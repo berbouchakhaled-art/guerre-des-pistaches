@@ -514,6 +514,11 @@
       color: #1a0628;
       box-shadow: 0 3px 0 #4a148c, 0 5px 12px rgba(0,0,0,.3);
     }
+    .level-btn.ship {
+      background: linear-gradient(180deg, #c5e1a5, #558b2f 45%, #1b5e20);
+      color: #f1f8e9;
+      box-shadow: 0 3px 0 #33691e, 0 5px 12px rgba(0,0,0,.35);
+    }
     .level-btn:active { transform: translateY(2px); }
     .level-btn.story {
       background: linear-gradient(180deg, #fff59d, #ffb300);
@@ -674,7 +679,7 @@
       <span class="star-name">SOUSOU</span>
       <span class="spin-star">★</span>
     </div>
-    <div class="tag">La star aux cheveux longs — 100% pistaches, 0% arachide</div>
+    <div class="tag">La star aux cheveux courts — 100% pistaches, 0% arachide</div>
   </div>
 
   <div class="wrap">
@@ -702,12 +707,13 @@
           <button type="button" data-weapon="2" aria-label="Grenade">💣</button>
         </div>
         <div class="touch-actions">
+          <button type="button" data-key="ArrowUp" aria-label="Viser en haut">↑</button>
           <button type="button" data-key="ArrowDown" aria-label="Se baisser">↓</button>
           <button type="button" class="jump-btn" data-key="Space" aria-label="Sauter">SAUT</button>
           <button type="button" class="fire-btn" data-action="fire" aria-label="Tirer">TIR</button>
         </div>
       </div>
-      <div class="touch-hint">◀▶ courir · SAUT · TIR · armes en haut à droite</div>
+      <div class="touch-hint">◀▶ · ↑ viser haut · SAUT · TIR</div>
     </div>
 
     <div id="startScreen" class="overlay" role="dialog" aria-labelledby="gameTitle" aria-modal="true">
@@ -746,8 +752,13 @@
             <span class="lv-name">🌌 Nuit Cosmique</span>
             <span class="lv-desc">Espace · trampolines · étoiles</span>
           </button>
-          <button type="button" class="level-btn story" id="startBtn" data-level="story" aria-label="Mode histoire les deux mondes">
-            ▶ Histoire (1 → 2)
+          <button type="button" class="level-btn ship" id="levelBtn2" data-level="2" aria-label="Monde 3 Vaisseau Pistache">
+            <span class="lv-code">MONDE 3-1</span>
+            <span class="lv-name">🚀 Vaisseau Pistache</span>
+            <span class="lv-desc">Guerre spatiale vs raisins secs aliens</span>
+          </button>
+          <button type="button" class="level-btn story" id="startBtn" data-level="story" aria-label="Mode histoire les trois mondes">
+            ▶ Histoire (1 → 2 → 3)
           </button>
         </div>
 
@@ -756,8 +767,8 @@
             ♿ Texte + boutons plus grands
           </button>
           <p class="a11y-note">
-            Clavier / tactile · pause <kbd>P</kbd> · mute <kbd>M</kbd>
-            <span class="desktop-only"> · flèches · Espace · X</span>
+            Clavier / tactile · ↑ tire en haut · pause <kbd>P</kbd> · mute <kbd>M</kbd>
+            <span class="desktop-only"> · flèches · Espace saut · X tir</span>
             <span class="mobile-only"> · boutons à l’écran</span>
           </p>
         </div>
@@ -779,6 +790,9 @@
           <button type="button" class="level-btn cosmo" id="endLevel1" data-level="1">
             <span class="lv-name">🌌 Rejouer Cosmique</span>
           </button>
+          <button type="button" class="level-btn ship" id="endLevel2" data-level="2">
+            <span class="lv-name">🚀 Rejouer Vaisseau</span>
+          </button>
           <button type="button" class="level-btn story" id="retryBtn">📋 Retour au menu</button>
         </div>
       </div>
@@ -789,6 +803,7 @@
     <span class="desktop-only">
       <kbd>←</kbd><kbd>→</kbd> courir ·
       <kbd>Espace</kbd> sauter ·
+      <kbd>↑</kbd> viser / tirer en haut ·
       <kbd>↓</kbd> se baisser ·
       <kbd>X</kbd> / clic tirer ·
       <kbd>1</kbd> Lance · <kbd>2</kbd> Gun · <kbd>3</kbd> Grenade ·
@@ -1075,6 +1090,19 @@
           ? [110,110,138,110, 103,103,130,103]
           : [110,110,165,110, 103,103,155,103, 92,92,138,92, 110,165,138,110];
         beat = hurryMode ? 0.12 : 0.18;
+      } else if (style === 'ship') {
+        // Thème vaisseau : pulse sci-fi
+        melody = hurryMode
+          ? [392,466,523,622, 523,466,392,349, 330,392,466,523]
+          : [
+              196,0,247,0, 294,0,370,0, 392,370,330,294,
+              247,0,294,0, 370,392,0,466, 0,523,466,392,
+              370,330,294,0, 247,294,370,392, 466,0,392,0
+            ];
+        bass = hurryMode
+          ? [98,98,123,98, 110,110,147,110]
+          : [98,98,147,98, 110,110,165,110, 123,123,185,123, 98,147,110,98];
+        beat = hurryMode ? 0.11 : 0.15;
       } else {
         melody = hurryMode
           ? [523,659,784,659, 587,740,880,740, 523,659,784,1047, 880,784,659,523]
@@ -1265,6 +1293,37 @@
         'XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXX',
       ],
     },
+    {
+      id: 3,
+      code: '3-1',
+      title: 'Vaisseau Pistache',
+      banner: 'MONDE 3-1 · VAISSEAU PISTACHE 🚀 vs RAISINS SECS 👽',
+      theme: 'ship',
+      time: 450,
+      gravity: 0.42,
+      jumpV: -16.5,
+      music: 'ship',
+      rows: [
+        // Coque en forme de pistache dans l'espace : salles, ponts, hublots, raisins aliens R
+        '........................................................................................',
+        '....C....C....3....C....C....C....3....C....C....C....3....C....C....C....3....C........',
+        '.........4.4.4..........R..........4.4.4..........R..........4.4.4..........R...........',
+        '....R........B..............R........B..............R........B..............R....4.4....',
+        '..111111....111111......111111....111111......111111....111111......111111....111111....',
+        '........................................................................................',
+        '..C....B....C....R....C....B....C....R....C....B....C....R....C....B....C....R....C.....',
+        '....4.4.4.4.4...........4.4.4.4.4...........4.4.4.4.4...........4.4.4.4.4.......3.......',
+        '.........R...................R...................R...................R..........R.......',
+        '1111......11111111......11111111......11111111......11111111......11111111......1111....',
+        '............................................................................3...........',
+        '....R....C....4.4....C....R....C....4.4....C....R....C....4.4....C....R....C....B.......',
+        '......3......................3......................3......................3............',
+        '1111111111111111111..BB..1111111111111111111..BB..1111111111111111111..BB..1111111111111',
+        '1111111111111111111......1111111111111111111......1111111111111111111......1111111111111',
+        '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+        '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+      ],
+    },
   ];
 
   let currentLevelIndex = 0;
@@ -1311,9 +1370,11 @@
         } else if (ch === 'C') {
           coinSpawns.push({ x: c * T + T / 2, y: r * T + T / 2 });
         } else if (ch === 'E') {
-          enemySpawns.push({ x: c * T + T / 2, y: r * T + T });
+          enemySpawns.push({ x: c * T + T / 2, y: r * T + T, kind: 'peanut' });
         } else if (ch === 'F') {
           flyerSpawns.push({ x: c * T + T / 2, y: r * T + T / 2 });
+        } else if (ch === 'R') {
+          enemySpawns.push({ x: c * T + T / 2, y: r * T + T, kind: 'raisin' });
         }
         // X lave = pas solide, géré à part
       }
@@ -1433,6 +1494,33 @@
   ];
   let weaponIndex = 0;
 
+  // Power-ups mystère
+  const POWER_DEFS = {
+    shield:    { name: 'BOUCLIER', color: '#4fc3f7', dur: 480, icon: '🛡️' },
+    triple:    { name: 'TRIPLE TIR', color: '#ffeb3b', dur: 420, icon: '🔱' },
+    rapid:     { name: 'RAFALE', color: '#ff7043', dur: 400, icon: '⚡' },
+    mega:      { name: 'MEGA PISTACHE', color: '#e040fb', dur: 360, icon: '💥' },
+    superJump: { name: 'SUPER SAUT', color: '#69f0ae', dur: 450, icon: '🐇' },
+    magnet:    { name: 'AIMANT', color: '#b388ff', dur: 500, icon: '🧲' },
+    heart:     { name: 'VIE +1', color: '#ef5350', dur: 0, icon: '❤️' },
+    star:      { name: 'ÉTOILE', color: '#ffd54f', dur: 300, icon: '⭐' },
+    // Nouveaux power-ups mystère
+    turbo:     { name: 'TURBO', color: '#00e5ff', dur: 420, icon: '💨' },
+    freeze:    { name: 'GEL RAISIN', color: '#81d4fa', dur: 360, icon: '❄️' },
+    ghost:     { name: 'FANTOME', color: '#e1bee7', dur: 300, icon: '👻' },
+    ricochet:  { name: 'RICOCHET', color: '#ffab40', dur: 420, icon: '↩️' },
+    tornado:   { name: 'TOURBILLON', color: '#a5d6a7', dur: 380, icon: '🌪️' },
+    double:    { name: '×2 SCORE', color: '#ffee58', dur: 480, icon: '✨' },
+    hover:     { name: 'ANTIGRAV', color: '#80deea', dur: 340, icon: '🛸' },
+    seed:      { name: 'MINES PISTACHE', color: '#dce775', dur: 0, icon: '🌱' },
+  };
+  let powerups = []; // {x,y,baseY,type,bob,life}
+  let mines = []; // {x,y,life,r}
+  let buffs = {
+    shield: 0, triple: 0, rapid: 0, mega: 0, superJump: 0, magnet: 0, star: 0,
+    turbo: 0, freeze: 0, ghost: 0, ricochet: 0, tornado: 0, double: 0, hover: 0,
+  };
+
   let running = false, paused = false, won = false;
   let score = 0, pistaches = 0, lives = difficulty.lives;
   let timeLeft = 400, timeAcc = 0;
@@ -1462,6 +1550,7 @@
     x: 80, y: 0, vx: 0, vy: 0,
     w: 36, h: 52,
     facing: 1,
+    aimUp: false, // flèche haut = tirer vers le haut
     onGround: false,
     crouching: false,
     anim: 0,
@@ -1775,11 +1864,13 @@
   // Menu principal : choix des niveaux
   bindMenuButton(document.getElementById('levelBtn0'), () => beginFromMenu(0, false));
   bindMenuButton(document.getElementById('levelBtn1'), () => beginFromMenu(1, false));
+  bindMenuButton(document.getElementById('levelBtn2'), () => beginFromMenu(2, false));
   bindMenuButton(document.getElementById('startBtn'), () => beginFromMenu(0, true));
 
   // Écran de fin : rejouer un niveau ou suite histoire
   bindMenuButton(document.getElementById('endLevel0'), () => beginFromMenu(0, false));
   bindMenuButton(document.getElementById('endLevel1'), () => beginFromMenu(1, false));
+  bindMenuButton(document.getElementById('endLevel2'), () => beginFromMenu(2, false));
   bindMenuButton(document.getElementById('retryBtn'), async (e) => {
     if (startLock || running) return;
     // Si on a fini le niv1 en mode histoire → proposer niv2 via __nextLevel
@@ -1818,6 +1909,12 @@
     coins = [];
     enemies = [];
     meteors = [];
+    powerups = [];
+    mines = [];
+    buffs = {
+      shield: 0, triple: 0, rapid: 0, mega: 0, superJump: 0, magnet: 0, star: 0,
+      turbo: 0, freeze: 0, ghost: 0, ricochet: 0, tornado: 0, double: 0, hover: 0,
+    };
     meteorTimer = 0;
     for (const s of coinSpawns) {
       coins.push({ x: s.x, y: s.y, baseY: s.y, taken: false, bob: Math.random() * 6 });
@@ -1855,7 +1952,7 @@
       for (let i = 0; i < extraP; i++) {
         enemies.push(makeEnemy(8 * T + i * 10 * T, (ROWS - 8) * T));
       }
-    } else {
+    } else if (levelDef.theme === 'cosmo') {
       for (const s of enemySpawns) {
         if (Math.random() < Math.max(0.4, em)) enemies.push(makeEnemy(s.x, s.y, { type: 'peanut' }));
       }
@@ -1870,6 +1967,39 @@
           baseY: (4 + (i % 3)) * T + 10,
           taken: false,
           bob: i * 0.7,
+        });
+      }
+    } else {
+      // Vaisseau : raisins secs aliens
+      for (const s of enemySpawns) {
+        const kind = s.kind === 'raisin' ? 'raisin' : (levelDef.theme === 'ship' ? 'raisin' : 'peanut');
+        if (Math.random() < Math.max(0.5, em)) enemies.push(makeEnemy(s.x, s.y, { type: kind }));
+      }
+      for (let i = 0; i < Math.round(8 * em); i++) {
+        enemies.push(makeEnemy(5 * T + i * 9 * T, (ROWS - 3) * T, { type: 'raisin', fast: Math.random() < 0.3 }));
+      }
+      for (let i = 0; i < Math.round(6 * em); i++) {
+        enemies.push(makeEnemy(6 * T + i * 12 * T, (5 + i % 3) * T, { type: 'raisin', flying: true }));
+      }
+      for (let i = 0; i < 22; i++) {
+        coins.push({
+          x: 3 * T + i * 3.8 * T,
+          y: (3 + (i % 4)) * T + 8,
+          baseY: (3 + (i % 4)) * T + 8,
+          taken: false,
+          bob: i,
+        });
+      }
+      // quelques power-ups déjà posés
+      const ptypes = Object.keys(POWER_DEFS);
+      for (let i = 0; i < 6; i++) {
+        powerups.push({
+          x: 8 * T + i * 12 * T,
+          y: (6 + (i % 2)) * T,
+          baseY: (6 + (i % 2)) * T,
+          type: ptypes[i % ptypes.length],
+          bob: i,
+          life: 99999,
         });
       }
     }
@@ -1914,14 +2044,17 @@
         break;
       }
     }
-    // Niv2 : spawn sur le grand pont de départ
     if (levelDef.theme === 'cosmo') {
+      player.x = 3 * T;
+      player.y = 13 * T - 2;
+    } else if (levelDef.theme === 'ship') {
       player.x = 3 * T;
       player.y = 13 * T - 2;
     }
     player.vx = 0;
     player.vy = 0;
     player.facing = 1;
+    player.aimUp = false;
     player.onGround = false;
     player.crouching = false;
     player.h = 52;
@@ -1949,16 +2082,17 @@
   }
 
   function makeEnemy(x, y, opts = {}) {
-    // 100% CACAHUÈTES — variants sol / colère / jumbo / VOLANTE (niv2)
-    const types = levelDef.theme === 'cosmo'
-      ? ['peanut', 'angry', 'flyer', 'jumbo', 'flyer']
-      : ['peanut', 'angry', 'jumbo', 'peanut', 'angry'];
+    let types;
+    if (levelDef.theme === 'ship') types = ['raisin', 'raisin', 'raisin', 'raisinBoss'];
+    else if (levelDef.theme === 'cosmo') types = ['peanut', 'angry', 'flyer', 'jumbo', 'flyer'];
+    else types = ['peanut', 'angry', 'jumbo', 'peanut', 'angry'];
     const type = opts.type || types[Math.floor(Math.random() * types.length)];
-    const flying = opts.flying || type === 'flyer';
+    const flying = opts.flying || type === 'flyer' || (type === 'raisin' && opts.flying);
+    const isRaisin = type === 'raisin' || type === 'raisinBoss';
     const dir = opts.dir != null ? opts.dir : (Math.random() < 0.5 ? -1 : 1);
     const speed = (1.0 + Math.random() * 1.1) * (opts.fast ? 1.4 : 1)
-      * (type === 'jumbo' ? 0.7 : 1)
-      * (flying ? (levelDef.theme === 'cosmo' ? 0.65 : 1.15) : 1)
+      * (type === 'jumbo' || type === 'raisinBoss' ? 0.7 : 1)
+      * (flying ? (levelDef.theme === 'cosmo' ? 0.65 : 1.0) : 1)
       * (levelDef.theme === 'cosmo' && !flying ? 0.75 : 1)
       * difficulty.enemySpeedMul;
     return {
@@ -1966,17 +2100,59 @@
       baseY: y,
       vx: dir * speed,
       vy: 0,
-      w: type === 'jumbo' ? 40 : flying ? 30 : 34,
-      h: type === 'jumbo' ? 44 : flying ? 28 : 36,
-      type: type === 'flyer' ? 'flyer' : type,
-      hp: type === 'jumbo' ? 3 : type === 'angry' ? 2 : 1,
+      w: type === 'jumbo' || type === 'raisinBoss' ? 42 : flying ? 30 : (isRaisin ? 32 : 34),
+      h: type === 'jumbo' || type === 'raisinBoss' ? 46 : flying ? 28 : (isRaisin ? 34 : 36),
+      type,
+      hp: type === 'jumbo' || type === 'raisinBoss' ? 3 : type === 'angry' ? 2 : 1,
       alive: true,
-      flying,
+      flying: !!flying,
+      species: isRaisin ? 'raisin' : 'peanut',
       bob: Math.random() * 10,
       onGround: false,
       flat: false,
       flatTimer: 0,
     };
+  }
+
+  function grantPower(type) {
+    const def = POWER_DEFS[type];
+    if (!def) return;
+    if (type === 'heart') {
+      lives++;
+      floatScore(player.x, player.y - 40, '❤️ +1');
+      AudioFX.powerup();
+      updateHud();
+      return;
+    }
+    if (type === 'seed') {
+      // Pose 3 mines pistache autour de Sousou
+      for (let i = -1; i <= 1; i++) {
+        mines.push({
+          x: player.x + i * 48,
+          y: player.y - 4,
+          life: 600,
+          r: 18,
+          arm: 30,
+        });
+      }
+      floatScore(player.x, player.y - 50, '🌱 MINES !');
+      spawnNameFX(player.x, player.y - 70, 'MINES PISTACHE', 'pop', 50);
+      AudioFX.powerup();
+      screenShake = 6;
+      return;
+    }
+    buffs[type] = def.dur;
+    floatScore(player.x, player.y - 50, def.icon + ' ' + def.name);
+    spawnNameFX(player.x, player.y - 70, def.name, 'pop', 50);
+    AudioFX.powerup();
+    if (type === 'star' || type === 'ghost') invuln = Math.max(invuln, Math.min(def.dur, 120));
+    screenShake = 6;
+  }
+
+  function spawnMysteryPower(x, y) {
+    const keys = Object.keys(POWER_DEFS);
+    const type = keys[Math.floor(Math.random() * keys.length)];
+    powerups.push({ x, y, baseY: y, type, bob: Math.random() * 6, life: 900 });
   }
 
   function updateHud() {
@@ -2052,8 +2228,11 @@
       }
     }
 
-    // vertical
-    player.vy += levelDef.gravity * difficulty.gravityMul;
+    // vertical — antigrav (hover) adoucit la gravité
+    let gMul = difficulty.gravityMul;
+    if (buffs.hover > 0) gMul *= 0.28;
+    player.vy += levelDef.gravity * gMul;
+    if (buffs.hover > 0 && player.vy > 4) player.vy = 4;
     if (player.vy > 14) player.vy = 14;
     player.y += player.vy;
     player.onGround = false;
@@ -2112,15 +2291,34 @@
     if (qb && !qb.used) {
       qb.used = true;
       qb.bounce = 8;
-      pistaches++;
-      score += 100;
-      floatScore(c * T + T / 2, r * T, '+100');
-      coins.push({
-        x: c * T + T / 2, y: r * T - 10, baseY: r * T - 10,
-        taken: false, bob: 0, pop: 20,
-      });
+      const roll = Math.random();
+      if (roll < 0.55) {
+        // Power-up mystère !
+        spawnMysteryPower(c * T + T / 2, r * T - 16);
+        floatScore(c * T + T / 2, r * T, '❓ POWER');
+        score += 50;
+      } else if (roll < 0.85) {
+        pistaches++;
+        score += 100;
+        floatScore(c * T + T / 2, r * T, '+100');
+        coins.push({
+          x: c * T + T / 2, y: r * T - 10, baseY: r * T - 10,
+          taken: false, bob: 0, pop: 20,
+        });
+      } else {
+        // jackpot : 3 pièces + power
+        for (let i = 0; i < 3; i++) {
+          coins.push({
+            x: c * T + T / 2 + (i - 1) * 14, y: r * T - 10, baseY: r * T - 10,
+            taken: false, bob: i, pop: 18 + i * 4,
+          });
+        }
+        spawnMysteryPower(c * T + T / 2, r * T - 28);
+        score += 150;
+        floatScore(c * T + T / 2, r * T, 'JACKPOT');
+      }
       AudioFX.blockHit();
-      explode(c * T + T / 2, r * T, '#ffeb3b', 8);
+      explode(c * T + T / 2, r * T, '#ffeb3b', 10);
       updateHud();
     } else if (LEVEL_ROWS[r] && LEVEL_ROWS[r][c] === '2') {
       AudioFX.bump();
@@ -2130,49 +2328,73 @@
 
   function tryJump() {
     if (!player.onGround || player.crouching || flagSliding) return;
-    player.vy = levelDef.jumpV + difficulty.jumpBonus;
+    let jv = levelDef.jumpV + difficulty.jumpBonus;
+    if (buffs.superJump > 0) jv -= 3.5;
+    player.vy = jv;
     player.onGround = false;
     AudioFX.jump();
     AudioFX.hairSwish();
     explode(player.x, player.y, '#8d6e63', 5);
   }
 
+  function fireBullet(kind, x, y, vx, vy, extra = {}) {
+    const mega = buffs.mega > 0;
+    bullets.push({
+      kind, x, y, vx, vy,
+      rot: 0,
+      life: extra.life || 80,
+      r: mega ? (extra.r || 14) * 1.6 : (extra.r || 14),
+      dmg: (extra.dmg || 1) + (mega ? 1 : 0),
+      ...extra,
+    });
+  }
+
   function tryShoot() {
     if (shootCD > 0 || flagSliding || !running || paused) return;
     const w = WEAPONS[weaponIndex];
-    shootCD = w.cd;
+    let cd = w.cd;
+    if (buffs.rapid > 0) cd = Math.max(4, Math.floor(cd * 0.45));
+    shootCD = cd;
     const dir = player.facing;
+    const aimUp = player.aimUp || keys['ArrowUp'];
     const y = player.crouching ? player.y - 18 : player.y - 32;
-    const mx = player.x + dir * 24;
+    const mx = aimUp ? player.x : player.x + dir * 24;
+    const my = aimUp ? player.y - player.h + 8 : y;
+
+    const mk = (vx, vy, kind, extra) => fireBullet(kind, mx, my, vx, vy, extra);
 
     if (w.id === 'lance') {
-      bullets.push({
-        kind: 'lance', x: mx, y, vx: dir * 9.5, vy: -0.3,
-        rot: 0, life: 80, r: 14, dmg: 1,
-      });
+      if (aimUp) mk(dir * 1.5, -12, 'lance', { r: 14, dmg: 1 });
+      else mk(dir * 9.5, -0.3, 'lance', { r: 14, dmg: 1 });
+      if (buffs.triple > 0) {
+        if (aimUp) {
+          mk(-3, -11, 'lance', { r: 12, dmg: 1 });
+          mk(3, -11, 'lance', { r: 12, dmg: 1 });
+        } else {
+          mk(dir * 9, -2.5, 'lance', { r: 12, dmg: 1 });
+          mk(dir * 9, 2.2, 'lance', { r: 12, dmg: 1 });
+        }
+      }
       AudioFX.shoot();
-      explode(mx, y, '#c5e1a5', 5);
+      explode(mx, my, '#c5e1a5', 5);
     } else if (w.id === 'gun') {
-      // rafale : 2 pistaches avec léger écart
-      for (let i = 0; i < 2; i++) {
-        bullets.push({
-          kind: 'gun', x: mx, y: y + (i === 0 ? -3 : 4),
-          vx: dir * (12 + i), vy: (Math.random() - 0.5) * 1.2,
-          rot: 0, life: 55, r: 12, dmg: 1,
-        });
+      for (let i = 0; i < (buffs.triple > 0 ? 3 : 2); i++) {
+        if (aimUp) mk((i - 1) * 2.5, -13 - i, 'gun', { r: 12, dmg: 1, life: 55 });
+        else mk(dir * (12 + i), (Math.random() - 0.5) * 1.5 + (i - 1), 'gun', { r: 12, dmg: 1, life: 55 });
       }
       AudioFX.shoot();
       AudioFX.whoosh();
-      explode(mx, y, '#ffeb3b', 6);
+      explode(mx, my, '#ffeb3b', 6);
     } else {
-      // grenade en cloche
-      bullets.push({
-        kind: 'grenade', x: mx, y, vx: dir * 5.5, vy: -8.5,
-        rot: 0, life: 120, r: 16, dmg: 3, armed: true,
-      });
+      if (aimUp) mk(dir * 1.2, -14, 'grenade', { r: 16, dmg: 3, armed: true, life: 120 });
+      else mk(dir * 5.5, -8.5, 'grenade', { r: 16, dmg: 3, armed: true, life: 120 });
+      if (buffs.triple > 0) {
+        mk(dir * 4, -10, 'grenade', { r: 14, dmg: 2, armed: true, life: 100 });
+        mk(dir * 6.5, -7, 'grenade', { r: 14, dmg: 2, armed: true, life: 100 });
+      }
       AudioFX.shoot();
       AudioFX.bump();
-      explode(mx, y, '#ff8a65', 4);
+      explode(mx, my, '#ff8a65', 4);
     }
   }
 
@@ -2194,6 +2416,17 @@
 
   function hurt(fell = false) {
     if (invuln > 0 && !fell) return;
+    // Bouclier : absorbe un coup
+    if (!fell && buffs.shield > 0) {
+      buffs.shield = 0;
+      invuln = 90;
+      screenShake = 8;
+      AudioFX.bump();
+      floatScore(player.x, player.y - 40, '🛡️ BLOQUÉ');
+      explode(player.x, player.y - 30, '#4fc3f7', 16);
+      return;
+    }
+    if (!fell && (buffs.star > 0 || buffs.ghost > 0)) return;
     // En mode « Pour tous », une chute dans un trou = -1 vie (pas game over immédiat)
     if (fell && difficulty.id === 'easy') {
       lives = Math.max(0, lives - 1);
@@ -2324,6 +2557,11 @@
     shootCD = Math.max(0, shootCD - 1);
     invuln = Math.max(0, invuln - 1);
     screenShake = Math.max(0, screenShake - 0.65);
+    // timers power-ups
+    for (const k of Object.keys(buffs)) {
+      if (buffs[k] > 0) buffs[k]--;
+    }
+    if (buffs.star > 0 || buffs.ghost > 0) invuln = Math.max(invuln, 2);
 
     // timer
     timeAcc += 1 / 60;
@@ -2361,18 +2599,20 @@
 
     const left = keys['ArrowLeft'] || keys['KeyA'];
     const right = keys['ArrowRight'] || keys['KeyD'];
-    const up = keys['ArrowUp'] || keys['KeyW'] || keys['KeyZ'] || keys['Space'];
+    // Flèche haut = viser en haut (pas saut) ; saut = Espace / Z / W
+    player.aimUp = !!(keys['ArrowUp']);
+    const jumpKey = keys['Space'] || keys['KeyZ'] || keys['KeyW'];
     const down = keys['ArrowDown'] || keys['KeyS'];
     const fire = keys['KeyX'];
 
     // crouch
-    const wantCrouch = down && player.onGround;
+    const wantCrouch = down && player.onGround && !player.aimUp;
     if (wantCrouch && !wasCrouch) AudioFX.crouch();
     wasCrouch = wantCrouch;
     player.crouching = wantCrouch;
     player.h = wantCrouch ? 32 : 52;
 
-    if (up) tryJump();
+    if (jumpKey) tryJump();
     if (fire) tryShoot();
 
     // run — glace = un peu de glisse (mais contrôlable)
@@ -2381,6 +2621,7 @@
     const accel = player.onGround ? (onIce ? 0.5 : 0.65) : 0.45;
     let maxSpd = player.crouching ? 2.2 : (onIce ? 6.0 : 5.2);
     if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.6;
+    if (buffs.turbo > 0) maxSpd *= 1.55;
     if (left) { player.vx -= accel; player.facing = -1; }
     if (right) { player.vx += accel; player.facing = 1; }
     if (!left && !right) {
@@ -2433,8 +2674,8 @@
     wasOnGround = player.onGround;
 
     // flag / portail
-    const flagW = levelDef.theme === 'cosmo' ? 55 : 30;
-    const flagTop = levelDef.theme === 'cosmo' ? flag.y - 100 : flag.y - flag.h;
+    const flagW = (levelDef.theme === 'cosmo' || levelDef.theme === 'ship') ? 55 : 30;
+    const flagTop = (levelDef.theme === 'cosmo' || levelDef.theme === 'ship') ? flag.y - 100 : flag.y - flag.h;
     if (player.x > flag.x - 10 && player.x < flag.x + flagW &&
         player.y > flagTop && player.y < flag.y + 20) {
       winLevel();
@@ -2452,7 +2693,6 @@
         ? cameraX + VW + 30 + Math.random() * 40
         : cameraX - 30 - Math.random() * 40;
       if (levelDef.theme === 'cosmo') {
-        // rare, lent, 1 PV seulement
         if (Math.random() < 0.55) {
           enemies.push(makeEnemy(
             sx,
@@ -2464,6 +2704,13 @@
             dir: fromRight ? -1 : 1, type: 'peanut', fast: false
           }));
         }
+      } else if (levelDef.theme === 'ship') {
+        const fly = Math.random() < 0.4;
+        enemies.push(makeEnemy(
+          sx,
+          fly ? player.y - 40 - Math.random() * 50 : player.y,
+          { dir: fromRight ? -1 : 1, type: Math.random() < 0.15 ? 'raisinBoss' : 'raisin', flying: fly, fast: Math.random() < 0.25 }
+        ));
       } else {
         const onPlatform = Math.random() < 0.25;
         const sy = onPlatform ? (ROWS - 8) * T : (ROWS - 3) * T;
@@ -2517,19 +2764,52 @@
       }
       c.bob += 0.1;
       const cy = c.baseY + Math.sin(c.bob) * 5;
+      // aimant : attire les pièces
+      if (buffs.magnet > 0 && !c.pop) {
+        const dx = player.x - c.x;
+        const dy = (player.y - player.h / 2) - cy;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < 160) {
+          c.x += (dx / d) * 4.5;
+          c.baseY += (dy / d) * 4.5;
+        }
+      }
       if (!c.pop && Math.hypot(player.x - c.x, (player.y - player.h / 2) - cy) < 40) {
         c.taken = true;
         pistaches++;
-        score += 50;
-        floatScore(c.x, cy, '+50');
+        const coinPts = buffs.double > 0 ? 100 : 50;
+        score += coinPts;
+        floatScore(c.x, cy, (buffs.double > 0 ? '✨' : '') + '+' + coinPts);
         if (pistaches % 5 === 0) {
           spawnNameFX(c.x, cy - 20, 'SOUSOU !', 'pop', 45);
           sousouStarBurst(c.x, cy);
         }
+        // chance de power-up mystère en collectant
+        if (Math.random() < 0.06) spawnMysteryPower(c.x, cy - 10);
         AudioFX.coin();
         explode(c.x, cy, '#ffeb3b', 12);
         explode(c.x, cy, '#8bc34a', 8);
         updateHud();
+      }
+    }
+
+    // power-ups
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const p = powerups[i];
+      p.bob += 0.12;
+      p.life--;
+      const py = p.baseY + Math.sin(p.bob) * 6;
+      if (buffs.magnet > 0) {
+        const dx = player.x - p.x;
+        const dy = (player.y - player.h / 2) - py;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < 180) { p.x += (dx / d) * 5; p.baseY += (dy / d) * 5; }
+      }
+      if (p.life <= 0) { powerups.splice(i, 1); continue; }
+      if (Math.hypot(player.x - p.x, (player.y - player.h / 2) - py) < 32) {
+        grantPower(p.type);
+        explode(p.x, py, POWER_DEFS[p.type]?.color || '#ffeb3b', 14);
+        powerups.splice(i, 1);
       }
     }
 
@@ -2545,8 +2825,24 @@
 
       const hitSolid = isSolidAt(b.x, b.y) || b.y > LEVEL_H;
       if (b.life <= 0 || hitSolid) {
-        if (b.kind === 'grenade') explodeGrenade(b.x, b.y);
-        else if (hitSolid) { AudioFX.shellCrack(); explode(b.x, b.y, '#aed581', 6); }
+        if (b.kind === 'grenade') {
+          explodeGrenade(b.x, b.y);
+          bullets.splice(i, 1);
+          continue;
+        }
+        if (hitSolid && buffs.ricochet > 0 && (b.bounce || 0) < 3) {
+          // Ricochet : rebond sur les murs
+          b.bounce = (b.bounce || 0) + 1;
+          if (isSolidAt(b.x + b.vx, b.y)) b.vx *= -1;
+          if (isSolidAt(b.x, b.y + b.vy) || b.y > LEVEL_H) b.vy *= -1;
+          b.life = Math.max(b.life, 40);
+          b.x += b.vx * 2;
+          b.y += b.vy * 2;
+          AudioFX.shellCrack();
+          explode(b.x, b.y, '#ffab40', 4);
+          continue;
+        }
+        if (hitSolid) { AudioFX.shellCrack(); explode(b.x, b.y, '#aed581', 6); }
         bullets.splice(i, 1);
         continue;
       }
@@ -2563,7 +2859,14 @@
             break;
           }
           e.hp -= b.dmg || 1;
-          bullets.splice(i, 1);
+          if (buffs.ricochet > 0 && (b.bounce || 0) < 2) {
+            b.bounce = (b.bounce || 0) + 1;
+            b.vx *= -0.9;
+            b.vy = -Math.abs(b.vy) - 2;
+            b.life = Math.max(b.life, 35);
+          } else {
+            bullets.splice(i, 1);
+          }
           AudioFX.shellCrack();
           explode(b.x, b.y, '#aed581', 8);
           explode(b.x, b.y, '#ffeb3b', 4);
@@ -2573,6 +2876,46 @@
         }
       }
       if (hitEnemy) continue;
+    }
+
+    // Tourbillon de pistaches autour de Sousou
+    if (buffs.tornado > 0 && frame % 4 === 0) {
+      const ang = frame * 0.22;
+      for (let k = 0; k < 3; k++) {
+        const a = ang + (k * Math.PI * 2) / 3;
+        const tx = player.x + Math.cos(a) * 42;
+        const ty = player.y - player.h / 2 + Math.sin(a) * 28;
+        if (frame % 12 === 0) explode(tx, ty, '#a5d6a7', 2);
+        for (const e of enemies) {
+          if (!e.alive || e.flat) continue;
+          if (Math.hypot(e.x - tx, (e.y - e.h / 2) - ty) < 28) {
+            e.hp -= 1;
+            if (e.hp <= 0) squashEnemy(e, false);
+            else explode(e.x, e.y - 10, '#a5d6a7', 5);
+          }
+        }
+      }
+    }
+
+    // Mines pistache
+    for (let i = mines.length - 1; i >= 0; i--) {
+      const m = mines[i];
+      m.life--;
+      if (m.arm > 0) m.arm--;
+      if (m.life <= 0) { mines.splice(i, 1); continue; }
+      if (m.arm > 0) continue;
+      let boom = false;
+      for (const e of enemies) {
+        if (!e.alive || e.flat) continue;
+        if (Math.hypot(e.x - m.x, (e.y - e.h / 2) - m.y) < m.r + e.w / 2) {
+          boom = true;
+          break;
+        }
+      }
+      if (boom) {
+        explodeGrenade(m.x, m.y);
+        mines.splice(i, 1);
+      }
     }
 
     // enemies
@@ -2585,12 +2928,15 @@
       }
       e.bob += e.flying ? 0.16 : 0.12;
 
+      // Gel : raisins / ennemis ralentis ou figés
+      const freezeMul = buffs.freeze > 0 ? 0.12 : 1;
+
       if (e.flying) {
-        // Cacahuète volante : ondulation + chasse légère
-        e.x += e.vx;
+        // Raisin / cacahuète volante : ondulation + chasse légère
+        e.x += e.vx * freezeMul;
         e.y = e.baseY + Math.sin(e.bob) * 18;
-        if (Math.random() < 0.01) e.vx *= -1;
-        if (Math.abs(e.x - player.x) < 220 && Math.random() < 0.02) {
+        if (buffs.freeze <= 0 && Math.random() < 0.01) e.vx *= -1;
+        if (buffs.freeze <= 0 && Math.abs(e.x - player.x) < 220 && Math.random() < 0.02) {
           e.vx = Math.sign(player.x - e.x) * Math.abs(e.vx);
         }
         // bornes basiques
@@ -2599,7 +2945,7 @@
         }
       } else {
         e.vy += levelDef.gravity * 1.05;
-        e.x += e.vx;
+        e.x += e.vx * freezeMul;
         e.y += e.vy;
         e.onGround = false;
         if (e.vy >= 0 && (isSolidAt(e.x - 8, e.y) || isSolidAt(e.x + 8, e.y))) {
@@ -2625,8 +2971,8 @@
         explode(e.x, e.y, '#ff5722', 8);
       }
 
-      // stomp / hurt
-      if (invuln <= 0 && !flagSliding) {
+      // stomp / hurt (fantôme = traverse sans dégât)
+      if (invuln <= 0 && !flagSliding && buffs.ghost <= 0) {
         const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.7;
         const playerBottom = player.y;
         const enemyTop = e.y - e.h;
@@ -2638,6 +2984,14 @@
           } else {
             hurt();
           }
+        }
+      } else if (buffs.ghost > 0) {
+        // fantôme peut encore écraser en sautant
+        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.7;
+        if (overlapX && player.vy > 0 && player.y - e.y < 14 && player.y > e.y - e.h - 8) {
+          squashEnemy(e, true);
+          player.vy = -9;
+          AudioFX.stomp();
         }
       }
     }
@@ -2691,14 +3045,22 @@
     e.flat = true;
     e.flatTimer = 30;
     e.vx = 0;
-    const pts = e.type === 'jumbo' ? 250 : e.type === 'angry' ? 150 : 100;
+    let pts = e.type === 'jumbo' || e.type === 'raisinBoss' ? 250 : e.type === 'angry' ? 150 : (e.species === 'raisin' ? 120 : 100);
+    if (buffs.double > 0) pts *= 2;
     score += pts;
-    floatScore(e.x, e.y - 20, '+' + pts);
-    spawnNameFX(e.x, e.y - 40, Math.random() < 0.5 ? 'SOUSOU !' : '★ STAR ★', 'pop', 40);
-    if (Math.random() < 0.25) spawnNameFX(e.x, e.y - 60, 'LA GUERRE DES PISTACHES', 'pop', 35);
-    explode(e.x, e.y - 10, '#a67c52', 10);
-    explode(e.x, e.y - 10, '#6d4c41', 10);
-    explode(e.x, e.y - 10, '#d7a86e', 6);
+    floatScore(e.x, e.y - 20, (buffs.double > 0 ? '✨' : '') + '+' + pts);
+    spawnNameFX(e.x, e.y - 40, Math.random() < 0.5 ? 'SOUSOU !' : (e.species === 'raisin' ? '🍇 OUT' : '★ STAR ★'), 'pop', 40);
+    if (Math.random() < 0.2) spawnNameFX(e.x, e.y - 60, 'LA GUERRE DES PISTACHES', 'pop', 35);
+    // drop power-up mystère
+    if (Math.random() < 0.18) spawnMysteryPower(e.x, e.y - 20);
+    if (e.species === 'raisin') {
+      explode(e.x, e.y - 10, '#4e342e', 12);
+      explode(e.x, e.y - 10, '#b2ff59', 6);
+    } else {
+      explode(e.x, e.y - 10, '#a67c52', 10);
+      explode(e.x, e.y - 10, '#6d4c41', 10);
+      explode(e.x, e.y - 10, '#d7a86e', 6);
+    }
     if (!stomped) AudioFX.crunch();
     updateHud();
   }
@@ -2726,7 +3088,109 @@
       ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
     }
 
-    if (levelDef.theme === 'cosmo') {
+    if (levelDef.theme === 'ship') {
+      // Espace profond + silhouettes de vaisseaux-pistaches en guerre
+      const sky = ctx.createLinearGradient(0, 0, 0, VH);
+      sky.addColorStop(0, '#020810');
+      sky.addColorStop(0.35, '#0a1a12');
+      sky.addColorStop(0.7, '#142618');
+      sky.addColorStop(1, '#0d1a10');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, VW, VH);
+      // étoiles + nébuleuse verte
+      for (let i = 0; i < 55; i++) {
+        const sx = ((i * 73 + frame * 0.35 + cameraX * 0.02) % VW);
+        const sy = (i * 37) % VH;
+        ctx.fillStyle = i % 7 === 0 ? '#c5e1a5' : (i % 11 === 0 ? '#ffab91' : '#fff');
+        ctx.globalAlpha = 0.35 + (Math.sin(frame * 0.05 + i) + 1) * 0.3;
+        ctx.fillRect(sx, sy, i % 9 === 0 ? 3 : 2, i % 9 === 0 ? 3 : 2);
+      }
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = '#8bc34a';
+      ctx.beginPath();
+      ctx.ellipse(VW * 0.7, VH * 0.25, 180, 60, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      // flotte de vaisseaux-pistaches en fond (parallaxe)
+      for (let i = 0; i < 4; i++) {
+        const ox = ((i * 280 - cameraX * 0.15 + frame * 0.4) % (VW + 220)) - 80;
+        const oy = 60 + i * 70 + Math.sin(frame * 0.02 + i) * 8;
+        ctx.save();
+        ctx.translate(ox, oy);
+        ctx.rotate(-0.15 + i * 0.05);
+        ctx.globalAlpha = 0.22 + i * 0.05;
+        // coque pistache
+        ctx.fillStyle = i % 2 === 0 ? '#7cb342' : '#558b2f';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 55, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#dcedc8';
+        ctx.beginPath();
+        ctx.ellipse(-10, -2, 22, 16, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // réacteur
+        ctx.fillStyle = '#80deea';
+        ctx.globalAlpha = 0.35 + Math.sin(frame * 0.2 + i) * 0.15;
+        ctx.beginPath();
+        ctx.ellipse(-55, 0, 18, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // laser vs raisin
+        if (i % 2 === 0) {
+          ctx.globalAlpha = 0.4;
+          ctx.strokeStyle = '#b2ff59';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(50, 0);
+          ctx.lineTo(90, -10 + Math.sin(frame * 0.1 + i) * 6);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      // raisins secs aliens ennemis en fond
+      for (let i = 0; i < 3; i++) {
+        const rx = ((i * 310 + cameraX * 0.08 + frame * 0.55) % (VW + 100));
+        const ry = 40 + i * 90;
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = '#4e342e';
+        ctx.beginPath();
+        ctx.ellipse(rx, ry, 16, 20, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#76ff03';
+        ctx.beginPath();
+        ctx.arc(rx - 4, ry - 4, 3, 0, Math.PI * 2);
+        ctx.arc(rx + 5, ry - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // nervures coque intérieure pistache
+      ctx.strokeStyle = 'rgba(174, 213, 129, 0.18)';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 6; i++) {
+        const ox = ((i * 200) - cameraX * 0.2) % (VW + 100);
+        ctx.beginPath();
+        ctx.ellipse(ox, VH / 2, 90, VH * 0.48, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // hublots
+      for (let i = 0; i < 5; i++) {
+        const hx = ((i * 190 - cameraX * 0.3) % (VW + 60));
+        const hy = 28 + (i % 2) * 14;
+        ctx.fillStyle = 'rgba(10, 30, 40, 0.55)';
+        ctx.beginPath();
+        ctx.arc(hx, hy, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(174, 213, 129, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath();
+        ctx.arc(hx - 5, hy - 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // lueur verte intérieure
+      ctx.fillStyle = 'rgba(139, 195, 74, 0.07)';
+      ctx.fillRect(0, 0, VW, VH);
+    } else if (levelDef.theme === 'cosmo') {
       // Ciel nocturne nébuleuse
       const sky = ctx.createLinearGradient(0, 0, 0, VH);
       sky.addColorStop(0, '#0a0618');
@@ -2798,7 +3262,40 @@
     for (const e of enemies) if (e.alive) drawEnemy(e);
     for (const b of bullets) drawBullet(b);
     for (const m of meteors) drawMeteor(m);
+    for (const p of powerups) drawPowerup(p);
+    for (const m of mines) drawMine(m);
     drawSousou();
+    // aura bouclier / étoile / fantôme / tourbillon
+    if (buffs.shield > 0 || buffs.star > 0 || buffs.ghost > 0 || buffs.tornado > 0 || buffs.hover > 0) {
+      ctx.save();
+      if (buffs.tornado > 0) {
+        const ang = frame * 0.22;
+        for (let k = 0; k < 3; k++) {
+          const a = ang + (k * Math.PI * 2) / 3;
+          const tx = player.x + Math.cos(a) * 42;
+          const ty = player.y - player.h / 2 + Math.sin(a) * 28;
+          ctx.fillStyle = '#aed581';
+          ctx.beginPath();
+          ctx.ellipse(tx, ty, 7, 5, a, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#e8f5e9';
+          ctx.beginPath();
+          ctx.ellipse(tx - 1, ty, 3, 4, a, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      let col = 'rgba(79, 195, 247, 0.65)';
+      if (buffs.star > 0) col = 'rgba(255, 213, 79, 0.7)';
+      else if (buffs.ghost > 0) col = 'rgba(225, 190, 231, 0.75)';
+      else if (buffs.hover > 0) col = 'rgba(128, 222, 234, 0.7)';
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = buffs.ghost > 0 ? 0.55 + Math.sin(frame * 0.25) * 0.25 : 1;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y - player.h / 2, 28 + Math.sin(frame * 0.2) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     for (const p of particles) {
       ctx.globalAlpha = Math.min(1, p.life / 15);
       ctx.fillStyle = p.color;
@@ -2849,7 +3346,7 @@
       ctx.fillText('La guerre des pistaches attend…', VW / 2, VH / 2 + 28);
     }
 
-    // watermark star bas-gauche en jeu
+    // watermark + buffs actifs
     if (running && !paused) {
       ctx.save();
       ctx.globalAlpha = 0.55 + Math.sin(frame * 0.08) * 0.15;
@@ -2857,9 +3354,88 @@
       ctx.fillStyle = '#fff59d';
       ctx.textAlign = 'left';
       ctx.fillText('★ SOUSOU · ' + levelDef.code + ' · ' + levelDef.title, 12, VH - 12);
+      ctx.globalAlpha = 1;
+      // barre de power-ups
+      let bx = 12;
+      const by = VH - 36;
+      for (const [k, v] of Object.entries(buffs)) {
+        if (v <= 0 || !POWER_DEFS[k]) continue;
+        const def = POWER_DEFS[k];
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(bx, by, 54, 18);
+        ctx.strokeStyle = def.color;
+        ctx.strokeRect(bx, by, 54, 18);
+        ctx.fillStyle = def.color;
+        ctx.font = '11px Fredoka, sans-serif';
+        ctx.fillText(def.icon + Math.ceil(v / 60) + 's', bx + 4, by + 13);
+        bx += 58;
+      }
+      if (player.aimUp) {
+        ctx.fillStyle = '#ffeb3b';
+        ctx.font = 'bold 12px Fredoka, sans-serif';
+        ctx.fillText('↑ TIR HAUT', VW - 100, VH - 14);
+      }
       ctx.restore();
     }
 
+    ctx.restore();
+  }
+
+  function drawMine(m) {
+    ctx.save();
+    ctx.translate(m.x, m.y);
+    const armed = m.arm <= 0;
+    const pulse = armed ? 1 + Math.sin(frame * 0.25) * 0.08 : 0.9;
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = armed ? '#8bc34a' : '#689f38';
+    ctx.beginPath();
+    ctx.ellipse(0, -4, 12, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e8f5e9';
+    ctx.beginPath();
+    ctx.ellipse(-3, -5, 5, 6, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = armed ? '#ffeb3b' : '#a5d6a7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, -4, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    if (armed) {
+      ctx.fillStyle = '#ff5252';
+      ctx.beginPath();
+      ctx.arc(0, -14, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPowerup(p) {
+    const y = p.baseY + Math.sin(p.bob) * 6;
+    const def = POWER_DEFS[p.type] || { color: '#fff', icon: '?', name: '?' };
+    ctx.save();
+    ctx.translate(p.x, y);
+    // boîte mystère
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.arc(0, 4, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = def.color;
+    ctx.strokeStyle = '#fffde7';
+    ctx.lineWidth = 2;
+    roundRect(-12, -12, 24, 24, 5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 14px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon || '?', 0, 1);
+    // pulse
+    ctx.strokeStyle = def.color;
+    ctx.globalAlpha = 0.4 + Math.sin(frame * 0.15 + p.bob) * 0.3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16 + Math.sin(frame * 0.2) * 2, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -2957,7 +3533,12 @@
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#ffe082';
     ctx.font = '16px Fredoka, sans-serif';
-    ctx.fillText(levelDef.theme === 'cosmo' ? 'mode détente · trampolines · petits trous' : 'la star entre en scène', 0, 52);
+    ctx.fillText(
+      levelDef.theme === 'cosmo' ? 'mode détente · trampolines · petits trous'
+        : levelDef.theme === 'ship' ? 'vaisseau pistache · raisins secs aliens 👽'
+        : 'la star entre en scène',
+      0, 52
+    );
     ctx.restore();
   }
 
@@ -2995,7 +3576,22 @@
         if (ch === '1') {
           const above = r > 0 ? LEVEL_ROWS[r - 1][c] : '.';
           const isTop = !'12345678IB'.includes(above);
-          if (levelDef.theme === 'cosmo') {
+          if (levelDef.theme === 'ship') {
+            // pont métallique vert pistache
+            ctx.fillStyle = isTop ? '#7cb342' : '#33691e';
+            ctx.fillRect(x, y, T, T);
+            if (isTop) {
+              ctx.fillStyle = '#aed581';
+              ctx.fillRect(x, y, T, 7);
+              ctx.fillStyle = '#c5e1a5';
+              ctx.fillRect(x + 4, y + 2, 8, 2);
+            } else {
+              ctx.strokeStyle = 'rgba(200,230,160,0.25)';
+              ctx.strokeRect(x + 4, y + 4, T - 8, T - 8);
+            }
+            ctx.strokeStyle = '#1b5e20';
+            ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
+          } else if (levelDef.theme === 'cosmo') {
             ctx.fillStyle = isTop ? '#5e35b1' : '#311b92';
             ctx.fillRect(x, y, T, T);
             if (isTop) {
@@ -3004,6 +3600,8 @@
               ctx.fillStyle = '#b39ddb';
               for (let i = 0; i < 3; i++) ctx.fillRect(x + 8 + i * 10, y + 3, 3, 3);
             }
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
           } else {
             ctx.fillStyle = isTop ? '#7cb342' : '#6d4c41';
             ctx.fillRect(x, y, T, T);
@@ -3023,9 +3621,9 @@
               ctx.fillRect(x + 8, y + 12, 6, 5);
               ctx.fillRect(x + 24, y + 22, 8, 4);
             }
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
           }
-          ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-          ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
         } else if (ch === '2') {
           // brique
           ctx.fillStyle = '#c62828';
@@ -3063,13 +3661,19 @@
           }
         } else if (ch === '4') {
           if (levelDef.theme === 'cosmo') {
-            // plateforme cristal
             ctx.fillStyle = '#7e57c2';
             ctx.fillRect(x, y, T, 12);
             ctx.fillStyle = '#b39ddb';
             ctx.fillRect(x, y, T, 4);
             ctx.fillStyle = 'rgba(255,255,255,0.35)';
             ctx.fillRect(x + 4, y + 2, 8, 2);
+          } else if (levelDef.theme === 'ship') {
+            ctx.fillStyle = '#558b2f';
+            ctx.fillRect(x, y, T, 12);
+            ctx.fillStyle = '#aed581';
+            ctx.fillRect(x, y, T, 4);
+            ctx.fillStyle = '#c5e1a5';
+            ctx.fillRect(x + 6, y + 2, 10, 2);
           } else {
             ctx.fillStyle = '#689f38';
             ctx.fillRect(x, y, T, 14);
@@ -3144,30 +3748,31 @@
 
   function drawFlag() {
     const x = flag.x, y = flag.y;
-    if (levelDef.theme === 'cosmo') {
-      // Portail de fin cosmique
+    if (levelDef.theme === 'cosmo' || levelDef.theme === 'ship') {
       const pulse = 1 + Math.sin(frame * 0.12) * 0.08;
-      ctx.strokeStyle = '#e1bee7';
+      const col1 = levelDef.theme === 'ship' ? '#aed581' : '#e1bee7';
+      const col2 = levelDef.theme === 'ship' ? '#8bc34a' : '#ce93d8';
+      ctx.strokeStyle = col1;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.ellipse(x + 20, y - 50, 22 * pulse, 40 * pulse, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.strokeStyle = '#ce93d8';
+      ctx.strokeStyle = col2;
       ctx.beginPath();
       ctx.ellipse(x + 20, y - 50, 14 * pulse, 28 * pulse, 0, 0, Math.PI * 2);
       ctx.stroke();
       const grd = ctx.createRadialGradient(x + 20, y - 50, 2, x + 20, y - 50, 30);
       grd.addColorStop(0, 'rgba(255, 235, 59, 0.5)');
-      grd.addColorStop(0.5, 'rgba(156, 39, 176, 0.35)');
+      grd.addColorStop(0.5, levelDef.theme === 'ship' ? 'rgba(104, 159, 56, 0.4)' : 'rgba(156, 39, 176, 0.35)');
       grd.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grd;
       ctx.beginPath();
       ctx.ellipse(x + 20, y - 50, 20, 36, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#ffeb3b';
-      ctx.font = 'bold 12px Fredoka, sans-serif';
+      ctx.font = 'bold 11px Fredoka, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('PORTAIL', x + 20, y - 95);
+      ctx.fillText(levelDef.theme === 'ship' ? 'COCKPIT' : 'PORTAIL', x + 20, y - 95);
       return;
     }
     // poteau parc
@@ -3464,52 +4069,110 @@
     ctx.restore();
   }
 
+  function drawRaisin(x, y, scale, rot, boss) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot || 0);
+    const s = scale || 1;
+    // corps ridé raisin sec
+    const g = ctx.createRadialGradient(-4 * s, -6 * s, 2 * s, 0, 0, 18 * s);
+    g.addColorStop(0, boss ? '#6d4c41' : '#5d4037');
+    g.addColorStop(0.5, boss ? '#4e342e' : '#3e2723');
+    g.addColorStop(1, '#1b1210');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 13 * s, 16 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // rides
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.lineWidth = 1.2 * s;
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 3 * s, -12 * s);
+      ctx.quadraticCurveTo(i * 4 * s + 2, 0, i * 2.5 * s, 12 * s);
+      ctx.stroke();
+    }
+    // yeux aliens verts
+    ctx.fillStyle = '#b2ff59';
+    ctx.beginPath();
+    ctx.ellipse(-4 * s, -4 * s, 3.5 * s, 4.5 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(4 * s, -4 * s, 3.5 * s, 4.5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1b5e20';
+    ctx.beginPath();
+    ctx.arc(-4 * s, -3 * s, 1.6 * s, 0, Math.PI * 2);
+    ctx.arc(4 * s, -3 * s, 1.6 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // antennes
+    ctx.strokeStyle = '#8d6e63';
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath();
+    ctx.moveTo(-5 * s, -14 * s);
+    ctx.lineTo(-8 * s, -22 * s);
+    ctx.moveTo(5 * s, -14 * s);
+    ctx.lineTo(8 * s, -22 * s);
+    ctx.stroke();
+    ctx.fillStyle = '#c6ff00';
+    ctx.beginPath();
+    ctx.arc(-8 * s, -22 * s, 2.5 * s, 0, Math.PI * 2);
+    ctx.arc(8 * s, -22 * s, 2.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // bouche
+    ctx.strokeStyle = '#ff8a65';
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    ctx.arc(0, 5 * s, 4 * s, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawEnemy(e) {
     const y = e.y;
     const bob = Math.sin(e.bob) * 2;
-    const scale = e.type === 'jumbo' ? 1.35 : e.type === 'angry' ? 1.15 : 1.05;
+    const scale = (e.type === 'jumbo' || e.type === 'raisinBoss') ? 1.35 : e.type === 'angry' ? 1.15 : 1.05;
     const rot = Math.sin(e.bob) * 0.1;
+    const isRaisin = e.species === 'raisin' || e.type === 'raisin' || e.type === 'raisinBoss';
 
     if (e.flat) {
       ctx.save();
       ctx.translate(e.x, y);
       ctx.scale(1.4, 0.32);
       ctx.translate(0, -8);
-      drawBigPeanut(0, -12, 1.1, 0, false, e.type);
+      if (isRaisin) drawRaisin(0, -12, 1.1, 0, e.type === 'raisinBoss');
+      else drawBigPeanut(0, -12, 1.1, 0, false, e.type);
       ctx.restore();
       return;
     }
 
-    // aura rougeâtre pour les méchantes
-    if (e.type === 'angry' || e.type === 'jumbo') {
-      ctx.fillStyle = e.type === 'jumbo' ? 'rgba(183,28,28,0.18)' : 'rgba(255,100,50,0.15)';
+    if (e.type === 'angry' || e.type === 'jumbo' || e.type === 'raisinBoss') {
+      ctx.fillStyle = isRaisin ? 'rgba(100, 60, 40, 0.2)' : (e.type === 'jumbo' ? 'rgba(183,28,28,0.18)' : 'rgba(255,100,50,0.15)');
       ctx.beginPath();
-      ctx.arc(e.x, y - 18 + bob, e.type === 'jumbo' ? 32 : 26, 0, Math.PI * 2);
+      ctx.arc(e.x, y - 18 + bob, e.type === 'jumbo' || e.type === 'raisinBoss' ? 32 : 26, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    drawBigPeanut(e.x, y - 18 + bob, scale, rot, true, e.type === 'flyer' ? 'angry' : e.type);
+    if (isRaisin) drawRaisin(e.x, y - 18 + bob, scale, rot, e.type === 'raisinBoss');
+    else drawBigPeanut(e.x, y - 18 + bob, scale, rot, true, e.type === 'flyer' ? 'angry' : e.type);
 
-    // ailes pour cacahuètes volantes
+    // ailes
     if (e.flying || e.type === 'flyer') {
       const flap = Math.sin(e.bob * 2) * 8;
       ctx.save();
       ctx.translate(e.x, y - 18 + bob);
-      ctx.fillStyle = 'rgba(255, 224, 178, 0.85)';
+      ctx.fillStyle = isRaisin ? 'rgba(174, 213, 129, 0.75)' : 'rgba(255, 224, 178, 0.85)';
       ctx.beginPath();
       ctx.ellipse(-16, -4, 12, 5 + flap * 0.15, -0.4 + flap * 0.02, 0, Math.PI * 2);
       ctx.ellipse(16, -4, 12, 5 + flap * 0.15, 0.4 - flap * 0.02, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#8d6e63';
+      ctx.strokeStyle = isRaisin ? '#33691e' : '#8d6e63';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.restore();
     }
 
-    // barre de vie jumbo / angry
     if (e.hp > 1) {
-      const maxHp = e.type === 'jumbo' ? 3 : 2;
-      const bw = e.type === 'jumbo' ? 30 : 22;
+      const maxHp = (e.type === 'jumbo' || e.type === 'raisinBoss') ? 3 : 2;
+      const bw = maxHp === 3 ? 30 : 22;
       const bx = e.x - bw / 2;
       const by = y - e.h - 8 + bob;
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -3521,26 +4184,26 @@
       ctx.strokeRect(bx, by, bw, 5);
     }
 
-    // petits pieds de cacahuète
-    ctx.save();
-    ctx.translate(e.x, y);
-    ctx.strokeStyle = '#5d4037';
-    ctx.lineWidth = 3.5;
-    ctx.lineCap = 'round';
-    const swing = Math.sin(e.bob * 1.5) * 3;
-    ctx.beginPath();
-    ctx.moveTo(-7, -2);
-    ctx.lineTo(-9 - swing, 4);
-    ctx.moveTo(7, -2);
-    ctx.lineTo(9 + swing, 4);
-    ctx.stroke();
-    // chaussures mini
-    ctx.fillStyle = '#3e2723';
-    ctx.beginPath();
-    ctx.ellipse(-10 - swing, 5, 5, 2.5, 0, 0, Math.PI * 2);
-    ctx.ellipse(10 + swing, 5, 5, 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    if (!e.flying) {
+      ctx.save();
+      ctx.translate(e.x, y);
+      ctx.strokeStyle = isRaisin ? '#2e1a12' : '#5d4037';
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+      const swing = Math.sin(e.bob * 1.5) * 3;
+      ctx.beginPath();
+      ctx.moveTo(-7, -2);
+      ctx.lineTo(-9 - swing, 4);
+      ctx.moveTo(7, -2);
+      ctx.lineTo(9 + swing, 4);
+      ctx.stroke();
+      ctx.fillStyle = isRaisin ? '#1a120c' : '#3e2723';
+      ctx.beginPath();
+      ctx.ellipse(-10 - swing, 5, 5, 2.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(10 + swing, 5, 5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   // --- SOUSOU : foulée comique bien visible + cheveux mal coiffés ---
@@ -3586,7 +4249,8 @@
 
     const bodyTop = crouch ? -28 : -40;
     const headY = crouch ? -40 : -56;
-    const shoulderY = bodyTop + 4;
+    // Cheveux courts (coupe garçonnette / frange) — nuque courte
+    const hairEnd = headY + 8;
 
     // --- FOULÉE COMIC : positions jambes (hanche → genou → pied) ---
     // jambe arrière / avant alternées
@@ -3646,71 +4310,35 @@
     const legA = legPose(1);   // jambe droite (côté +x local)
     const legB = legPose(-1);  // jambe gauche
 
-    // === CHEVEUX LONGS AUX ÉPAULES, MAL COIFFÉS (derrière le corps) ===
+    // === CHEVEUX COURTS (nuque + côtés, style coupe nette) ===
     const hairDark = '#2c1810';
     const hairMid = '#3e2723';
     const hairLight = '#5d4037';
 
-    // masse principale arrière — s'arrête aux épaules
     ctx.fillStyle = hairMid;
     ctx.beginPath();
-    ctx.moveTo(-13, headY - 2);
-    ctx.quadraticCurveTo(-20 + h1, headY + 14, -18 + h2, shoulderY + 6);
-    ctx.quadraticCurveTo(-12 + h1, shoulderY + 14, -4, shoulderY + 10);
-    ctx.lineTo(2, shoulderY + 12 + h3 * 0.3);
-    ctx.quadraticCurveTo(10 + h2, shoulderY + 14, 16 + h1, shoulderY + 4);
-    ctx.quadraticCurveTo(19 + h3, headY + 16, 13, headY - 2);
+    ctx.moveTo(-11, headY);
+    ctx.quadraticCurveTo(-13 + h1 * 0.3, headY + 4, -10 + h2 * 0.2, hairEnd);
+    ctx.quadraticCurveTo(-3, hairEnd + 1, 0, hairEnd);
+    ctx.quadraticCurveTo(4, hairEnd + 1, 10 + h1 * 0.2, hairEnd);
+    ctx.quadraticCurveTo(13 + h3 * 0.25, headY + 4, 11, headY);
     ctx.closePath();
     ctx.fill();
 
-    // mèches en pagaille (inégales, pointues, croisées)
+    // mèches très courtes sur les côtés
     ctx.fillStyle = hairDark;
-    // mèche gauche folle
     ctx.beginPath();
-    ctx.moveTo(-10, headY + 2);
-    ctx.quadraticCurveTo(-22 + h2, headY + 18, -16 + h1, shoulderY + 16);
-    ctx.quadraticCurveTo(-11, shoulderY + 8, -6, headY + 10);
+    ctx.moveTo(-8, headY + 1);
+    ctx.quadraticCurveTo(-11 + h2 * 0.2, headY + 5, -7, hairEnd);
+    ctx.lineTo(-3, headY + 3);
     ctx.closePath();
     ctx.fill();
-    // mèche qui part de travers
     ctx.beginPath();
-    ctx.moveTo(-4, headY);
-    ctx.quadraticCurveTo(-14 + h3, headY + 20, -8 + h2, shoulderY + 18);
-    ctx.lineTo(-2, shoulderY + 6);
+    ctx.moveTo(7, headY + 1);
+    ctx.quadraticCurveTo(11 + h1 * 0.2, headY + 5, 8, hairEnd);
+    ctx.lineTo(3, headY + 3);
     ctx.closePath();
     ctx.fill();
-    // mèche droite en bataille
-    ctx.beginPath();
-    ctx.moveTo(6, headY + 2);
-    ctx.quadraticCurveTo(18 + h1, headY + 14, 17 + h3, shoulderY + 14);
-    ctx.quadraticCurveTo(12 + h2, shoulderY + 4, 8, headY + 8);
-    ctx.closePath();
-    ctx.fill();
-    // mèche collée à l'épaule droite
-    ctx.beginPath();
-    ctx.moveTo(10, headY + 6);
-    ctx.quadraticCurveTo(20 + h4, headY + 22, 14 + h1, shoulderY + 20);
-    ctx.lineTo(8, shoulderY + 8);
-    ctx.closePath();
-    ctx.fill();
-    // mèche centrale qui retombe n'importe comment
-    ctx.fillStyle = hairLight;
-    ctx.beginPath();
-    ctx.moveTo(0, headY + 4);
-    ctx.quadraticCurveTo(h4 - 4, headY + 22, -2 + h3, shoulderY + 12);
-    ctx.quadraticCurveTo(4, headY + 20, 3, headY + 6);
-    ctx.closePath();
-    ctx.fill();
-
-    // stries "mal peignées"
-    ctx.strokeStyle = 'rgba(20,10,5,0.45)';
-    ctx.lineWidth = 1.2;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-8 + i * 4, headY + 4);
-      ctx.quadraticCurveTo(-10 + i * 4 + h1, headY + 20, -6 + i * 3 + h2, shoulderY + 8 + i);
-      ctx.stroke();
-    }
 
     // ===== JAMBES (foulée bien visible) =====
     function drawLeg(L, isFront) {
@@ -3798,17 +4426,25 @@
     ctx.arc(-6 - armSwing, crouch ? -8 : (-8 + armSwing * 0.2), 3.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // bras arme (suit un peu le balancier)
+    // bras arme (suit un peu le balancier) — pointe en haut si aimUp
     const gunBob = isRun ? -s * 5 : 0;
+    const aimUp = player.aimUp;
     ctx.strokeStyle = '#ffcc80';
     ctx.lineWidth = 5;
     ctx.beginPath();
     ctx.moveTo(10, bodyTop + 8);
-    ctx.lineTo(18, crouch ? -18 : -28 + gunBob * 0.3);
+    if (aimUp) ctx.lineTo(8, crouch ? -30 : -48 + gunBob * 0.2);
+    else ctx.lineTo(18, crouch ? -18 : -28 + gunBob * 0.3);
     ctx.stroke();
-    const gunY = (crouch ? -24 : -34) + gunBob;
-    const gunX = 16 + (isRun ? Math.abs(s) * 2 : 0);
+    const gunY = aimUp ? (crouch ? -46 : -62) + gunBob * 0.3 : (crouch ? -24 : -34) + gunBob;
+    const gunX = aimUp ? 4 : (16 + (isRun ? Math.abs(s) * 2 : 0));
     const wid = WEAPONS[weaponIndex].id;
+    ctx.save();
+    if (aimUp) {
+      ctx.translate(gunX + 8, gunY + 16);
+      ctx.rotate(-Math.PI / 2);
+      ctx.translate(-(gunX + 8), -(gunY + 4));
+    }
     if (wid === 'lance') {
       ctx.fillStyle = '#5d4037';
       roundRect(gunX, gunY, 30, 8, 2);
@@ -3860,6 +4496,7 @@
       ctx.ellipse(gunX + 28, gunY + 4, 8, 10, 0.1, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.restore();
 
     // tête (hoche un peu en courant)
     const headBob = isRun ? Math.abs(s2) * 2 : 0;
@@ -3869,48 +4506,47 @@
     ctx.arc(0, hy, 13, 0, Math.PI * 2);
     ctx.fill();
 
-    // crâne + frange EN BATAILLE
+    // crâne + frange COURTE (coupe nette, un peu en bataille)
     ctx.fillStyle = hairMid;
     ctx.beginPath();
-    ctx.ellipse(0, hy - 7, 14, 11, 0, Math.PI, 0);
+    ctx.ellipse(0, hy - 6, 13.5, 10, 0, Math.PI, 0);
     ctx.fill();
     ctx.fillStyle = hairDark;
     ctx.beginPath();
-    ctx.moveTo(-13, hy - 6);
-    ctx.quadraticCurveTo(-11, hy + 6, -7, hy + 2);
-    ctx.quadraticCurveTo(-3, hy + 9, 0, hy + 1);
-    ctx.quadraticCurveTo(3, hy + 8, 6, hy - 1);
-    ctx.quadraticCurveTo(11, hy + 7, 13, hy - 4);
-    ctx.quadraticCurveTo(12, hy - 16, 2, hy - 17);
-    ctx.quadraticCurveTo(-10, hy - 16, -13, hy - 6);
+    ctx.moveTo(-12, hy - 4);
+    ctx.quadraticCurveTo(-10, hy + 2, -6, hy - 1);
+    ctx.quadraticCurveTo(-2, hy + 3, 0, hy - 1);
+    ctx.quadraticCurveTo(2, hy + 3, 6, hy - 1);
+    ctx.quadraticCurveTo(10, hy + 2, 12, hy - 3);
+    ctx.quadraticCurveTo(11, hy - 14, 1, hy - 15);
+    ctx.quadraticCurveTo(-9, hy - 14, -12, hy - 4);
+    ctx.closePath();
+    ctx.fill();
+    // frange courte
+    ctx.beginPath();
+    ctx.moveTo(-7, hy - 10);
+    ctx.quadraticCurveTo(-4 + h4 * 0.3, hy - 4, -2, hy - 1);
+    ctx.lineTo(-5, hy - 8);
     ctx.closePath();
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(-6, hy - 14);
-    ctx.quadraticCurveTo(-12 + h4, hy - 24, -4, hy - 18);
+    ctx.moveTo(2, hy - 11);
+    ctx.quadraticCurveTo(5 + h3 * 0.2, hy - 3, 6, hy);
+    ctx.lineTo(3, hy - 8);
     ctx.closePath();
     ctx.fill();
+    // petite mèche sur le sommet
     ctx.beginPath();
-    ctx.moveTo(4, hy - 15);
-    ctx.quadraticCurveTo(14 + h3, hy - 26, 10, hy - 14);
+    ctx.moveTo(-1, hy - 14);
+    ctx.quadraticCurveTo(h2 * 0.3, hy - 20, 3, hy - 14);
+    ctx.lineTo(0, hy - 12);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = hairLight;
     ctx.beginPath();
-    ctx.moveTo(0, hy - 16);
-    ctx.quadraticCurveTo(h2, hy - 28, 5, hy - 17);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = hairMid;
-    ctx.beginPath();
-    ctx.moveTo(-2, hy - 8);
-    ctx.quadraticCurveTo(-8 + h1, hy + 2, -5, hy + 8);
-    ctx.quadraticCurveTo(-1, hy + 2, 1, hy - 4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(11, hy);
-    ctx.quadraticCurveTo(18 + h2, hy + 8, 12, hy + 14);
-    ctx.lineTo(10, hy + 4);
+    ctx.moveTo(-4, hy - 10);
+    ctx.quadraticCurveTo(-1, hy - 6, 2, hy - 9);
+    ctx.lineTo(0, hy - 12);
     ctx.closePath();
     ctx.fill();
 
@@ -3959,19 +4595,19 @@
     ctx.arc(0, hy + 3, smileR, 0.12, Math.PI - 0.12);
     ctx.stroke();
 
-    // cheveux devant les épaules
+    // mèches courtes devant les oreilles
     ctx.fillStyle = hairDark;
     ctx.globalAlpha = flash ? 0.4 : 0.92;
     ctx.beginPath();
-    ctx.moveTo(-12, hy + 8);
-    ctx.quadraticCurveTo(-17 + h1, bodyTop + 8, -14 + h2, shoulderY + 8);
-    ctx.quadraticCurveTo(-9, bodyTop + 12, -8, hy + 12);
+    ctx.moveTo(-11, hy + 4);
+    ctx.quadraticCurveTo(-14 + h1 * 0.3, hy + 10, -10, hy + 16);
+    ctx.lineTo(-6, hy + 8);
     ctx.closePath();
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(9, hy + 6);
-    ctx.quadraticCurveTo(17 + h3, bodyTop + 6, 15 + h1, shoulderY + 10);
-    ctx.quadraticCurveTo(11, bodyTop + 14, 7, hy + 10);
+    ctx.moveTo(9, hy + 3);
+    ctx.quadraticCurveTo(13 + h3 * 0.3, hy + 9, 10, hy + 15);
+    ctx.lineTo(5, hy + 7);
     ctx.closePath();
     ctx.fill();
     ctx.globalAlpha = flash ? 0.4 : 1;
