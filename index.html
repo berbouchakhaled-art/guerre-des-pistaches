@@ -76,14 +76,24 @@
     }
     body.playing.mobile-fs canvas {
       position: absolute;
-      left: 0;
-      top: 0;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      /* contain = tout le jeu visible (pas de coupe), fond noir sur les bords */
       width: 100% !important;
       height: 100% !important;
       max-width: none !important;
       max-height: none !important;
-      object-fit: fill; /* remplit tout l'écran */
+      object-fit: contain;
       background: #000;
+    }
+    /* Paysage : le canvas occupe toute la hauteur utile sans écraser Sousou hors cadre */
+    @media (orientation: landscape) {
+      body.playing.mobile-fs canvas {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain;
+      }
     }
     body.playing.mobile-fs .hud {
       top: max(4px, env(safe-area-inset-top));
@@ -1593,6 +1603,7 @@
   let timeLeft = 400, timeAcc = 0;
   let frame = 0;
   let cameraX = 0;
+  let cameraY = 0;
   let keys = {};
   let particles = [];
   let bullets = [];
@@ -1734,10 +1745,26 @@
     }
   }
 
-  window.addEventListener('resize', fitMobileViewport);
-  window.addEventListener('orientationchange', () => setTimeout(fitMobileViewport, 100));
+  window.addEventListener('resize', () => {
+    fitMobileViewport();
+    if (running) snapCamera();
+  });
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      fitMobileViewport();
+      if (running) snapCamera();
+    }, 120);
+    // 2e passe après la fin de l'anim de rotation iOS
+    setTimeout(() => {
+      fitMobileViewport();
+      if (running) snapCamera();
+    }, 400);
+  });
   if (window.visualViewport) {
-    visualViewport.addEventListener('resize', fitMobileViewport);
+    visualViewport.addEventListener('resize', () => {
+      fitMobileViewport();
+      if (running) snapCamera();
+    });
     visualViewport.addEventListener('scroll', fitMobileViewport);
   }
   fitMobileViewport();
@@ -2180,6 +2207,7 @@
     timeAcc = 0;
     frame = 0;
     cameraX = 0;
+    cameraY = 0;
     hurry = false;
     won = false;
     flagSliding = false;
@@ -2220,6 +2248,7 @@
     player.crouching = false;
     player.h = 52;
     player.anim = 0;
+    snapCamera();
 
     populateLevelEntities();
 
@@ -2455,6 +2484,11 @@
     if (player.y > LEVEL_H + 80) {
       hurt(true);
     }
+
+    // Ne jamais laisser Sousou sortir des bords du monde (sinon hors caméra)
+    const hwClamp = player.w / 2;
+    if (player.x < hwClamp) { player.x = hwClamp; player.vx = Math.max(0, player.vx); }
+    if (player.x > LEVEL_W - hwClamp) { player.x = LEVEL_W - hwClamp; player.vx = Math.min(0, player.vx); }
   }
 
   function hitBlock(c, r) {
@@ -2618,6 +2652,7 @@
           break;
         }
       }
+      snapCamera();
       updateHud();
       if (lives <= 0) diePlayer();
       return;
@@ -3237,9 +3272,54 @@
   }
 
   function updateCamera() {
-    const target = player.x - VW * 0.35;
-    cameraX += (target - cameraX) * 0.12;
-    cameraX = Math.max(0, Math.min(LEVEL_W - VW, cameraX));
+    // --- Horizontal : suivi + zone morte (Sousou ne peut PAS sortir de l'écran) ---
+    const lookAhead = player.facing * Math.min(70, 20 + Math.abs(player.vx) * 10);
+    const targetX = player.x + lookAhead - VW * 0.38;
+    cameraX += (targetX - cameraX) * 0.22;
+
+    // Contraintes dures : Sousou reste entre ~22% et ~62% de la largeur visible
+    const minScreenX = VW * 0.22;
+    const maxScreenX = VW * 0.62;
+    let sx = player.x - cameraX;
+    if (sx < minScreenX) cameraX = player.x - minScreenX;
+    if (sx > maxScreenX) cameraX = player.x - maxScreenX;
+
+    const maxCamX = Math.max(0, LEVEL_W - VW);
+    cameraX = Math.max(0, Math.min(maxCamX, cameraX));
+
+    // --- Vertical : suit les sauts / plateformes hautes (critique en paysage) ---
+    const focusY = player.y - player.h * 0.45;
+    let targetY = focusY - VH * 0.58;
+    // Près du sol : coller le bas du niveau en bas de l'écran (style Mario)
+    const floorY = (ROWS - 2) * T;
+    if (player.onGround && player.y >= floorY - 8) {
+      targetY = Math.max(0, LEVEL_H - VH);
+    }
+    cameraY += (targetY - cameraY) * 0.2;
+
+    // Contraintes dures verticales
+    const minScreenY = VH * 0.18;
+    const maxScreenY = VH * 0.78;
+    let sy = player.y - cameraY;
+    if (sy < minScreenY) cameraY = player.y - minScreenY;
+    if (sy > maxScreenY) cameraY = player.y - maxScreenY;
+
+    const maxCamY = Math.max(0, LEVEL_H - VH);
+    cameraY = Math.max(0, Math.min(maxCamY, cameraY));
+  }
+
+  /** Place la caméra immédiatement sur Sousou (spawn / respawn / rotation écran). */
+  function snapCamera() {
+    cameraX = player.x - VW * 0.35;
+    cameraY = player.y - VH * 0.6;
+    const maxCamX = Math.max(0, LEVEL_W - VW);
+    const maxCamY = Math.max(0, LEVEL_H - VH);
+    cameraX = Math.max(0, Math.min(maxCamX, cameraX));
+    cameraY = Math.max(0, Math.min(maxCamY, cameraY));
+    // Force le bas du niveau visible au spawn au sol
+    if (player.y > (ROWS - 4) * T) {
+      cameraY = maxCamY;
+    }
   }
 
   function updateParticles() {
@@ -3422,10 +3502,8 @@
     }
 
     ctx.save();
-    ctx.translate(-Math.floor(cameraX), 0);
-    // offset vertical si niveau plus petit — centrer bas
-    const yOff = VH - LEVEL_H;
-    ctx.translate(0, yOff);
+    // Caméra X + Y (plus de yOff fixe qui laissait Sousou hors cadre en hauteur)
+    ctx.translate(-Math.floor(cameraX), -Math.floor(cameraY));
 
     drawTiles();
     drawFlag();
@@ -3743,6 +3821,7 @@
         const x = c * T, y = r * T;
         // only draw if roughly on screen
         if (x + T < cameraX - T || x > cameraX + VW + T) continue;
+        if (y + T < cameraY - T || y > cameraY + VH + T) continue;
 
         if (ch === '1') {
           const above = r > 0 ? LEVEL_ROWS[r - 1][c] : '.';
@@ -4815,6 +4894,8 @@
   player.y = (ROWS - 3) * T - 2;
   player.onGround = true;
   cameraX = 0;
+  cameraY = Math.max(0, LEVEL_H - VH);
+  snapCamera();
   loop();
   </script>
 </body>
