@@ -763,11 +763,15 @@
         </div>
 
         <div class="a11y-row" style="width:100%;display:flex;flex-direction:column;gap:6px;align-items:stretch">
+          <button type="button" id="soundUnlockBtn" class="diff-btn active" style="background:linear-gradient(180deg,#66bb6a,#2e7d32);border-color:#1b5e20;color:#fff;font-weight:700">
+            🔊 Activer le son (touche ici)
+          </button>
           <button type="button" id="a11yToggle" class="diff-btn" aria-pressed="false">
             ♿ Texte + boutons plus grands
           </button>
           <p class="a11y-note">
-            Clavier / tactile · ↑ tire en haut · pause <kbd>P</kbd> · mute <kbd>M</kbd>
+            💡 Sur iPhone : touche d’abord « Activer le son », volume du téléphone + interrupteur silencieux OFF
+            · ↑ tire en haut · pause <kbd>P</kbd> · mute <kbd>M</kbd>
             <span class="desktop-only"> · flèches · Espace saut · X tir</span>
             <span class="mobile-only"> · boutons à l’écran</span>
           </p>
@@ -826,25 +830,30 @@
   // AUDIO MAX — musique + bruitages pistache/Mario-like
   // =========================================================
   const AudioFX = (() => {
-    let ctx, master, musicGain, sfxGain, muted = false;
+    let ctx, master, musicGain, sfxGain;
+    // Toujours démarrer avec le son ON (évite un mute "collé" sans le savoir)
+    let muted = false;
+    try { localStorage.removeItem('gdp_mute'); } catch (_) {}
     let musicTimer = null, drumTimer = null, bassTimer = null;
     let stepToggle = false;
     let unlocked = false;
+    let lastMusic = { hurry: false, style: 'day' };
+    let pending = []; // sons en attente tant que le contexte n'est pas running
 
     function ensure() {
       if (ctx) return true;
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return false;
       try {
-        ctx = new AC();
+        ctx = new AC({ latencyHint: 'interactive' });
         master = ctx.createGain();
         master.gain.value = muted ? 0 : 1;
         master.connect(ctx.destination);
         musicGain = ctx.createGain();
-        musicGain.gain.value = 0.35; // plus fort
+        musicGain.gain.value = 0.55;
         musicGain.connect(master);
         sfxGain = ctx.createGain();
-        sfxGain.gain.value = 1.2;
+        sfxGain.gain.value = 1.0;
         sfxGain.connect(master);
       } catch (e) {
         console.warn('Audio init failed', e);
@@ -853,20 +862,51 @@
       return true;
     }
 
+    function flushPending() {
+      if (!ctx || ctx.state !== 'running' || muted) return;
+      const q = pending.splice(0, pending.length);
+      for (const fn of q) {
+        try { fn(); } catch (e) { console.warn('sfx', e); }
+      }
+    }
+
+    function unlockTick() {
+      if (!ctx || unlocked) return;
+      try {
+        // 1) buffer silencieux (débloque iOS)
+        const n = Math.max(1, Math.floor(ctx.sampleRate * 0.05));
+        const b = ctx.createBuffer(1, n, ctx.sampleRate);
+        const s = ctx.createBufferSource();
+        s.buffer = b;
+        s.connect(master);
+        s.start(0);
+        // 2) micro-bip très court pour forcer le pipeline audio
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = 880;
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(master);
+        o.start(0);
+        o.stop(ctx.currentTime + 0.03);
+        unlocked = true;
+      } catch (e) {
+        console.warn('unlock', e);
+      }
+    }
+
     async function resume() {
       if (!ensure()) return false;
       try {
         if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
           await ctx.resume();
         }
-        // "débloquer" l'audio navigateur avec un bip silencieux
-        if (!unlocked && ctx.state === 'running') {
-          const b = ctx.createBuffer(1, 1, 22050);
-          const s = ctx.createBufferSource();
-          s.buffer = b;
-          s.connect(master);
-          s.start(0);
-          unlocked = true;
+        // 2e tentative (certains Safari restent suspended)
+        if (ctx.state !== 'running') {
+          await ctx.resume();
+        }
+        if (ctx.state === 'running') {
+          unlockTick();
+          flushPending();
         }
       } catch (e) {
         console.warn('Audio resume failed', e);
@@ -875,30 +915,50 @@
       return ctx.state === 'running';
     }
 
+    /** Joue un son dès que l'audio est prêt (file d'attente si suspendu). */
+    function whenReady(fn) {
+      if (muted) return;
+      if (!ensure()) return;
+      if (ctx.state === 'running') {
+        try { fn(); } catch (e) { console.warn('sfx', e); }
+        return;
+      }
+      // garde les derniers sons (évite une file infinie)
+      if (pending.length > 40) pending.shift();
+      pending.push(fn);
+      ctx.resume().then(() => {
+        unlockTick();
+        flushPending();
+      }).catch(() => {});
+    }
+
     function alive() {
       if (muted) return false;
       if (!ensure()) return false;
-      if (ctx.state !== 'running') {
-        // tentative non-bloquante
-        ctx.resume().catch(() => {});
-        return ctx.state === 'running';
-      }
-      return true;
+      if (ctx.state === 'running') return true;
+      ctx.resume().then(() => { unlockTick(); flushPending(); }).catch(() => {});
+      return false;
     }
 
     function setMuted(m) {
-      muted = m;
+      muted = !!m;
+      try { localStorage.setItem('gdp_mute', muted ? '1' : '0'); } catch (_) {}
       if (master && ctx) {
         try {
           master.gain.cancelScheduledValues(ctx.currentTime);
-          master.gain.setValueAtTime(m ? 0 : 1, ctx.currentTime);
+          master.gain.setValueAtTime(muted ? 0 : 1, ctx.currentTime);
         } catch (_) {
-          master.gain.value = m ? 0 : 1;
+          master.gain.value = muted ? 0 : 1;
         }
+      }
+      if (muted) {
+        stopMusic();
+        pending.length = 0;
       }
     }
     function toggleMute() { setMuted(!muted); return muted; }
     function isMuted() { return muted; }
+    function isUnlocked() { return unlocked && ctx && ctx.state === 'running'; }
 
     function noiseBuf(dur) {
       const n = Math.max(1, Math.floor(ctx.sampleRate * dur));
@@ -907,41 +967,37 @@
       for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
       return b;
     }
-    function noise({ dur = .1, freq = 1200, q = 3, type = 'bandpass', gain = .3, pitch = 1 } = {}) {
-      if (!alive()) return;
-      try {
-        const t = ctx.currentTime;
-        const src = ctx.createBufferSource();
-        src.buffer = noiseBuf(Math.max(dur, .04));
-        const f = ctx.createBiquadFilter();
-        f.type = type; f.Q.value = q;
-        f.frequency.setValueAtTime(Math.max(40, freq), t);
-        if (pitch !== 1) f.frequency.exponentialRampToValueAtTime(Math.max(60, freq * pitch), t + dur);
-        const g = ctx.createGain();
-        const gv = Math.max(0.001, gain);
-        g.gain.setValueAtTime(gv, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.02));
-        src.connect(f); f.connect(g); g.connect(sfxGain);
-        src.start(t); src.stop(t + dur + .03);
-      } catch (e) { console.warn('noise', e); }
+    function noiseNow({ dur = .1, freq = 1200, q = 3, type = 'bandpass', gain = .3, pitch = 1 } = {}) {
+      const t = ctx.currentTime;
+      const src = ctx.createBufferSource();
+      src.buffer = noiseBuf(Math.max(dur, .04));
+      const f = ctx.createBiquadFilter();
+      f.type = type; f.Q.value = q;
+      f.frequency.setValueAtTime(Math.max(40, freq), t);
+      if (pitch !== 1) f.frequency.exponentialRampToValueAtTime(Math.max(60, freq * pitch), t + dur);
+      const g = ctx.createGain();
+      const gv = Math.max(0.001, gain * 1.35);
+      g.gain.setValueAtTime(gv, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.02));
+      src.connect(f); f.connect(g); g.connect(sfxGain);
+      src.start(t); src.stop(t + dur + .03);
     }
-    function osc({ f = 440, f2, dur = .12, type = 'square', gain = .15, atk = .005 } = {}) {
-      if (!alive()) return;
-      try {
-        const t = ctx.currentTime;
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = type;
-        o.frequency.setValueAtTime(Math.max(20, f), t);
-        if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + dur);
-        const gv = Math.max(0.001, gain);
-        g.gain.setValueAtTime(0.001, t);
-        g.gain.linearRampToValueAtTime(gv, t + Math.max(atk, 0.001));
-        g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.02));
-        o.connect(g); g.connect(sfxGain);
-        o.start(t); o.stop(t + dur + .03);
-      } catch (e) { console.warn('osc', e); }
+    function oscNow({ f = 440, f2, dur = .12, type = 'square', gain = .15, atk = .005 } = {}) {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(Math.max(20, f), t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + Math.max(dur, 0.02));
+      const gv = Math.max(0.001, gain * 1.35);
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.linearRampToValueAtTime(gv, t + Math.max(atk, 0.001));
+      g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.02));
+      o.connect(g); g.connect(sfxGain);
+      o.start(t); o.stop(t + dur + .03);
     }
+    function noise(opts) { whenReady(() => noiseNow(opts)); }
+    function osc(opts) { whenReady(() => oscNow(opts)); }
     function chord(freqs, dur = .2, type = 'triangle', gain = .08) {
       freqs.forEach((f, i) => setTimeout(() => osc({ f, dur, type, gain }), i * 8));
     }
@@ -1068,10 +1124,14 @@
 
     // --- Musique niveau style Mario (overworld-ish) ---
     function startMusic(hurryMode = false, style = 'day') {
+      lastMusic = { hurry: !!hurryMode, style: style || 'day' };
       if (muted) return;
       if (!ensure()) return;
       if (ctx.state !== 'running') {
-        ctx.resume().then(() => startMusic(hurryMode, style)).catch(() => {});
+        ctx.resume().then(() => {
+          unlockTick();
+          startMusic(hurryMode, style);
+        }).catch(() => {});
         return;
       }
       stopMusic();
@@ -1134,7 +1194,7 @@
           o.frequency.value = note;
           // soft duty via gain envelope
           g.gain.setValueAtTime(0.001, t);
-          g.gain.linearRampToValueAtTime(0.11, t + 0.01);
+          g.gain.linearRampToValueAtTime(0.18, t + 0.01);
           g.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.85);
           // light filter
           const f = ctx.createBiquadFilter();
@@ -1147,7 +1207,7 @@
             const g2 = ctx.createGain();
             o2.type = 'triangle';
             o2.frequency.value = note * 1.25;
-            g2.gain.setValueAtTime(0.05, t);
+            g2.gain.setValueAtTime(0.08, t);
             g2.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.7);
             o2.connect(g2); g2.connect(musicGain);
             o2.start(t); o2.stop(t + beat);
@@ -1165,7 +1225,7 @@
         const g = ctx.createGain();
         o.type = 'triangle';
         o.frequency.value = note;
-        g.gain.setValueAtTime(0.14, t);
+        g.gain.setValueAtTime(0.22, t);
         g.gain.exponentialRampToValueAtTime(0.001, t + beat * 1.6);
         o.connect(g); g.connect(musicGain);
         o.start(t); o.stop(t + beat * 1.8);
@@ -1174,6 +1234,11 @@
 
       function drumTick() {
         if (!ctx || muted) return;
+        if (ctx.state !== 'running') {
+          ctx.resume().catch(() => {});
+          drumTimer = setTimeout(drumTick, beat * 1000);
+          return;
+        }
         const t = ctx.currentTime;
         // kick
         if (di % 2 === 0) {
@@ -1182,7 +1247,7 @@
           o.type = 'sine';
           o.frequency.setValueAtTime(110, t);
           o.frequency.exponentialRampToValueAtTime(40, t + 0.1);
-          g.gain.setValueAtTime(0.2, t);
+          g.gain.setValueAtTime(0.28, t);
           g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
           o.connect(g); g.connect(musicGain);
           o.start(t); o.stop(t + 0.13);
@@ -1209,8 +1274,10 @@
       musicTimer = drumTimer = bassTimer = null;
     }
 
+    function getLastMusic() { return lastMusic; }
+
     return {
-      resume, toggleMute, isMuted, setMuted, alive,
+      resume, toggleMute, isMuted, setMuted, alive, isUnlocked, getLastMusic,
       jump, land, crouch, footstep, shoot, shellCrack, crunch,
       coin, stomp, bump, blockHit, powerup, hit, die, flag, win,
       gameOver, pause, ui, enemy, whoosh, tick, hurry, hairSwish,
@@ -1769,27 +1836,76 @@
     }
   }, { passive: false });
 
+  function syncMuteBtn() {
+    if (!muteBtn) return;
+    const m = AudioFX.isMuted();
+    muteBtn.textContent = m ? '🔇 Son OFF' : '🔊 Son ON';
+    muteBtn.setAttribute('aria-pressed', m ? 'true' : 'false');
+    muteBtn.title = m ? 'Activer le son' : 'Couper le son';
+  }
+  syncMuteBtn();
+
   muteBtn.onclick = async e => {
     e.stopPropagation();
+    e.preventDefault();
     await AudioFX.resume();
     toggleMuteUI();
   };
+  muteBtn.addEventListener('touchend', async e => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    await AudioFX.resume();
+    // touchend + click would double-toggle : on ne toggle que si pas déjà géré par click récent
+  }, { passive: false });
+
   function toggleMuteUI() {
     const m = AudioFX.toggleMute();
-    muteBtn.textContent = m ? '🔇 Son OFF' : '🔊 Son MAX';
+    syncMuteBtn();
     if (!m && running && !paused) {
       AudioFX.startMusic(hurry, levelDef.music);
       AudioFX.ui();
+      AudioFX.coin();
     }
     if (m) AudioFX.stopMusic();
   }
 
-  // Débloquer l'audio au premier clic / touche (règle des navigateurs)
+  // Débloquer l'audio au premier geste (règle iOS / Chrome)
+  let unlockBusy = false;
   async function unlockAudio() {
-    await AudioFX.resume();
+    if (unlockBusy) return;
+    unlockBusy = true;
+    try {
+      const ok = await AudioFX.resume();
+      if (ok && !AudioFX.isMuted()) {
+        // micro feedback une seule fois
+        if (!window.__gdpAudioBeeped) {
+          window.__gdpAudioBeeped = true;
+          try { AudioFX.ui(); } catch (_) {}
+        }
+      }
+    } finally {
+      unlockBusy = false;
+    }
   }
-  window.addEventListener('pointerdown', unlockAudio, { once: false });
-  window.addEventListener('keydown', unlockAudio, { once: false });
+  ['pointerdown', 'touchstart', 'mousedown', 'keydown', 'click'].forEach((ev) => {
+    window.addEventListener(ev, unlockAudio, { capture: true, passive: true });
+  });
+
+  // Reprend le son après onglet en arrière-plan / verrouillage iPhone
+  document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) return;
+    await AudioFX.resume();
+    if (running && !paused && !AudioFX.isMuted()) {
+      const lm = AudioFX.getLastMusic();
+      AudioFX.startMusic(lm.hurry, levelDef.music || lm.style);
+    }
+  });
+  window.addEventListener('pageshow', async () => {
+    await AudioFX.resume();
+  });
+  window.addEventListener('focus', async () => {
+    await AudioFX.resume();
+  });
 
   let startLock = false;
   let storyMode = false; // enchaîne 1→2 si true
@@ -1826,13 +1942,23 @@
 
   function bindMenuButton(el, handler) {
     if (!el) return;
+    let last = 0;
     const go = (e) => {
+      const now = Date.now();
+      if (now - last < 350) return; // évite double touchend+click
+      last = now;
       if (e) {
         if (e.cancelable) e.preventDefault();
         e.stopPropagation();
       }
+      // débloque l'audio dès le geste (sync)
+      try { AudioFX.resume(); } catch (_) {}
       handler(e);
     };
+    // touchstart = meilleur pour débloquer le son sur iOS
+    el.addEventListener('touchstart', (e) => {
+      try { AudioFX.resume(); } catch (_) {}
+    }, { passive: true });
     el.addEventListener('touchend', go, { passive: false });
     el.addEventListener('click', go);
   }
@@ -1841,9 +1967,16 @@
     if (startLock || running) return;
     startLock = true;
     try {
+      // Déblocage audio DANS le geste utilisateur (critique iPhone)
       await AudioFX.resume();
+      await new Promise((r) => setTimeout(r, 30));
       await AudioFX.resume();
-      try { AudioFX.ui(); AudioFX.coin(); } catch (_) {}
+      try {
+        if (!AudioFX.isMuted()) {
+          AudioFX.ui();
+          AudioFX.coin();
+        }
+      } catch (_) {}
       storyMode = !!isStory;
       window.__nextLevel = undefined;
       if (isStory) startLevel(0, { resetScore: true });
@@ -1860,6 +1993,34 @@
   bindMenuButton(document.getElementById('diffNormal'), () => setDifficulty('normal'));
   bindMenuButton(document.getElementById('diffHard'), () => setDifficulty('hard'));
   bindMenuButton(document.getElementById('a11yToggle'), () => applyLargeUI(!largeUI));
+
+  // Bouton dédié : débloque le son (surtout iPhone Safari)
+  const soundUnlockBtn = document.getElementById('soundUnlockBtn');
+  if (soundUnlockBtn) {
+    const doUnlock = async (e) => {
+      if (e) {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+      }
+      AudioFX.setMuted(false);
+      syncMuteBtn();
+      await AudioFX.resume();
+      await AudioFX.resume();
+      try {
+        AudioFX.ui();
+        AudioFX.coin();
+        setTimeout(() => AudioFX.powerup(), 120);
+      } catch (_) {}
+      soundUnlockBtn.textContent = '🔊 Son activé !';
+      soundUnlockBtn.style.background = 'linear-gradient(180deg,#81c784,#388e3c)';
+      setTimeout(() => {
+        if (soundUnlockBtn) soundUnlockBtn.textContent = '🔊 Son OK — retester';
+      }, 1500);
+    };
+    soundUnlockBtn.addEventListener('touchstart', (e) => { try { AudioFX.resume(); } catch (_) {} }, { passive: true });
+    soundUnlockBtn.addEventListener('touchend', doUnlock, { passive: false });
+    soundUnlockBtn.addEventListener('click', doUnlock);
+  }
 
   // Menu principal : choix des niveaux
   bindMenuButton(document.getElementById('levelBtn0'), () => beginFromMenu(0, false));
@@ -2071,10 +2232,20 @@
     endScreen.classList.add('hidden');
     showTouchUI(true);
     updateHud();
-    AudioFX.resume().then(() => {
+    // Musique + jingle (relance resume pour iOS)
+    (async () => {
+      await AudioFX.resume();
+      if (AudioFX.isMuted()) return;
       AudioFX.startMusic(false, levelDef.music);
       AudioFX.powerup();
-    });
+      // Si le contexte n'était pas prêt, 2e essai après un court délai
+      setTimeout(async () => {
+        await AudioFX.resume();
+        if (!AudioFX.isMuted() && running && !paused) {
+          AudioFX.startMusic(false, levelDef.music);
+        }
+      }, 200);
+    })();
   }
 
   function startGame() {
