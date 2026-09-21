@@ -39,6 +39,7 @@
     body.playing {
       overflow: hidden;
       touch-action: none;
+      touch-action: none;
       justify-content: center;
     }
     /* ===== Plein écran mobile (portrait + paysage) ===== */
@@ -218,8 +219,16 @@
       z-index: 2;
     }
     .hud span {
-      background: rgba(12,24,10,.62); padding: 5px 11px; border-radius: 999px;
-      border: 2px solid rgba(139,195,74,.5); backdrop-filter: blur(4px);
+      background: rgba(8,18,6,.78); padding: 5px 11px; border-radius: 999px;
+      border: 2px solid rgba(174,213,129,.65); backdrop-filter: blur(6px);
+      box-shadow: 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.35);
+      text-shadow: 0 1px 2px rgba(0,0,0,.55);
+    }
+    .hud #worldLabel {
+      border-color: #81c784;
+      color: #c8e6a0;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
     .hud .star-badge {
       border-color: #ffeb3b;
@@ -244,8 +253,20 @@
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
       touch-action: pan-y;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
     }
-    .overlay.hidden { display: none !important; }
+    .overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      /* garder le flux pour l'anim de sortie, sans bloquer le jeu */
+      z-index: -1;
+    }
+    .overlay:not(.hidden) .overlay-inner {
+      animation: bannerIn 0.45s cubic-bezier(.2,1.3,.4,1) both;
+    }
     .overlay-inner {
       width: min(420px, 100%);
       margin: 0 auto;
@@ -455,6 +476,34 @@
     .touch-weapons button.selected {
       border-color: #ffeb3b;
       background: rgba(255, 235, 59, 0.4);
+    }
+    .play-hint {
+      position: absolute;
+      left: 50%;
+      top: 18%;
+      transform: translateX(-50%);
+      z-index: 6;
+      pointer-events: none;
+      background: rgba(6,16,6,.82);
+      border: 2px solid rgba(255,235,59,.55);
+      color: #fff8e1;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      text-align: center;
+      max-width: min(420px, 92%);
+      line-height: 1.35;
+      box-shadow: 0 6px 20px rgba(0,0,0,.4);
+      transition: opacity 0.35s ease;
+    }
+    .play-hint.hidden { opacity: 0; visibility: hidden; }
+    .play-hint kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: #1b3a16;
+      border: 1px solid #8bc34a;
+      font-size: 0.78rem;
     }
     .touch-hint {
       position: absolute;
@@ -728,13 +777,15 @@
     <canvas id="game" width="960" height="540"></canvas>
     <div class="hud">
       <span class="star-badge" id="starBadge">★ SOUSOU</span>
+      <span id="worldLabel">Monde —</span>
       <span id="score">⭐ 0</span>
       <span id="pistaches">Pistaches : 0</span>
       <span id="lives">❤️ × 7</span>
       <span id="weapon">🗡️ Lance</span>
       <span id="time">⏱️ 400</span>
     </div>
-    <button id="muteBtn" class="mute-btn" type="button">🔊 Son MAX</button>
+    <button id="muteBtn" class="mute-btn" type="button" aria-pressed="false" title="Couper le son">🔊 Son ON</button>
+    <div id="playHint" class="play-hint hidden" role="status" aria-live="polite"></div>
 
     <!-- Pad tactile (mobile / tablette) : directions à GAUCHE, actions à DROITE -->
     <div id="touchUI" class="touch-ui" aria-hidden="true">
@@ -812,10 +863,11 @@
             ♿ Texte + boutons plus grands
           </button>
           <p class="a11y-note">
-            💡 Sur iPhone : touche d’abord « Activer le son », volume du téléphone + interrupteur silencieux OFF
-            · ↑ tire en haut · pause <kbd>P</kbd> · mute <kbd>M</kbd>
-            <span class="desktop-only"> · flèches · Espace saut · X tir</span>
-            <span class="mobile-only"> · boutons à l’écran</span>
+            💡 Premier lancement : « Activer le son » (surtout iPhone) · volume + · silencieux OFF
+            · <kbd>Espace</kbd>/<span class="mobile-only">SAUT</span> sauter · <kbd>X</kbd>/<span class="mobile-only">TIR</span> tirer
+            · ↑ vise en haut · <kbd>P</kbd> pause · <kbd>M</kbd> mute
+            <span class="desktop-only"> · flèches pour courir</span>
+            <span class="mobile-only"> · croix à gauche, actions à droite · paysage conseillé</span>
           </p>
         </div>
       </div>
@@ -828,6 +880,7 @@
         </div>
         <h2 id="endTitle">Bravo !</h2>
         <p class="big" id="finalScore">Score : 0</p>
+        <p id="endStats" style="color:#c8e6a0;font-weight:600"></p>
         <p id="endMsg"></p>
         <div class="level-pick">
           <button type="button" class="level-btn park" id="endLevel0" data-level="0">
@@ -873,9 +926,9 @@
   // =========================================================
   const AudioFX = (() => {
     let ctx, master, musicGain, sfxGain;
-    // Toujours démarrer avec le son ON (évite un mute "collé" sans le savoir)
+    // Respecte le choix mute de la session précédente (défaut = son ON)
     let muted = false;
-    try { localStorage.removeItem('gdp_mute'); } catch (_) {}
+    try { muted = localStorage.getItem('gdp_mute') === '1'; } catch (_) {}
     let musicTimer = null, drumTimer = null, bassTimer = null;
     let stepToggle = false;
     let unlocked = false;
@@ -892,10 +945,10 @@
         master.gain.value = muted ? 0 : 1;
         master.connect(ctx.destination);
         musicGain = ctx.createGain();
-        musicGain.gain.value = 0.55;
+        musicGain.gain.value = 0.42;
         musicGain.connect(master);
         sfxGain = ctx.createGain();
-        sfxGain.gain.value = 1.0;
+        sfxGain.gain.value = 0.85;
         sfxGain.connect(master);
       } catch (e) {
         console.warn('Audio init failed', e);
@@ -1018,7 +1071,7 @@
       f.frequency.setValueAtTime(Math.max(40, freq), t);
       if (pitch !== 1) f.frequency.exponentialRampToValueAtTime(Math.max(60, freq * pitch), t + dur);
       const g = ctx.createGain();
-      const gv = Math.max(0.001, gain * 1.35);
+      const gv = Math.max(0.001, Math.min(0.55, gain * 1.12));
       g.gain.setValueAtTime(gv, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.02));
       src.connect(f); f.connect(g); g.connect(sfxGain);
@@ -1031,7 +1084,7 @@
       o.type = type;
       o.frequency.setValueAtTime(Math.max(20, f), t);
       if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + Math.max(dur, 0.02));
-      const gv = Math.max(0.001, gain * 1.35);
+      const gv = Math.max(0.001, Math.min(0.5, gain * 1.12));
       g.gain.setValueAtTime(0.001, t);
       g.gain.linearRampToValueAtTime(gv, t + Math.max(atk, 0.001));
       g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.02));
@@ -1046,9 +1099,9 @@
 
     // --- Bruitages ---
     function jump() {
-      osc({ f: 280, f2: 620, dur: .14, type: 'square', gain: .14 });
-      osc({ f: 420, f2: 900, dur: .1, type: 'triangle', gain: .08 });
-      noise({ dur: .05, freq: 2000, type: 'highpass', gain: .1 });
+      osc({ f: 300, f2: 720, dur: .12, type: 'square', gain: .13 });
+      osc({ f: 480, f2: 980, dur: .09, type: 'triangle', gain: .07 });
+      noise({ dur: .04, freq: 2200, type: 'highpass', gain: .08 });
     }
     function land() {
       noise({ dur: .07, freq: 160, type: 'lowpass', gain: .32 });
@@ -1064,10 +1117,10 @@
       osc({ f: stepToggle ? 90 : 80, dur: .04, type: 'sine', gain: .05 });
     }
     function shoot() {
-      noise({ dur: .06, freq: 2600, q: 2.5, gain: .32, pitch: .35 });
-      noise({ dur: .05, freq: 900, type: 'highpass', gain: .2 });
-      osc({ f: 700, f2: 200, dur: .08, type: 'triangle', gain: .12 });
-      osc({ f: 1100, f2: 400, dur: .05, type: 'square', gain: .06 });
+      noise({ dur: .05, freq: 2400, q: 2.2, gain: .24, pitch: .4 });
+      noise({ dur: .04, freq: 1000, type: 'highpass', gain: .14 });
+      osc({ f: 760, f2: 220, dur: .07, type: 'triangle', gain: .11 });
+      osc({ f: 1180, f2: 420, dur: .045, type: 'square', gain: .05 });
     }
     function shellCrack() {
       noise({ dur: .09, freq: 2300, q: 5, gain: .42, pitch: .3 });
@@ -1075,15 +1128,15 @@
       osc({ f: 200, f2: 70, dur: .11, type: 'sawtooth', gain: .1 });
     }
     function crunch() {
-      noise({ dur: .13, freq: 1500, q: 3, gain: .48, pitch: .22 });
-      noise({ dur: .1, freq: 380, type: 'lowpass', gain: .32 });
-      osc({ f: 150, f2: 50, dur: .14, type: 'triangle', gain: .15 });
+      noise({ dur: .11, freq: 1400, q: 2.8, gain: .32, pitch: .25 });
+      noise({ dur: .08, freq: 360, type: 'lowpass', gain: .22 });
+      osc({ f: 150, f2: 55, dur: .12, type: 'triangle', gain: .11 });
     }
     function coin() {
-      // style Mario coin
-      osc({ f: 988, dur: .08, type: 'square', gain: .12 });
-      setTimeout(() => osc({ f: 1319, dur: .22, type: 'square', gain: .14 }), 55);
-      noise({ dur: .04, freq: 4000, type: 'highpass', gain: .08 });
+      // ding pistache clair (sans pic agressif)
+      osc({ f: 1046, dur: .07, type: 'square', gain: .1 });
+      setTimeout(() => osc({ f: 1396, dur: .18, type: 'square', gain: .12 }), 50);
+      noise({ dur: .03, freq: 3800, type: 'highpass', gain: .06 });
     }
     function stomp() {
       osc({ f: 180, f2: 60, dur: .12, type: 'square', gain: .18 });
@@ -1106,9 +1159,9 @@
       noise({ dur: .15, freq: 2800, gain: .18 });
     }
     function hit() {
-      noise({ dur: .22, freq: 280, type: 'lowpass', gain: .45 });
-      osc({ f: 180, f2: 50, dur: .28, type: 'sawtooth', gain: .2 });
-      osc({ f: 320, f2: 70, dur: .2, type: 'square', gain: .1 });
+      noise({ dur: .18, freq: 260, type: 'lowpass', gain: .32 });
+      osc({ f: 170, f2: 55, dur: .22, type: 'sawtooth', gain: .14 });
+      osc({ f: 300, f2: 80, dur: .16, type: 'square', gain: .08 });
     }
     function die() {
       [400, 350, 300, 200, 120, 80].forEach((f, i) =>
@@ -1651,6 +1704,9 @@
   let wasOnGround = true;
   let wasCrouch = false;
   let stepTimer = 0;
+  let coyoteFrames = 0;
+  let jumpBuffer = 0;
+  let playHintTimer = 0;
   let hurry = false;
   let flagSliding = false;
   let flagSlideY = 0;
@@ -1675,7 +1731,7 @@
       paused = !paused;
       AudioFX.pause();
       if (paused) AudioFX.stopMusic();
-      else AudioFX.startMusic(hurry, levelDef.music);
+      else if (!AudioFX.isMuted()) AudioFX.startMusic(hurry, levelDef.music);
     }
     if (e.code === 'KeyM') toggleMuteUI();
     if (e.code === 'Digit1' || e.code === 'Numpad1') setWeapon(0);
@@ -1889,10 +1945,23 @@
   document.addEventListener('touchmove', (e) => {
     if (document.body.classList.contains('playing')) {
       // autoriser seulement si on est sur un bouton (déjà géré)
-      if (!e.target.closest || !e.target.closest('.touch-ui button, .mute-btn, .overlay button')) {
+      if (!e.target.closest || !e.target.closest('.touch-ui button, .mute-btn, .overlay button, .overlay')) {
         if (e.cancelable) e.preventDefault();
       }
     }
+  }, { passive: false });
+  // Pinch-zoom / gesture iOS pendant le jeu
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) => {
+    document.addEventListener(ev, (e) => {
+      if (document.body.classList.contains('playing') && e.cancelable) e.preventDefault();
+    }, { passive: false });
+  });
+  // Double-tap zoom sur le canvas
+  let __lastTap = 0;
+  canvas.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - __lastTap < 280 && e.cancelable) e.preventDefault();
+    __lastTap = now;
   }, { passive: false });
 
   function syncMuteBtn() {
@@ -1904,18 +1973,23 @@
   }
   syncMuteBtn();
 
-  muteBtn.onclick = async e => {
-    e.stopPropagation();
-    e.preventDefault();
-    await AudioFX.resume();
-    toggleMuteUI();
-  };
-  muteBtn.addEventListener('touchend', async e => {
-    e.stopPropagation();
-    if (e.cancelable) e.preventDefault();
-    await AudioFX.resume();
-    // touchend + click would double-toggle : on ne toggle que si pas déjà géré par click récent
-  }, { passive: false });
+  // Mute fiable mobile + desktop (évite le double toggle touchend/click)
+  {
+    let muteLast = 0;
+    const doMuteToggle = async (e) => {
+      if (e) {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+      }
+      const now = Date.now();
+      if (now - muteLast < 350) return;
+      muteLast = now;
+      await AudioFX.resume();
+      toggleMuteUI();
+    };
+    muteBtn.addEventListener('touchend', doMuteToggle, { passive: false });
+    muteBtn.addEventListener('click', doMuteToggle);
+  }
 
   function toggleMuteUI() {
     const m = AudioFX.toggleMute();
@@ -2255,6 +2329,8 @@
     wasOnGround = true;
     wasCrouch = false;
     stepTimer = 0;
+    coyoteFrames = 0;
+    jumpBuffer = 0;
 
     player.x = 3 * T;
     player.y = Math.min((ROWS - 5) * T, LEVEL_H - 3 * T);
@@ -2293,6 +2369,19 @@
     endScreen.classList.add('hidden');
     showTouchUI(true);
     updateHud();
+    // Astuce premier run (une fois par navigateur)
+    try {
+      const hintEl = document.getElementById('playHint');
+      if (hintEl && !localStorage.getItem('gdp_hint_v1')) {
+        const mobile = isTouchDevice;
+        hintEl.innerHTML = mobile
+          ? '📱 <strong>Astuce</strong> : croix à gauche · <strong>SAUT</strong> / <strong>TIR</strong> à droite<br>Collecte les <strong>pistaches</strong> ★ · paysage conseillé'
+          : '💡 <strong>Astuce</strong> : <kbd>Espace</kbd> sauter · <kbd>X</kbd> tirer · flèches courir<br>Collecte les <strong>pistaches</strong> ★ · <kbd>P</kbd> pause';
+        hintEl.classList.remove('hidden');
+        playHintTimer = 280; // ~4.5 s
+        localStorage.setItem('gdp_hint_v1', '1');
+      }
+    } catch (_) {}
     // Musique + jingle (relance resume pour iOS)
     (async () => {
       await AudioFX.resume();
@@ -2377,8 +2466,10 @@
     floatScore(player.x, player.y - 50, def.icon + ' ' + def.name);
     spawnNameFX(player.x, player.y - 70, def.name, 'pop', 50);
     AudioFX.powerup();
+    explode(player.x, player.y - 30, def.color || '#ffeb3b', 16);
+    explode(player.x, player.y - 30, '#ffffff', 6);
     if (type === 'star' || type === 'ghost') invuln = Math.max(invuln, Math.min(def.dur, 120));
-    screenShake = 6;
+    screenShake = 7;
   }
 
   function spawnMysteryPower(x, y) {
@@ -2397,6 +2488,10 @@
     if (badge) {
       const dLabel = difficulty.id === 'easy' ? 'POUR TOUS' : (difficulty.id === 'hard' ? 'DÉFI' : 'NORMAL');
       badge.textContent = '★ SOUSOU · ' + dLabel;
+    }
+    const worldEl = document.getElementById('worldLabel');
+    if (worldEl && levelDef) {
+      worldEl.textContent = '🌍 ' + levelDef.code + ' · ' + levelDef.title;
     }
   }
 
@@ -2564,14 +2659,20 @@
   }
 
   function tryJump() {
-    if (!player.onGround || player.crouching || flagSliding) return;
+    if (player.crouching || flagSliding) return;
+    const canCoyote = coyoteFrames > 0 || player.onGround;
+    if (!canCoyote) return;
     let jv = levelDef.jumpV + difficulty.jumpBonus;
     if (buffs.superJump > 0) jv -= 3.5;
     player.vy = jv;
     player.onGround = false;
+    coyoteFrames = 0;
+    jumpBuffer = 0;
     AudioFX.jump();
     AudioFX.hairSwish();
     explode(player.x, player.y, '#8d6e63', 5);
+    explode(player.x, player.y, '#c5e1a5', 3);
+    screenShake = Math.max(screenShake, 2.5);
   }
 
   function fireBullet(kind, x, y, vx, vy, extra = {}) {
@@ -2613,7 +2714,8 @@
         }
       }
       AudioFX.shoot();
-      explode(mx, my, '#c5e1a5', 5);
+      explode(mx, my, '#c5e1a5', 6);
+      screenShake = Math.max(screenShake, 1.8);
     } else if (w.id === 'gun') {
       for (let i = 0; i < (buffs.triple > 0 ? 3 : 2); i++) {
         if (aimUp) mk((i - 1) * 2.5, -13 - i, 'gun', { r: 12, dmg: 1, life: 55 });
@@ -2621,7 +2723,8 @@
       }
       AudioFX.shoot();
       AudioFX.whoosh();
-      explode(mx, my, '#ffeb3b', 6);
+      explode(mx, my, '#ffeb3b', 7);
+      screenShake = Math.max(screenShake, 2.2);
     } else {
       if (aimUp) mk(dir * 1.2, -14, 'grenade', { r: 16, dmg: 3, armed: true, life: 120 });
       else mk(dir * 5.5, -8.5, 'grenade', { r: 16, dmg: 3, armed: true, life: 120 });
@@ -2631,7 +2734,8 @@
       }
       AudioFX.shoot();
       AudioFX.bump();
-      explode(mx, my, '#ff8a65', 4);
+      explode(mx, my, '#ff8a65', 5);
+      screenShake = Math.max(screenShake, 2.5);
     }
   }
 
@@ -2706,6 +2810,9 @@
   function diePlayer() {
     running = false;
     showTouchUI(false);
+    playHintTimer = 0;
+    const ph = document.getElementById('playHint');
+    if (ph) ph.classList.add('hidden');
     keys = {};
     window.__nextLevel = undefined;
     storyMode = false;
@@ -2714,9 +2821,13 @@
     setTimeout(() => {
       endTitle.textContent = 'La star est tombée…';
       finalScoreEl.textContent = 'Score : ' + score;
+      const statsDie = document.getElementById('endStats');
+      if (statsDie) statsDie.textContent = '🥜 ' + pistaches + ' pistaches · ' + levelDef.code + ' · ' + difficulty.label;
       endMsg.textContent = levelDef.theme === 'cosmo'
         ? 'La Nuit Cosmique a eu raison de Sousou… choisis un monde !'
-        : 'SOUSOU reviendra plus fort — choisis un niveau !';
+        : levelDef.theme === 'ship'
+          ? 'Les raisins aliens ont eu le dernier mot… réessaie le vaisseau !'
+          : 'SOUSOU reviendra plus fort — choisis un niveau !';
       const es = document.getElementById('endStarName');
       if (es) es.textContent = '★ SOUSOU ★';
       const retry = document.getElementById('retryBtn');
@@ -2743,19 +2854,22 @@
     sousouStarBurst(player.x, player.y - 40);
     updateHud();
 
-    // Mode histoire : niv1 → proposer niv2
+    // Mode histoire : enchaîne vers le monde suivant
     if (storyMode && currentLevelIndex < LEVEL_DEFS.length - 1) {
       running = false;
       showTouchUI(false);
       AudioFX.stopMusic();
       AudioFX.flag();
-      endTitle.textContent = 'Niveau 1 réussi !';
+      const next = LEVEL_DEFS[currentLevelIndex + 1];
+      endTitle.textContent = levelDef.code + ' réussi !';
       finalScoreEl.textContent = 'Score : ' + score;
-      endMsg.textContent = 'La Nuit Cosmique t’attend… ou rejoue un monde au choix !';
+      const statsMid = document.getElementById('endStats');
+      if (statsMid) statsMid.textContent = '🥜 ' + pistaches + ' pistaches · ❤️ × ' + lives + ' · ' + difficulty.label;
+      endMsg.textContent = 'Prochain monde : « ' + next.title + ' » — ou rejoue un monde au choix !';
       const es = document.getElementById('endStarName');
-      if (es) es.textContent = '★ MONDE 2 ★';
+      if (es) es.textContent = '★ ' + next.code + ' · ' + next.title.toUpperCase() + ' ★';
       const retry = document.getElementById('retryBtn');
-      if (retry) retry.textContent = '🚀 Entrer dans la Nuit Cosmique';
+      if (retry) retry.textContent = '▶ Continuer → ' + next.title;
       endScreen.classList.remove('hidden');
       window.__nextLevel = currentLevelIndex + 1;
       return;
@@ -2768,8 +2882,10 @@
     const cleared = levelDef.title;
     endTitle.textContent = storyMode ? 'Victoire de la STAR !' : (levelDef.code + ' terminé !');
     finalScoreEl.textContent = 'Score : ' + score;
+    const statsWin = document.getElementById('endStats');
+    if (statsWin) statsWin.textContent = '🥜 ' + pistaches + ' pistaches · difficulté ' + difficulty.label;
     endMsg.textContent = storyMode
-      ? 'SOUSOU domine Parc + Nuit Cosmique — ' + pistaches + ' pistaches ! ★'
+      ? 'SOUSOU domine les 3 mondes — ' + pistaches + ' pistaches ! ★'
       : 'Monde « ' + cleared + ' » conquis — ' + pistaches + ' pistaches ! Choisis un niveau :';
     const es = document.getElementById('endStarName');
     if (es) es.textContent = storyMode ? '★ SOUSOU LÉGENDE ★' : ('★ ' + levelDef.code + ' ★');
@@ -2795,6 +2911,13 @@
     shootCD = Math.max(0, shootCD - 1);
     invuln = Math.max(0, invuln - 1);
     screenShake = Math.max(0, screenShake - 0.65);
+    if (playHintTimer > 0) {
+      playHintTimer--;
+      if (playHintTimer <= 0) {
+        const hintEl = document.getElementById('playHint');
+        if (hintEl) hintEl.classList.add('hidden');
+      }
+    }
     // timers power-ups
     for (const k of Object.keys(buffs)) {
       if (buffs[k] > 0) buffs[k]--;
@@ -2850,7 +2973,11 @@
     player.crouching = wantCrouch;
     player.h = wantCrouch ? 32 : 52;
 
-    if (jumpKey) tryJump();
+    if (jumpKey) jumpBuffer = 10;
+    else jumpBuffer = Math.max(0, jumpBuffer - 1);
+    if (jumpBuffer > 0) tryJump();
+    // saut variable : relâcher coupe le sommet (feeling snappy)
+    if (!jumpKey && player.vy < -5.5) player.vy *= 0.62;
     if (fire) tryShoot();
 
     // run — glace = un peu de glisse (mais contrôlable)
@@ -2908,7 +3035,13 @@
     }
     if (!wasOnGround && player.onGround) {
       AudioFX.land();
+      explode(player.x, player.y, '#a1887f', 6);
+      explode(player.x, player.y, '#c5e1a5', 3);
+      // saut buffer : sauter juste après l'atterrissage
+      if (jumpBuffer > 0) tryJump();
     }
+    if (player.onGround) coyoteFrames = 8;
+    else coyoteFrames = Math.max(0, coyoteFrames - 1);
     wasOnGround = player.onGround;
 
     // flag / portail
@@ -3025,8 +3158,10 @@
         // chance de power-up mystère en collectant
         if (Math.random() < 0.06) spawnMysteryPower(c.x, cy - 10);
         AudioFX.coin();
-        explode(c.x, cy, '#ffeb3b', 12);
-        explode(c.x, cy, '#8bc34a', 8);
+        explode(c.x, cy, '#ffeb3b', 14);
+        explode(c.x, cy, '#8bc34a', 10);
+        explode(c.x, cy, '#fff59d', 6);
+        if (pistaches % 10 === 0) sousouStarBurst(c.x, cy);
         updateHud();
       }
     }
@@ -3625,6 +3760,9 @@
       ctx.fillStyle = '#fff';
       ctx.font = '18px Fredoka, sans-serif';
       ctx.fillText('La guerre des pistaches attend…', VW / 2, VH / 2 + 28);
+      ctx.fillStyle = '#c8e6a0';
+      ctx.font = '14px Fredoka, sans-serif';
+      ctx.fillText('Appuie sur P pour reprendre', VW / 2, VH / 2 + 54);
     }
 
     // watermark + buffs actifs
@@ -4494,7 +4632,9 @@
     const y = player.y;
     const f = player.facing;
     const crouch = player.crouching;
-    const flash = invuln > 0 && Math.floor(invuln / 3) % 2 === 0;
+    // Clignotement invulnérabilité plus lisible (rapide en fin de iframe)
+    const flashRate = invuln > 40 ? 3 : 2;
+    const flash = invuln > 0 && Math.floor(invuln / flashRate) % 2 === 0;
     const spd = Math.abs(player.vx);
     const isRun = player.onGround && spd > 0.8 && !crouch;
     const isAir = !player.onGround;
@@ -4521,7 +4661,20 @@
     ctx.translate(x, y - bounce);
     ctx.scale(f * stretch, squash);
     ctx.rotate(lean); // penché en avant (local +x = direction du regard)
-    if (flash) ctx.globalAlpha = 0.4;
+    if (flash) ctx.globalAlpha = 0.28;
+    else if (invuln > 0) ctx.globalAlpha = 0.85;
+
+    // aura invuln (contour cyan) — lisible même sans clignotement fort
+    if (invuln > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.25 * Math.sin(frame * 0.45);
+      ctx.strokeStyle = buffs.star > 0 ? '#ffeb3b' : '#4fc3f7';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, crouch ? -18 : -28, crouch ? 22 : 20, crouch ? 22 : 34, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // ombre (compense le rebond)
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
