@@ -8,10 +8,20 @@
 </head><body><div id="b"><div class="s">★ SOUSOU ★</div><p>Chargement de La guerre des pistaches…</p></div>
 <script>
 (async()=>{
-  const parts=await Promise.all([0,1,2,3].map(i=>fetch('q'+i+'.b64').then(r=>{if(!r.ok)throw new Error('q'+i+' '+r.status);return r.text()})));
-  const bin=Uint8Array.from(atob(parts.join('')),c=>c.charCodeAt(0));
-  if(typeof DecompressionStream==='undefined'){document.getElementById('b').innerHTML='<p>Navigateur trop ancien.</p>';return;}
-  const html=await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-  document.open();document.write(html);document.close();
-})().catch(e=>{document.getElementById('b').innerHTML='<p>Erreur: '+e.message+'</p>';});
+  const N=6;
+  const MAIN_SHA='57ac0ae4575c6779cba04420d239a51e53d7dae6';
+  const hexParts=await Promise.all([...Array(N).keys()].map(i=>fetch('h'+String(i).padStart(2,'0')+'.hex').then(r=>{if(!r.ok)throw new Error('h'+i+' '+r.status);return r.text()})));
+  const hex=hexParts.map(t=>t.trim().toLowerCase()).join('');
+  const gz=Uint8Array.from(hex.match(/.{1,2}/g).map(b=>parseInt(b,16)));
+  if(typeof DecompressionStream==='undefined')throw new Error('gzip requis');
+  const ops=JSON.parse(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  const baseUrl='https://raw.githubusercontent.com/berbouchakhaled-art/guerre-des-pistaches/'+MAIN_SHA+'/index.html';
+  const base=await fetch(baseUrl).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text()});
+  const lines=base.split(/(?<=\n)/);
+  for(let k=ops.length-1;k>=0;k--){
+    const [i1,nd,ins]=ops[k];
+    lines.splice(i1,nd,...ins);
+  }
+  document.open();document.write(lines.join(''));document.close();
+})().catch(e=>{document.getElementById('b').innerHTML='<p>Erreur: '+e.message+'</p><p>Réseau requis (chargement du jeu de base + polish).</p>';});
 </script></body></html>
