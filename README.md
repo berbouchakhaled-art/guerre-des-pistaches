@@ -1,14 +1,12 @@
 # La guerre des pistaches — starring Sousou
 
-Jeu navigateur gratuit. Ouvre `index.html` via **HTTP** (GitHub Pages ou un petit serveur local) — le chargement applique un polish sur la base du jeu et nécessite le réseau.
+Jeu navigateur gratuit (un seul fichier `index.html`). Ouvre le fichier localement (`file://` OK) ou via GitHub Pages.
 
 ## Jouer
 
-1. Ouvre [`index.html`](./index.html) dans un navigateur moderne (Chrome, Firefox, Safari) **via HTTP** (pas `file://`).
+1. Ouvre [`index.html`](./index.html) dans un navigateur moderne (Chrome, Firefox, Safari).
 2. Choisis la difficulté (**Pour tous** / **Normal** / **Défi**) et un monde, ou lance **Histoire (1 → 2 → 3)**.
 3. Sur iPhone / iPad : touche d’abord **Activer le son**, volume du téléphone +, interrupteur silencieux OFF.
-
-Serveur local rapide : `python3 -m http.server 8080` puis http://localhost:8080/
 
 ## Contrôles
 
@@ -19,7 +17,7 @@ Serveur local rapide : `python3 -m http.server 8080` puis http://localhost:8080/
 | Tirer | X / clic | **TIR** |
 | Viser en haut | ↑ | ↑ |
 | Se baisser | ↓ | ↓ |
-| Armes | 1 / 2 / 3 ou Tab | Boutons 🗡️🔫💣 |
+| Armes | 1 / 2 / 3 ou Tab | Boutons 🔪🔫💣 |
 | Pause | P | — |
 | Mute | M | Bouton 🔊 (mémorisé) |
 
@@ -43,7 +41,7 @@ Thème 100 % pistaches (ennemis « cacahuètes » = vilains de cartoon uniquemen
 
 - Aucune pub, analytics, compte ou API payante.
 - Audio Web Audio API (déblocage au geste utilisateur).
-- `index.html` charge la base pinnée (`main` @ `57ac0ae…`) puis applique `h00.hex`…`h05.hex` (patch gzip).
+- Fichier unique autonome — aucun loader, aucun `h*.hex`, fonctionne hors ligne.
 - Compatible tactile + safe-area + paysage.
 
 Bon jeu — ★ SOUSOU ★
