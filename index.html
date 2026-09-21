@@ -1,1 +1,17 @@
-@/workspace/guerre-des-pistaches/index.html
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>La guerre des pistaches — starring Sousou</title>
+<style>html,body{margin:0;height:100%;background:#0d1a0c;color:#c8e6a0;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center}#b{text-align:center}.s{color:#ffeb3b;font-size:1.5rem}</style>
+</head><body><div id="b"><div class="s">★ SOUSOU ★</div><p>Chargement de La guerre des pistaches…</p></div>
+<script>
+(async()=>{
+  const [a,b]=await Promise.all([fetch('p0.b64'),fetch('p1.b64')].map(p=>p.then(r=>{if(!r.ok)throw new Error(r.status);return r.text()})));
+  const bin=Uint8Array.from(atob(a+b),c=>c.charCodeAt(0));
+  if(typeof DecompressionStream==='undefined'){document.getElementById('b').innerHTML='<p>Navigateur trop ancien.</p>';return;}
+  const html=await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  document.open();document.write(html);document.close();
+})().catch(e=>{document.getElementById('b').innerHTML='<p>Erreur: '+e.message+'</p>';});
+</script></body></html>
