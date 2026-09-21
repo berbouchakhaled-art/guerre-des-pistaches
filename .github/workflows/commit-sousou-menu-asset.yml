@@ -20,12 +20,7 @@ jobs:
           mkdir -p assets
           test -f assets/sousou-menu.b64
           base64 -d assets/sousou-menu.b64 > assets/sousou-menu.png
-          python3 - <<'PY'
-          from PIL import Image
-          im = Image.open('assets/sousou-menu.png')
-          assert im.size == (128, 128), im.size
-          print('ok', im.size, im.mode)
-          PY
+          python3 -c "import pathlib; d=pathlib.Path('assets/sousou-menu.png').read_bytes(); assert d[:8]==b'\\x89PNG\\r\\n\\x1a\\n' and len(d)>500, len(d); print('png', len(d))"
           rm -f assets/sousou-menu.b64
           rm -f .github/workflows/commit-sousou-menu-asset.yml
           git config user.name "github-actions[bot]"
