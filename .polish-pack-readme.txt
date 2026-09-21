@@ -1,1 +1,0 @@
-Game pack: index.html (loader) + q0.b64..q3.b64 (gzip base64 of polished index). Open index.html via HTTP (not file://) so fetch works.
