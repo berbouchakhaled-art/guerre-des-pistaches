@@ -1,0 +1,105 @@
+name: Materialize standalone index.html
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/materialize-standalone.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: polish/global-pass
+      - name: Rebuild standalone index.html
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import gzip, json, re, urllib.request, pathlib, textwrap
+          BASE_SHA = "57ac0ae4575c6779cba04420d239a51e53d7dae6"
+          OWNER = "berbouchakhaled-art"
+          REPO = "guerre-des-pistaches"
+          hex_data = "".join(pathlib.Path("h%02d.hex" % i).read_text().split() for i in range(6))
+          ops = json.loads(gzip.decompress(bytes.fromhex(hex_data)))
+          url = "https://raw.githubusercontent.com/%s/%s/%s/index.html" % (OWNER, REPO, BASE_SHA)
+          base = urllib.request.urlopen(url).read().decode("utf-8")
+          lines = re.split(r"(?<=\n)", base)
+          if lines and lines[-1] == "":
+              lines.pop()
+          for i1, nd, ins in reversed(ops):
+              lines[i1:i1 + nd] = ins
+          out = "".join(lines)
+          pathlib.Path("index.html").write_text(out, encoding="utf-8")
+          print("wrote index.html", len(out.encode()), "bytes")
+          assert out.startswith("<!DOCTYPE html>")
+          assert "coyoteFrames" in out
+          assert "jumpBuffer" in out
+          assert "h00.hex" not in out
+          readme = textwrap.dedent("""\
+          # La guerre des pistaches — starring Sousou
+
+          Jeu navigateur gratuit (un seul fichier `index.html`). Ouvre le fichier localement (`file://` OK) ou via GitHub Pages.
+
+          ## Jouer
+
+          1. Ouvre [`index.html`](./index.html) dans un navigateur moderne (Chrome, Firefox, Safari).
+          2. Choisis la difficulté (**Pour tous** / **Normal** / **Défi**) et un monde, ou lance **Histoire (1 → 2 → 3)**.
+          3. Sur iPhone / iPad : touche d’abord **Activer le son**, volume du téléphone +, interrupteur silencieux OFF.
+
+          ## Contrôles
+
+          | Action | Clavier | Mobile |
+          |--------|---------|--------|
+          | Courir | ← → | Croix directionnelle |
+          | Sauter | Espace / Z / W | **SAUT** |
+          | Tirer | X / clic | **TIR** |
+          | Viser en haut | ↑ | ↑ |
+          | Se baisser | ↓ | ↓ |
+          | Armes | 1 / 2 / 3 ou Tab | Boutons 🗡️🔫💣 |
+          | Pause | P | — |
+          | Mute | M | Bouton 🔊 (mémorisé) |
+
+          ## Mondes
+
+          1. **Parc Pistache** — jour, herbe, tuyaux  
+          2. **Nuit Cosmique** — espace, trampolines, étoiles  
+          3. **Vaisseau Pistache** — raisins secs aliens  
+
+          Thème 100 % pistaches (ennemis « cacahuètes » = vilains de cartoon uniquement).
+
+          ## Polish (cette branche)
+
+          - Game feel : coyote time, jump buffer, hauteur de saut variable, particules / shake
+          - Invulnérabilité plus lisible, SFX plus nets, mute fiable + persistant
+          - HUD / overlays / indices première partie, écrans de fin plus clairs
+          - Mobile : touch-action, safe-area, anti zoom/scroll accidentel
+          - Correctif mode Histoire (messages de monde dynamiques)
+
+          ## Notes techniques
+
+          - Aucune pub, analytics, compte ou API payante.
+          - Audio Web Audio API (déblocage au geste utilisateur).
+          - Fichier unique autonome — aucun loader, aucun `h*.hex`, fonctionne hors ligne.
+          - Compatible tactile + safe-area + paysage.
+
+          Bon jeu — ★ SOUSOU ★
+          """)
+          pathlib.Path("README.md").write_text(readme, encoding="utf-8")
+          PY
+      - name: Remove hex files and push
+        run: |
+          set -euo pipefail
+          rm -f h00.hex h01.hex h02.hex h03.hex h04.hex h05.hex
+          rm -f p*.b64 patch*.b64 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git status
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Replace loader with standalone polished index.html (offline/file://)"
+          git push origin HEAD:polish/global-pass
