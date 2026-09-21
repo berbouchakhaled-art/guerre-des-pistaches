@@ -21,7 +21,7 @@ jobs:
           BASE_SHA = "57ac0ae4575c6779cba04420d239a51e53d7dae6"
           OWNER = "berbouchakhaled-art"
           REPO = "guerre-des-pistaches"
-          hex_data = "".join(pathlib.Path("h%02d.hex" % i).read_text().split() for i in range(6))
+          hex_data = "".join(pathlib.Path("h%02d.hex" % i).read_text().strip() for i in range(6))
           ops = json.loads(gzip.decompress(bytes.fromhex(hex_data)))
           url = "https://raw.githubusercontent.com/%s/%s/%s/index.html" % (OWNER, REPO, BASE_SHA)
           base = urllib.request.urlopen(url).read().decode("utf-8")
