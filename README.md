@@ -37,6 +37,11 @@ Thème 100 % pistaches (ennemis « cacahuètes » = vilains de cartoon uniquemen
 - Mobile : touch-action, safe-area, anti zoom/scroll accidentel
 - Correctif mode Histoire (messages de monde dynamiques)
 
+## Portrait menu
+
+- Portrait pixel 80s de Sousou sur l’écran d’accueil : `assets/sousou-menu.png` (sprite 40×40, palette limitée, rendu `pixelated`).
+- Perf légère : plafonds particules, culling hors écran, gradients ciel mis en cache, ombres réduites, mode FX allégé si FPS bas.
+
 ## Notes techniques
 
 - Aucune pub, analytics, compte ou API payante.
