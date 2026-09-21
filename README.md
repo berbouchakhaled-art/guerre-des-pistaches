@@ -17,7 +17,7 @@ Jeu navigateur gratuit (un seul fichier `index.html`). Ouvre le fichier localeme
 | Tirer | X / clic | **TIR** |
 | Viser en haut | ↑ | ↑ |
 | Se baisser | ↓ | ↓ |
-| Armes | 1 / 2 / 3 ou Tab | Boutons 🔪🔫💣 |
+| Armes | 1 / 2 / 3 ou Tab | Boutons 🗡️🔫💣 |
 | Pause | P | — |
 | Mute | M | Bouton 🔊 (mémorisé) |
 
