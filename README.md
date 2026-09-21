@@ -1,12 +1,14 @@
 # La guerre des pistaches — starring Sousou
 
-Jeu navigateur gratuit (un seul fichier `index.html`). Ouvre le fichier localement ou via GitHub Pages.
+Jeu navigateur gratuit. Ouvre `index.html` via **HTTP** (GitHub Pages ou un petit serveur local) — le chargement applique un polish sur la base du jeu et nécessite le réseau.
 
 ## Jouer
 
-1. Ouvre [`index.html`](./index.html) dans un navigateur moderne (Chrome, Firefox, Safari).
+1. Ouvre [`index.html`](./index.html) dans un navigateur moderne (Chrome, Firefox, Safari) **via HTTP** (pas `file://`).
 2. Choisis la difficulté (**Pour tous** / **Normal** / **Défi**) et un monde, ou lance **Histoire (1 → 2 → 3)**.
 3. Sur iPhone / iPad : touche d’abord **Activer le son**, volume du téléphone +, interrupteur silencieux OFF.
+
+Serveur local rapide : `python3 -m http.server 8080` puis http://localhost:8080/
 
 ## Contrôles
 
@@ -19,7 +21,7 @@ Jeu navigateur gratuit (un seul fichier `index.html`). Ouvre le fichier localeme
 | Se baisser | ↓ | ↓ |
 | Armes | 1 / 2 / 3 ou Tab | Boutons 🗡️🔫💣 |
 | Pause | P | — |
-| Mute | M | Bouton 🔊 |
+| Mute | M | Bouton 🔊 (mémorisé) |
 
 ## Mondes
 
@@ -27,12 +29,21 @@ Jeu navigateur gratuit (un seul fichier `index.html`). Ouvre le fichier localeme
 2. **Nuit Cosmique** — espace, trampolines, étoiles  
 3. **Vaisseau Pistache** — raisins secs aliens  
 
-Thème 100 % pistaches (0 % arachide comestible — les ennemis « cacahuètes » restent des vilains de cartoon).
+Thème 100 % pistaches (ennemis « cacahuètes » = vilains de cartoon uniquement).
+
+## Polish (cette branche)
+
+- Game feel : coyote time, jump buffer, hauteur de saut variable, particules / shake
+- Invulnérabilité plus lisible, SFX plus nets, mute fiable + persistant
+- HUD / overlays / indices première partie, écrans de fin plus clairs
+- Mobile : touch-action, safe-area, anti zoom/scroll accidentel
+- Correctif mode Histoire (messages de monde dynamiques)
 
 ## Notes techniques
 
 - Aucune pub, analytics, compte ou API payante.
 - Audio Web Audio API (déblocage au geste utilisateur).
-- Compatible tactile + safe-area (encoche) + mode paysage.
+- `index.html` charge la base pinnée (`main` @ `57ac0ae…`) puis applique `h00.hex`…`h05.hex` (patch gzip).
+- Compatible tactile + safe-area + paysage.
 
 Bon jeu — ★ SOUSOU ★
