@@ -8,8 +8,8 @@
 </head><body><div id="b"><div class="s">★ SOUSOU ★</div><p>Chargement de La guerre des pistaches…</p></div>
 <script>
 (async()=>{
-  const [a,b]=await Promise.all([fetch('p0.b64'),fetch('p1.b64')].map(p=>p.then(r=>{if(!r.ok)throw new Error(r.status);return r.text()})));
-  const bin=Uint8Array.from(atob(a+b),c=>c.charCodeAt(0));
+  const parts=await Promise.all([0,1,2,3].map(i=>fetch('q'+i+'.b64').then(r=>{if(!r.ok)throw new Error('q'+i+' '+r.status);return r.text()})));
+  const bin=Uint8Array.from(atob(parts.join('')),c=>c.charCodeAt(0));
   if(typeof DecompressionStream==='undefined'){document.getElementById('b').innerHTML='<p>Navigateur trop ancien.</p>';return;}
   const html=await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   document.open();document.write(html);document.close();
