@@ -1,0 +1,38 @@
+name: Commit Sousou menu asset
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/commit-sousou-menu-asset.yml'
+      - 'assets/sousou-menu.b64'
+jobs:
+  commit-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/sousou-menu-v5
+      - name: Decode PNG, enlarge portrait CSS, and commit
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          test -f assets/sousou-menu.b64
+          base64 -d assets/sousou-menu.b64 > assets/sousou-menu.png
+          python3 -c "import pathlib; d=pathlib.Path('assets/sousou-menu.png').read_bytes(); assert d[:8]==b'\\x89PNG\\r\\n\\x1a\\n' and len(d)>500, len(d); print('png', len(d))"
+          python3 scripts/apply_sousou_menu_portrait.py
+          rm -f assets/sousou-menu.b64
+          rm -f .github/workflows/commit-sousou-menu-asset.yml
+          rm -f scripts/apply_sousou_menu_portrait.py
+          rmdir scripts 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git status
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Replace sousou-menu.png with colorful transparent v5 pixel art; slightly enlarge menu portrait"
+          git push origin HEAD:feature/sousou-menu-v5
