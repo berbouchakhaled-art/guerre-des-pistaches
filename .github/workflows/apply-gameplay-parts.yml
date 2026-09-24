@@ -6,7 +6,7 @@ on:
     paths:
       - 'patches/gameplay-feel.part0.patch'
       - 'patches/gameplay-feel.part1.patch'
-      - 'patches/gameplay-feel.part2.patch'
+      - 'patches/gameplay-feel.part2.patch.b64'
       - '.github/workflows/apply-gameplay-parts.yml'
 jobs:
   apply:
@@ -21,6 +21,7 @@ jobs:
       - name: Assemble parts, patch main index, commit
         run: |
           set -euo pipefail
+          base64 -d patches/gameplay-feel.part2.patch.b64 > patches/gameplay-feel.part2.patch
           cat patches/gameplay-feel.part0.patch patches/gameplay-feel.part1.patch patches/gameplay-feel.part2.patch > /tmp/gameplay-feel.patch
           git fetch origin main
           git show origin/main:index.html > index.html
