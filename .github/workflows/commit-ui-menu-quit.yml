@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/commit-ui-menu-quit.yml'
-      - 'scripts/ui-menu-quit.patch'
+      - 'scripts/ui-menu-quit.patch.b64gz'
 jobs:
   commit-ui:
     runs-on: ubuntu-latest
@@ -17,13 +17,20 @@ jobs:
       - name: Apply patch and commit
         run: |
           set -euo pipefail
-          test -f scripts/ui-menu-quit.patch
+          test -f scripts/ui-menu-quit.patch.b64gz
+          python3 - <<'PY'
+          import base64, gzip, pathlib
+          raw = pathlib.Path('scripts/ui-menu-quit.patch.b64gz').read_text().strip()
+          data = gzip.decompress(base64.b64decode(raw))
+          pathlib.Path('scripts/ui-menu-quit.patch').write_bytes(data)
+          print('patch bytes', len(data))
+          PY
           patch -p1 < scripts/ui-menu-quit.patch
           grep -q 'returnToMenu' index.html
           grep -q 'id="menuBtn"' index.html
           grep -q 'clamp(180px, 42vw, 260px)' index.html
           grep -q 'border-radius: 22px' index.html
-          rm -f scripts/ui-menu-quit.patch
+          rm -f scripts/ui-menu-quit.patch scripts/ui-menu-quit.patch.b64gz
           rm -f .github/workflows/commit-ui-menu-quit.yml
           rmdir scripts 2>/dev/null || true
           rmdir .github/workflows 2>/dev/null || true
