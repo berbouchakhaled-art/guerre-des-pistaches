@@ -1,0 +1,117 @@
+         storyMode = true;
+         startLevel(n, { resetScore: false });
+       } finally {
+@@ -2412,11 +2413,26 @@
+       }
+       return;
+     }
++    // Après une mort : rejouer le même niveau tout de suite
++    if (typeof window.__retryLevel === 'number' && window.__retryLevel >= 0) {
++      startLock = true;
++      try {
++        await AudioFX.resume();
++        const n = window.__retryLevel;
++        window.__retryLevel = undefined;
++        storyMode = false;
++        startLevel(n, { resetScore: true });
++      } finally {
++        setTimeout(() => { startLock = false; }, 350);
++      }
++      return;
++    }
+     // Sinon retour menu
+     endScreen.classList.add('hidden');
+     startScreen.classList.remove('hidden');
+     showTouchUI(false);
+     window.__nextLevel = undefined;
++    window.__retryLevel = undefined;
+     storyMode = false;
+     syncMenuBtn();
+   });
+@@ -2533,6 +2549,7 @@
+   }
+ 
+   function startLevel(index, { resetScore = false } = {}) {
++    window.__retryLevel = undefined;
+     applyLevelDef(index);
+     parseLevel();
+     if (resetScore) {
+@@ -3006,12 +3023,13 @@
+       return;
+     }
+     if (!fell && (buffs.star > 0 || buffs.ghost > 0)) return;
+-    // En mode « Pour tous », une chute dans un trou = -1 vie (pas game over immédiat)
+-    if (fell && difficulty.id === 'easy') {
++    // Chute dans un trou : -1 vie + respawn (sauf Défi = mort immédiate)
++    if (fell && difficulty.id !== 'hard') {
+       lives = Math.max(0, lives - 1);
+       invuln = difficulty.invulnHit;
+       screenShake = 10;
+       AudioFX.hit();
++      floatScore(player.x, player.y - 40, '💔 -1');
+       // respawn sûr près de la caméra
+       player.x = Math.max(2 * T, cameraX + 80);
+       player.y = Math.min(player.y, (ROWS - 5) * T);
+@@ -3033,15 +3051,19 @@
+     }
+     lives -= difficulty.contactLivesLost || 1;
+     invuln = difficulty.invulnHit;
+-    screenShake = 12;
++    screenShake = 14;
+     AudioFX.hit();
++    floatScore(player.x, player.y - 40, '💥 OUCH');
++    explode(player.x, player.y - 20, '#ef5350', 12);
++    explode(player.x, player.y - 20, '#ffeb3b', 6);
+     updateHud();
+     if (lives <= 0 || fell) {
+       if (fell) lives = 0;
+       diePlayer();
+     } else {
+-      player.vy = -7;
+-      player.vx = -player.facing * 4;
++      // knockback intentionnel (loin de la menace)
++      player.vy = -9;
++      player.vx = -player.facing * 5.5;
+     }
+   }
+ 
+@@ -3054,6 +3076,7 @@
+     if (ph) ph.classList.add('hidden');
+     keys = {};
+     window.__nextLevel = undefined;
++    window.__retryLevel = currentLevelIndex;
+     storyMode = false;
+     AudioFX.die();
+     AudioFX.stopMusic();
+@@ -3063,17 +3086,17 @@
+       const statsDie = document.getElementById('endStats');
+       if (statsDie) statsDie.textContent = '🥜 ' + pistaches + ' pistaches · ' + levelDef.code + ' · ' + difficulty.label;
+       endMsg.textContent = levelDef.theme === 'cosmo'
+-        ? 'La Nuit Cosmique a eu raison de Sousou… choisis un monde !'
++        ? 'La Nuit Cosmique a eu raison de Sousou… réessaie ou choisis un monde !'
+         : levelDef.theme === 'ship'
+           ? 'Les raisins aliens ont eu le dernier mot… réessaie le vaisseau !'
+-          : 'SOUSOU reviendra plus fort — choisis un niveau !';
++          : 'SOUSOU reviendra plus fort — rejoue ce niveau ou choisis un autre !';
+       const es = document.getElementById('endStarName');
+       if (es) es.textContent = '★ SOUSOU ★';
+       const retry = document.getElementById('retryBtn');
+-      if (retry) retry.textContent = '📋 Retour au menu';
++      if (retry) retry.textContent = '🔄 Rejouer ce niveau';
+       endScreen.classList.remove('hidden');
+       AudioFX.gameOver();
+-    }, 600);
++    }, 280);
+   }
+ 
+   function winLevel() {
+@@ -3214,24 +3237,26 @@
+     player.crouching = wantCrouch;
+     player.h = wantCrouch ? 32 : 52;
+ 
+-    if (jumpKey) jumpBuffer = 10;
++    if (jumpKey) jumpBuffer = 12;
+     else jumpBuffer = Math.max(0, jumpBuffer - 1);
+     if (jumpBuffer > 0) tryJump();
+-    // saut variable : relâcher coupe le sommet (feeling snappy)
+-    if (!jumpKey && player.vy < -5.5) player.vy *= 0.62;
