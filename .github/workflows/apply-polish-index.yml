@@ -3,6 +3,7 @@ on:
   push:
     branches: [polish/fr-controls-gfx-fluid]
     paths:
+      - "payload/index.polish.patch.gz.b64"
       - "payload/index.polish.patch.gz.b64.a"
       - "payload/index.polish.patch.gz.b64.b"
       - ".github/workflows/apply-polish-index.yml"
@@ -20,9 +21,15 @@ jobs:
       - name: Apply gzipped patch to index.html
         run: |
           set -euo pipefail
-          test -f payload/index.polish.patch.gz.b64.a
-          test -f payload/index.polish.patch.gz.b64.b
-          cat payload/index.polish.patch.gz.b64.a payload/index.polish.patch.gz.b64.b | base64 -d | gunzip | git apply --whitespace=nowarn -
+          if [ -f payload/index.polish.patch.gz.b64 ]; then
+            SRC=payload/index.polish.patch.gz.b64
+            tr -d '\n\r \t' < "$SRC" | base64 -d | gunzip > /tmp/polish.patch
+          else
+            test -f payload/index.polish.patch.gz.b64.a
+            test -f payload/index.polish.patch.gz.b64.b
+            cat payload/index.polish.patch.gz.b64.a payload/index.polish.patch.gz.b64.b | tr -d '\n\r \t' | base64 -d | gunzip > /tmp/polish.patch
+          fi
+          git apply --whitespace=nowarn /tmp/polish.patch
           grep -q AZERTY index.html
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
