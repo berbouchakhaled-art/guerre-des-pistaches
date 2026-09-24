@@ -1,0 +1,40 @@
+name: Apply polish index
+on:
+  push:
+    branches: [polish/fr-controls-gfx-fluid]
+    paths:
+      - "payload/index.polish.patch.gz.hex.0"
+      - "payload/index.polish.patch.gz.hex.1"
+      - "payload/index.polish.patch.gz.hex.2"
+      - ".github/workflows/apply-polish-index.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: polish/fr-controls-gfx-fluid
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply hex-gzipped patch to index.html
+        run: |
+          set -euo pipefail
+          python3 << 'PY'
+          from pathlib import Path
+          import binascii, gzip
+          h = "".join(Path(f"payload/index.polish.patch.gz.hex.{i}").read_text().strip() for i in range(3))
+          Path("/tmp/polish.patch").write_bytes(gzip.decompress(binascii.unhexlify(h)))
+          PY
+          git apply --whitespace=nowarn /tmp/polish.patch
+          grep -q AZERTY index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No index.html changes"
+            exit 0
+          fi
+          git commit -m "polish: FR controls, gfx, fluidity for French users"
+          git push origin HEAD:polish/fr-controls-gfx-fluid
