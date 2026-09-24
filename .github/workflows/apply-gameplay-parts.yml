@@ -1,0 +1,35 @@
+name: Apply gameplay feel parts
+on:
+  workflow_dispatch:
+  push:
+    branches: [gameplay/feel-pass]
+    paths:
+      - 'patches/gameplay-feel.part0.patch'
+      - 'patches/gameplay-feel.part1.patch'
+      - 'patches/gameplay-feel.part2.patch'
+      - '.github/workflows/apply-gameplay-parts.yml'
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gameplay/feel-pass
+          fetch-depth: 0
+      - name: Assemble parts, patch main index, commit
+        run: |
+          set -euo pipefail
+          cat patches/gameplay-feel.part0.patch patches/gameplay-feel.part1.patch patches/gameplay-feel.part2.patch > /tmp/gameplay-feel.patch
+          git fetch origin main
+          git show origin/main:index.html > index.html
+          patch -p1 < /tmp/gameplay-feel.patch
+          grep -q "jumpBuffer = 12" index.html
+          grep -q "Rejouer ce niveau" index.html
+          git add index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --cached --quiet; then echo No changes; exit 0; fi
+          git commit -m "gameplay: snappier jump/run, fairer combat, faster same-level retry"
+          git push
