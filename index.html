@@ -1767,6 +1767,41 @@
   let fpsEma = 60;
   let lastFrameTs = 0;
 
+  // Large Sousou map watermark (all worlds / story / difficulties)
+  const sousouBgImg = new Image();
+  let sousouBgReady = false;
+  sousouBgImg.decoding = 'async';
+  sousouBgImg.onload = () => { sousouBgReady = true; };
+  // Prefer crisp upscaled bg; fall back to menu portrait (already on Pages)
+  sousouBgImg.onerror = () => {
+    if (!sousouBgImg.dataset.fallback) {
+      sousouBgImg.dataset.fallback = '1';
+      sousouBgImg.src = 'assets/sousou-menu.png';
+    }
+  };
+  sousouBgImg.src = 'assets/sousou-bg.png';
+
+  function drawSousouMapBackground() {
+    if (!sousouBgReady || !sousouBgImg.naturalWidth) return;
+    // ~70% of canvas height, slightly left of center so play stays readable
+    const targetH = VH * (lowFxMode ? 0.62 : 0.72);
+    const scale = targetH / sousouBgImg.naturalHeight;
+    const dw = Math.round(sousouBgImg.naturalWidth * scale);
+    const dh = Math.round(targetH);
+    const dx = Math.round(VW * 0.5 - dw * 0.5 - VW * 0.04);
+    const dy = Math.round(VH * 0.5 - dh * 0.5 + VH * 0.02);
+    const alpha = lowFxMode ? 0.28 : 0.38;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    // world-ish feel: mild parallax so it drifts with the map, still always on-screen
+    const px = dx - Math.floor((cameraX * 0.08) % 24);
+    const py = dy - Math.floor((cameraY * 0.06) % 16);
+    ctx.drawImage(sousouBgImg, 0, 0, sousouBgImg.naturalWidth, sousouBgImg.naturalHeight, px, py, dw, dh);
+    ctx.restore();
+  }
+
+
   function trimParticles() {
     if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
   }
@@ -3771,6 +3806,9 @@
         drawCloud(cx, 40 + (i % 3) * 25, 1 + (i % 2) * 0.3);
       }
     }
+
+    // Grand portrait Sousou en fond de map (tous mondes) — derrière les tuiles
+    drawSousouMapBackground();
 
     ctx.save();
     // Caméra X + Y (plus de yOff fixe qui laissait Sousou hors cadre en hauteur)
