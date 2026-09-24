@@ -1,0 +1,36 @@
+name: Apply gameplay feel patch
+on:
+  workflow_dispatch:
+  push:
+    branches: [gameplay/feel-pass]
+    paths:
+      - 'patches/gameplay-feel.patch'
+      - '.github/workflows/apply-gameplay-patch.yml'
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: gameplay/feel-pass
+          fetch-depth: 0
+      - name: Restore index.html from main and apply patch
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:index.html > index.html
+          patch -p1 < patches/gameplay-feel.patch
+          rm -f GAMEPLAY_FEEL.md size-test.html
+          git add index.html
+          git rm -f --ignore-unmatch GAMEPLAY_FEEL.md size-test.html || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "gameplay: snappier jump/run, fairer combat, faster same-level retry"
+          git push origin HEAD:gameplay/feel-pass
