@@ -517,17 +517,17 @@
       box-shadow: 0 4px 0 rgba(0,0,0,0.35);
     }
     .touch-actions .jump-btn {
-      background: rgba(255, 180, 0, 0.65);
+      background: rgba(255, 180, 0, 0.72);
       border-color: #ffd54f;
-      width: 78px;
-      height: 78px;
-      font-size: 0.9rem;
+      width: 88px;
+      height: 88px;
+      font-size: 0.95rem;
     }
     .touch-actions .fire-btn {
-      background: rgba(100, 180, 40, 0.7);
+      background: rgba(100, 180, 40, 0.75);
       border-color: #c5e1a5;
-      width: 84px;
-      height: 84px;
+      width: 90px;
+      height: 90px;
       font-size: 0.95rem;
     }
     .touch-weapons {
@@ -815,8 +815,8 @@
         height: calc(54px * 3 + 12px);
       }
       .touch-left button { width: 54px; height: 54px; font-size: 1.3rem; }
-      .touch-actions .fire-btn { width: 76px; height: 76px; }
-      .touch-actions .jump-btn { width: 70px; height: 70px; }
+      .touch-actions .fire-btn { width: 82px; height: 82px; }
+      .touch-actions .jump-btn { width: 80px; height: 80px; }
     }
     /* Paysage mobile : croix directionnelle compacte à gauche */
     @media (orientation: landscape) {
@@ -830,9 +830,9 @@
       body.playing.mobile-fs .touch-left button {
         width: 48px; height: 48px; font-size: 1.15rem; border-radius: 12px;
       }
-      body.playing.mobile-fs .touch-actions button { width: 56px; height: 56px; font-size: 0.7rem; }
-      body.playing.mobile-fs .touch-actions .jump-btn { width: 62px; height: 62px; }
-      body.playing.mobile-fs .touch-actions .fire-btn { width: 68px; height: 68px; }
+      body.playing.mobile-fs .touch-actions button { width: 60px; height: 60px; font-size: 0.72rem; }
+      body.playing.mobile-fs .touch-actions .jump-btn { width: 70px; height: 70px; }
+      body.playing.mobile-fs .touch-actions .fire-btn { width: 74px; height: 74px; }
       body.playing.mobile-fs .touch-weapons button { min-width: 46px; height: 36px; }
       body.playing.mobile-fs .touch-hint { display: none; }
       body.playing.mobile-fs .hud span { padding: 2px 6px; }
@@ -1496,8 +1496,8 @@
       banner: 'MONDE 1-1 · PARC PISTACHE',
       theme: 'park',
       time: 400,
-      gravity: 0.48,
-      jumpV: -17.8,
+      gravity: 0.52,
+      jumpV: -17.5,
       music: 'day',
       rows: [
         '........................................................................................',
@@ -1526,8 +1526,8 @@
       banner: 'MONDE 2-1 · NUIT COSMIQUE ★',
       theme: 'cosmo',
       time: 450,
-      gravity: 0.40, // un peu plus stable qu'avant
-      jumpV: -17.2,  // sauts généreux
+      gravity: 0.44, // moins flottant, toujours généreux
+      jumpV: -16.9,  // sauts généreux
       music: 'night',
       rows: [
         // Version FACILE : grands ponts, petits trous, peu de lave, peu d'ennemis
@@ -1557,8 +1557,8 @@
       banner: 'MONDE 3-1 · VAISSEAU PISTACHE 🚀 vs RAISINS SECS 👽',
       theme: 'ship',
       time: 450,
-      gravity: 0.42,
-      jumpV: -16.5,
+      gravity: 0.46,
+      jumpV: -16.3,
       music: 'ship',
       rows: [
         // Coque en forme de pistache dans l'espace : salles, ponts, hublots, raisins aliens R
@@ -1713,10 +1713,10 @@
       maxEnemies: 22,
       spawnEveryMul: 1,
       meteorEvery: 160,
-      invulnHit: 140,
-      invulnStart: 80,
+      invulnHit: 160,
+      invulnStart: 90,
       jumpBonus: 0,
-      gravityMul: 1,
+      gravityMul: 1.02,
       enemySpeedMul: 1,
       contactLivesLost: 1,
       extraCoins: false,
@@ -1730,10 +1730,10 @@
       maxEnemies: 32,
       spawnEveryMul: 0.7,
       meteorEvery: 90,
-      invulnHit: 80,
-      invulnStart: 40,
+      invulnHit: 100,
+      invulnStart: 50,
       jumpBonus: 1.2, // saut un peu plus faible (moins négatif)
-      gravityMul: 1.08,
+      gravityMul: 1.1,
       enemySpeedMul: 1.25,
       contactLivesLost: 1,
       extraCoins: false,
@@ -2405,10 +2405,25 @@
         await AudioFX.resume();
         const n = window.__nextLevel;
         window.__nextLevel = undefined;
+        window.__retryLevel = undefined;
         storyMode = true;
         startLevel(n, { resetScore: false });
       } finally {
         setTimeout(() => { startLock = false; }, 400);
+      }
+      return;
+    }
+    // Après une mort : rejouer le même niveau tout de suite
+    if (typeof window.__retryLevel === 'number' && window.__retryLevel >= 0) {
+      startLock = true;
+      try {
+        await AudioFX.resume();
+        const n = window.__retryLevel;
+        window.__retryLevel = undefined;
+        storyMode = false;
+        startLevel(n, { resetScore: true });
+      } finally {
+        setTimeout(() => { startLock = false; }, 350);
       }
       return;
     }
@@ -2417,6 +2432,7 @@
     startScreen.classList.remove('hidden');
     showTouchUI(false);
     window.__nextLevel = undefined;
+    window.__retryLevel = undefined;
     storyMode = false;
     syncMenuBtn();
   });
@@ -2533,6 +2549,7 @@
   }
 
   function startLevel(index, { resetScore = false } = {}) {
+    window.__retryLevel = undefined;
     applyLevelDef(index);
     parseLevel();
     if (resetScore) {
@@ -3006,12 +3023,13 @@
       return;
     }
     if (!fell && (buffs.star > 0 || buffs.ghost > 0)) return;
-    // En mode « Pour tous », une chute dans un trou = -1 vie (pas game over immédiat)
-    if (fell && difficulty.id === 'easy') {
+    // Chute dans un trou : -1 vie + respawn (sauf Défi = mort immédiate)
+    if (fell && difficulty.id !== 'hard') {
       lives = Math.max(0, lives - 1);
       invuln = difficulty.invulnHit;
       screenShake = 10;
       AudioFX.hit();
+      floatScore(player.x, player.y - 40, '💔 -1');
       // respawn sûr près de la caméra
       player.x = Math.max(2 * T, cameraX + 80);
       player.y = Math.min(player.y, (ROWS - 5) * T);
@@ -3033,15 +3051,19 @@
     }
     lives -= difficulty.contactLivesLost || 1;
     invuln = difficulty.invulnHit;
-    screenShake = 12;
+    screenShake = 14;
     AudioFX.hit();
+    floatScore(player.x, player.y - 40, '💥 OUCH');
+    explode(player.x, player.y - 20, '#ef5350', 12);
+    explode(player.x, player.y - 20, '#ffeb3b', 6);
     updateHud();
     if (lives <= 0 || fell) {
       if (fell) lives = 0;
       diePlayer();
     } else {
-      player.vy = -7;
-      player.vx = -player.facing * 4;
+      // knockback intentionnel (loin de la menace)
+      player.vy = -9;
+      player.vx = -player.facing * 5.5;
     }
   }
 
@@ -3054,6 +3076,7 @@
     if (ph) ph.classList.add('hidden');
     keys = {};
     window.__nextLevel = undefined;
+    window.__retryLevel = currentLevelIndex;
     storyMode = false;
     AudioFX.die();
     AudioFX.stopMusic();
@@ -3063,17 +3086,17 @@
       const statsDie = document.getElementById('endStats');
       if (statsDie) statsDie.textContent = '🥜 ' + pistaches + ' pistaches · ' + levelDef.code + ' · ' + difficulty.label;
       endMsg.textContent = levelDef.theme === 'cosmo'
-        ? 'La Nuit Cosmique a eu raison de Sousou… choisis un monde !'
+        ? 'La Nuit Cosmique a eu raison de Sousou… réessaie ou choisis un monde !'
         : levelDef.theme === 'ship'
           ? 'Les raisins aliens ont eu le dernier mot… réessaie le vaisseau !'
-          : 'SOUSOU reviendra plus fort — choisis un niveau !';
+          : 'SOUSOU reviendra plus fort — rejoue ce niveau ou choisis un autre !';
       const es = document.getElementById('endStarName');
       if (es) es.textContent = '★ SOUSOU ★';
       const retry = document.getElementById('retryBtn');
-      if (retry) retry.textContent = '📋 Retour au menu';
+      if (retry) retry.textContent = '🔄 Rejouer ce niveau';
       endScreen.classList.remove('hidden');
       AudioFX.gameOver();
-    }, 600);
+    }, 280);
   }
 
   function winLevel() {
@@ -3214,24 +3237,26 @@
     player.crouching = wantCrouch;
     player.h = wantCrouch ? 32 : 52;
 
-    if (jumpKey) jumpBuffer = 10;
+    if (jumpKey) jumpBuffer = 12;
     else jumpBuffer = Math.max(0, jumpBuffer - 1);
     if (jumpBuffer > 0) tryJump();
-    // saut variable : relâcher coupe le sommet (feeling snappy)
-    if (!jumpKey && player.vy < -5.5) player.vy *= 0.62;
+    // saut variable : relâcher tôt = petit hop (coupe plus tôt / plus net)
+    if (!jumpKey && player.vy < -3.2) player.vy *= 0.55;
+    // chute un peu plus snappy si on ne maintient pas le saut
+    if (!jumpKey && player.vy > 0) player.vy += levelDef.gravity * difficulty.gravityMul * 0.28;
     if (fire) tryShoot();
 
-    // run — glace = un peu de glisse (mais contrôlable)
+    // run — accélération / freinage plus réactifs (glace reste un peu glissante)
     const gt = player.onGround ? groundTileUnderPlayer() : null;
     const onIce = gt && gt.type === 11;
-    const accel = player.onGround ? (onIce ? 0.5 : 0.65) : 0.45;
-    let maxSpd = player.crouching ? 2.2 : (onIce ? 6.0 : 5.2);
-    if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.6;
+    const accel = player.onGround ? (onIce ? 0.55 : 0.9) : 0.52;
+    let maxSpd = player.crouching ? 2.4 : (onIce ? 6.2 : 5.6);
+    if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.9;
     if (buffs.turbo > 0) maxSpd *= 1.55;
     if (left) { player.vx -= accel; player.facing = -1; }
     if (right) { player.vx += accel; player.facing = 1; }
     if (!left && !right) {
-      const fric = onIce ? 0.92 : (player.onGround ? 0.75 : 0.92);
+      const fric = onIce ? 0.94 : (player.onGround ? 0.68 : 0.90);
       player.vx *= fric;
       if (Math.abs(player.vx) < 0.08) player.vx = 0;
     }
@@ -3283,7 +3308,7 @@
       // saut buffer : sauter juste après l'atterrissage
       if (jumpBuffer > 0) tryJump();
     }
-    if (player.onGround) coyoteFrames = 8;
+    if (player.onGround) coyoteFrames = 10;
     else coyoteFrames = Math.max(0, coyoteFrames - 1);
     wasOnGround = player.onGround;
 
@@ -3388,12 +3413,12 @@
           c.baseY += (dy / d) * 4.5;
         }
       }
-      if (!c.pop && Math.hypot(player.x - c.x, (player.y - player.h / 2) - cy) < 40) {
+      if (!c.pop && Math.hypot(player.x - c.x, (player.y - player.h / 2) - cy) < 44) {
         c.taken = true;
         pistaches++;
         const coinPts = buffs.double > 0 ? 100 : 50;
         score += coinPts;
-        floatScore(c.x, cy, (buffs.double > 0 ? '✨' : '') + '+' + coinPts);
+        floatScore(c.x, cy, '🥜 ' + (buffs.double > 0 ? '✨' : '') + '+' + coinPts);
         if (pistaches % 5 === 0) {
           spawnNameFX(c.x, cy - 20, 'SOUSOU !', 'pop', 45);
           sousouStarBurst(c.x, cy);
@@ -3401,9 +3426,11 @@
         // chance de power-up mystère en collectant
         if (Math.random() < 0.06) spawnMysteryPower(c.x, cy - 10);
         AudioFX.coin();
-        explode(c.x, cy, '#ffeb3b', 14);
-        explode(c.x, cy, '#8bc34a', 10);
-        explode(c.x, cy, '#fff59d', 6);
+        explode(c.x, cy, '#ffeb3b', 16);
+        explode(c.x, cy, '#8bc34a', 12);
+        explode(c.x, cy, '#fff59d', 8);
+        explode(c.x, cy, '#c5e1a5', 6);
+        screenShake = Math.max(screenShake, 2.2);
         if (pistaches % 10 === 0) sousouStarBurst(c.x, cy);
         updateHud();
       }
@@ -3589,13 +3616,14 @@
 
       // stomp / hurt (fantôme = traverse sans dégât)
       if (invuln <= 0 && !flagSliding && buffs.ghost <= 0) {
-        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.7;
+        // hitbox contact un peu plus juste ; stomp un peu plus généreux
+        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.58;
         const playerBottom = player.y;
         const enemyTop = e.y - e.h;
         if (overlapX && playerBottom > enemyTop - 8 && player.y - player.h < e.y) {
-          if (player.vy > 0 && player.y - e.y < 14) {
+          if (player.vy > 0.4 && player.y - e.y < 18) {
             squashEnemy(e, true);
-            player.vy = -9;
+            player.vy = -10;
             AudioFX.stomp();
           } else {
             hurt();
@@ -3603,10 +3631,10 @@
         }
       } else if (buffs.ghost > 0) {
         // fantôme peut encore écraser en sautant
-        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.7;
-        if (overlapX && player.vy > 0 && player.y - e.y < 14 && player.y > e.y - e.h - 8) {
+        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.58;
+        if (overlapX && player.vy > 0.4 && player.y - e.y < 18 && player.y > e.y - e.h - 8) {
           squashEnemy(e, true);
-          player.vy = -9;
+          player.vy = -10;
           AudioFX.stomp();
         }
       }
@@ -3686,9 +3714,9 @@
 
   function updateCamera() {
     // --- Horizontal : suivi + zone morte (Sousou ne peut PAS sortir de l'écran) ---
-    const lookAhead = player.facing * Math.min(70, 20 + Math.abs(player.vx) * 10);
+    const lookAhead = player.facing * Math.min(90, 28 + Math.abs(player.vx) * 12);
     const targetX = player.x + lookAhead - VW * 0.38;
-    cameraX += (targetX - cameraX) * 0.22;
+    cameraX += (targetX - cameraX) * 0.28;
 
     // Contraintes dures : Sousou reste entre ~22% et ~62% de la largeur visible
     const minScreenX = VW * 0.22;
@@ -3708,7 +3736,7 @@
     if (player.onGround && player.y >= floorY - 8) {
       targetY = Math.max(0, LEVEL_H - VH);
     }
-    cameraY += (targetY - cameraY) * 0.2;
+    cameraY += (targetY - cameraY) * 0.26;
 
     // Contraintes dures verticales
     const minScreenY = VH * 0.18;

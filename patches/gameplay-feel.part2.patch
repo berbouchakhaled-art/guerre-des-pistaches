@@ -1,0 +1,117 @@
++    // saut variable : relâcher tôt = petit hop (coupe plus tôt / plus net)
++    if (!jumpKey && player.vy < -3.2) player.vy *= 0.55;
++    // chute un peu plus snappy si on ne maintient pas le saut
++    if (!jumpKey && player.vy > 0) player.vy += levelDef.gravity * difficulty.gravityMul * 0.28;
+     if (fire) tryShoot();
+ 
+-    // run — glace = un peu de glisse (mais contrôlable)
++    // run — accélération / freinage plus réactifs (glace reste un peu glissante)
+     const gt = player.onGround ? groundTileUnderPlayer() : null;
+     const onIce = gt && gt.type === 11;
+-    const accel = player.onGround ? (onIce ? 0.5 : 0.65) : 0.45;
+-    let maxSpd = player.crouching ? 2.2 : (onIce ? 6.0 : 5.2);
+-    if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.6;
++    const accel = player.onGround ? (onIce ? 0.55 : 0.9) : 0.52;
++    let maxSpd = player.crouching ? 2.4 : (onIce ? 6.2 : 5.6);
++    if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.9;
+     if (buffs.turbo > 0) maxSpd *= 1.55;
+     if (left) { player.vx -= accel; player.facing = -1; }
+     if (right) { player.vx += accel; player.facing = 1; }
+     if (!left && !right) {
+-      const fric = onIce ? 0.92 : (player.onGround ? 0.75 : 0.92);
++      const fric = onIce ? 0.94 : (player.onGround ? 0.68 : 0.90);
+       player.vx *= fric;
+       if (Math.abs(player.vx) < 0.08) player.vx = 0;
+     }
+@@ -3283,7 +3308,7 @@
+       // saut buffer : sauter juste après l'atterrissage
+       if (jumpBuffer > 0) tryJump();
+     }
+-    if (player.onGround) coyoteFrames = 8;
++    if (player.onGround) coyoteFrames = 10;
+     else coyoteFrames = Math.max(0, coyoteFrames - 1);
+     wasOnGround = player.onGround;
+ 
+@@ -3388,12 +3413,12 @@
+           c.baseY += (dy / d) * 4.5;
+         }
+       }
+-      if (!c.pop && Math.hypot(player.x - c.x, (player.y - player.h / 2) - cy) < 40) {
++      if (!c.pop && Math.hypot(player.x - c.x, (player.y - player.h / 2) - cy) < 44) {
+         c.taken = true;
+         pistaches++;
+         const coinPts = buffs.double > 0 ? 100 : 50;
+         score += coinPts;
+-        floatScore(c.x, cy, (buffs.double > 0 ? '✨' : '') + '+' + coinPts);
++        floatScore(c.x, cy, '🥜 ' + (buffs.double > 0 ? '✨' : '') + '+' + coinPts);
+         if (pistaches % 5 === 0) {
+           spawnNameFX(c.x, cy - 20, 'SOUSOU !', 'pop', 45);
+           sousouStarBurst(c.x, cy);
+@@ -3401,9 +3426,11 @@
+         // chance de power-up mystère en collectant
+         if (Math.random() < 0.06) spawnMysteryPower(c.x, cy - 10);
+         AudioFX.coin();
+-        explode(c.x, cy, '#ffeb3b', 14);
+-        explode(c.x, cy, '#8bc34a', 10);
+-        explode(c.x, cy, '#fff59d', 6);
++        explode(c.x, cy, '#ffeb3b', 16);
++        explode(c.x, cy, '#8bc34a', 12);
++        explode(c.x, cy, '#fff59d', 8);
++        explode(c.x, cy, '#c5e1a5', 6);
++        screenShake = Math.max(screenShake, 2.2);
+         if (pistaches % 10 === 0) sousouStarBurst(c.x, cy);
+         updateHud();
+       }
+@@ -3589,13 +3616,14 @@
+ 
+       // stomp / hurt (fantôme = traverse sans dégât)
+       if (invuln <= 0 && !flagSliding && buffs.ghost <= 0) {
+-        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.7;
++        // hitbox contact un peu plus juste ; stomp un peu plus généreux
++        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.58;
+         const playerBottom = player.y;
+         const enemyTop = e.y - e.h;
+         if (overlapX && playerBottom > enemyTop - 8 && player.y - player.h < e.y) {
+-          if (player.vy > 0 && player.y - e.y < 14) {
++          if (player.vy > 0.4 && player.y - e.y < 18) {
+             squashEnemy(e, true);
+-            player.vy = -9;
++            player.vy = -10;
+             AudioFX.stomp();
+           } else {
+             hurt();
+@@ -3603,10 +3631,10 @@
+         }
+       } else if (buffs.ghost > 0) {
+         // fantôme peut encore écraser en sautant
+-        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.7;
+-        if (overlapX && player.vy > 0 && player.y - e.y < 14 && player.y > e.y - e.h - 8) {
++        const overlapX = Math.abs(player.x - e.x) < (player.w + e.w) / 2 * 0.58;
++        if (overlapX && player.vy > 0.4 && player.y - e.y < 18 && player.y > e.y - e.h - 8) {
+           squashEnemy(e, true);
+-          player.vy = -9;
++          player.vy = -10;
+           AudioFX.stomp();
+         }
+       }
+@@ -3686,9 +3714,9 @@
+ 
+   function updateCamera() {
+     // --- Horizontal : suivi + zone morte (Sousou ne peut PAS sortir de l'écran) ---
+-    const lookAhead = player.facing * Math.min(70, 20 + Math.abs(player.vx) * 10);
++    const lookAhead = player.facing * Math.min(90, 28 + Math.abs(player.vx) * 12);
+     const targetX = player.x + lookAhead - VW * 0.38;
+-    cameraX += (targetX - cameraX) * 0.22;
++    cameraX += (targetX - cameraX) * 0.28;
+ 
+     // Contraintes dures : Sousou reste entre ~22% et ~62% de la largeur visible
+     const minScreenX = VW * 0.22;
+@@ -3708,7 +3736,7 @@
+     if (player.onGround && player.y >= floorY - 8) {
+       targetY = Math.max(0, LEVEL_H - VH);
+     }
+-    cameraY += (targetY - cameraY) * 0.2;
++    cameraY += (targetY - cameraY) * 0.26;
+ 
+     // Contraintes dures verticales
+     const minScreenY = VH * 0.18;
