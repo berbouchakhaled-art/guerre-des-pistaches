@@ -1,1 +1,1 @@
-@file:///workspace/index.gameplay.html
+/workspace/index.gameplay.html
