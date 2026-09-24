@@ -226,7 +226,10 @@
       z-index: 2;
     }
     .hud span {
-      background: rgba(8,18,6,.78); padding: 5px 11px; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(27,58,22,.88), rgba(8,18,6,.88));
+      padding: 5px 11px; border-radius: 999px;
+      border: 1px solid rgba(174,213,129,.45);
+      box-shadow: 0 2px 0 rgba(27,94,32,.35);
       border: 2px solid rgba(174,213,129,.65); backdrop-filter: blur(6px);
       box-shadow: 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.35);
       text-shadow: 0 1px 2px rgba(0,0,0,.55);
@@ -388,8 +391,15 @@
     button:active { transform: translateY(2px); box-shadow: 0 1px 0 #4a7c23; }
     .mute-btn {
       position: absolute; top: 8px; right: 8px; bottom: auto; z-index: 6;
-      font-size: .8rem; padding: 7px 12px; margin: 0;
+      font-size: .8rem; padding: 8px 14px; margin: 0;
       animation: none;
+      color: #1b3a16;
+      background: linear-gradient(180deg, #dcedc8, #8bc34a);
+      border: 2px solid #33691e;
+      border-radius: 999px;
+      box-shadow: 0 3px 0 #1b5e20, 0 4px 10px rgba(0,0,0,.35);
+      font-weight: 700;
+      min-height: 40px;
     }
     .menu-btn {
       position: absolute; top: 8px; left: 8px; bottom: auto; z-index: 12;
@@ -422,7 +432,7 @@
       border-radius: 5px; padding: 1px 6px; font-family: inherit; font-size: .74rem;
     }
 
-    /* ===== Contrôles tactiles — iOS Safari first ===== */
+    /* ===== Contrôles tactiles — iOS Safari first (FR, multi-touch) ===== */
     .touch-ui {
       display: none;
       position: absolute;
@@ -435,7 +445,7 @@
     }
     .touch-ui button {
       pointer-events: auto !important;
-      touch-action: manipulation;
+      touch-action: none;
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
@@ -445,48 +455,62 @@
       outline: none;
       -webkit-appearance: none;
       appearance: none;
+      transition: transform 0.06s ease, filter 0.06s ease, box-shadow 0.06s ease;
     }
     .touch-ui button.active {
-      background: rgba(139, 195, 74, 0.7) !important;
+      background: linear-gradient(180deg, #c5e1a5, #7cb342) !important;
       border-color: #ffeb3b !important;
-      transform: scale(0.95);
+      color: #1b3a16 !important;
+      transform: scale(0.92);
+      filter: brightness(1.08);
+      box-shadow: 0 1px 0 #33691e, inset 0 0 12px rgba(255,235,59,0.35) !important;
     }
-    /* Gauche = croix directionnelle (↑ ↓ ← →) */
+    /* Gauche = grands pads Gauche/Droite (+ petits Visée/Baisser) */
     .touch-left {
       position: absolute;
       left: max(6px, env(safe-area-inset-left));
       bottom: max(10px, env(safe-area-inset-bottom));
       display: grid;
-      grid-template-columns: 58px 58px 58px;
-      grid-template-rows: 58px 58px 58px;
-      gap: 6px;
+      grid-template-columns: minmax(72px, 18vw) minmax(72px, 18vw);
+      grid-template-rows: 44px minmax(72px, 16vw);
+      gap: 8px;
       z-index: 9;
-      width: calc(58px * 3 + 12px);
-      height: calc(58px * 3 + 12px);
+      width: auto;
+      height: auto;
+      max-width: 46vw;
     }
     .touch-left button {
-      width: 58px;
-      height: 58px;
-      border-radius: 14px;
-      font-size: 1.45rem;
-      border: 3px solid rgba(255, 255, 255, 0.55);
-      background: rgba(0, 0, 0, 0.55);
-      color: #fff;
+      min-width: 56px;
+      min-height: 56px;
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      font-size: clamp(0.7rem, 2.6vw, 0.95rem);
+      border: 3px solid #aed581;
+      background: linear-gradient(180deg, rgba(46,90,40,0.82), rgba(20,40,16,0.88));
+      color: #f1f8e9;
       font-family: inherit;
       font-weight: 700;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.35);
-      padding: 0;
-      line-height: 1;
+      box-shadow: 0 5px 0 #1b3a16, 0 6px 14px rgba(0,0,0,0.35);
+      padding: 4px;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
     }
-    .touch-left .dir-up    { grid-column: 2; grid-row: 1; }
+    .touch-left .dir-up    { grid-column: 1; grid-row: 1; min-height: 44px; font-size: 0.72rem; }
+    .touch-left .dir-down  { grid-column: 2; grid-row: 1; min-height: 44px; font-size: 0.72rem; }
     .touch-left .dir-left  { grid-column: 1; grid-row: 2; }
-    .touch-left .dir-right { grid-column: 3; grid-row: 2; }
-    .touch-left .dir-down  { grid-column: 2; grid-row: 3; }
+    .touch-left .dir-right { grid-column: 2; grid-row: 2; }
+    .touch-left .dir-left,
+    .touch-left .dir-right {
+      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      background: linear-gradient(180deg, rgba(104,159,56,0.75), rgba(46,90,40,0.9));
+      border-color: #dce775;
+    }
     .touch-left .dir-up {
-      background: rgba(255, 193, 7, 0.45);
+      background: linear-gradient(180deg, rgba(255, 193, 7, 0.55), rgba(245, 127, 23, 0.55));
       border-color: #ffeb3b;
     }
-    /* Droite = armes + SAUT + TIR uniquement */
+    /* Droite = armes + Sauter + Tirer */
     .touch-right {
       position: absolute;
       right: max(8px, env(safe-area-inset-right));
@@ -499,36 +523,41 @@
     }
     .touch-actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: flex-end;
     }
     .touch-actions button {
-      width: 70px;
-      height: 70px;
+      min-width: 56px;
+      min-height: 56px;
+      width: clamp(72px, 18vw, 96px);
+      height: clamp(72px, 18vw, 96px);
       border-radius: 50%;
-      font-size: 0.8rem;
+      font-size: clamp(0.72rem, 2.4vw, 0.95rem);
       line-height: 1.15;
-      border: 3px solid rgba(255, 255, 255, 0.55);
-      background: rgba(0, 0, 0, 0.55);
+      border: 3px solid #c5e1a5;
+      background: linear-gradient(180deg, rgba(46,90,40,0.85), rgba(20,40,16,0.9));
       color: #fff;
       font-family: inherit;
-      font-weight: 700;
-      padding: 4px;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.35);
+      font-weight: 800;
+      padding: 6px;
+      box-shadow: 0 5px 0 #1b3a16, 0 6px 14px rgba(0,0,0,0.35);
+      text-transform: none;
     }
     .touch-actions .jump-btn {
-      background: rgba(255, 180, 0, 0.72);
-      border-color: #ffd54f;
-      width: 88px;
-      height: 88px;
-      font-size: 0.95rem;
+      background: linear-gradient(180deg, #ffd54f, #f9a825);
+      border-color: #fff59d;
+      color: #3e2723;
+      width: clamp(80px, 20vw, 104px);
+      height: clamp(80px, 20vw, 104px);
+      font-size: clamp(0.8rem, 2.6vw, 1rem);
     }
     .touch-actions .fire-btn {
-      background: rgba(100, 180, 40, 0.75);
-      border-color: #c5e1a5;
-      width: 90px;
-      height: 90px;
-      font-size: 0.95rem;
+      background: linear-gradient(180deg, #aed581, #558b2f);
+      border-color: #dcedc8;
+      color: #1b3a16;
+      width: clamp(84px, 21vw, 108px);
+      height: clamp(84px, 21vw, 108px);
+      font-size: clamp(0.8rem, 2.6vw, 1rem);
     }
     .touch-weapons {
       display: flex;
@@ -540,15 +569,16 @@
       border-radius: 12px;
       font-size: 1rem;
       padding: 4px 8px;
-      border: 3px solid rgba(255, 255, 255, 0.45);
-      background: rgba(0, 0, 0, 0.55);
-      color: #fff;
+      border: 3px solid #aed581;
+      background: linear-gradient(180deg, rgba(46,90,40,0.8), rgba(20,40,16,0.88));
+      color: #f1f8e9;
       font-family: inherit;
       font-weight: 700;
     }
     .touch-weapons button.selected {
       border-color: #ffeb3b;
-      background: rgba(255, 235, 59, 0.4);
+      background: linear-gradient(180deg, rgba(255,235,59,0.55), rgba(139,195,74,0.55));
+      color: #1b3a16;
     }
     .play-hint {
       position: absolute;
@@ -806,43 +836,48 @@
       .hud span { padding: 3px 7px; }
       .overlay p { font-size: 0.82rem; max-width: 100%; }
       .marquee { display: none; }
-      .mute-btn { top: 44px; right: 6px; font-size: 0.7rem; padding: 6px 10px; z-index: 9; }
+      .mute-btn { top: 8px; right: 6px; font-size: 0.72rem; padding: 8px 12px; z-index: 12; min-height: 40px; }
       .menu-btn { top: 8px; left: 6px; font-size: 0.78rem; padding: 10px 14px; z-index: 12; }
       .touch-left {
-        grid-template-columns: 54px 54px 54px;
-        grid-template-rows: 54px 54px 54px;
-        width: calc(54px * 3 + 12px);
-        height: calc(54px * 3 + 12px);
+        grid-template-columns: minmax(64px, 20vw) minmax(64px, 20vw);
+        grid-template-rows: 40px minmax(64px, 18vw);
+        gap: 7px;
+        max-width: 48vw;
       }
-      .touch-left button { width: 54px; height: 54px; font-size: 1.3rem; }
-      .touch-actions .fire-btn { width: 82px; height: 82px; }
-      .touch-actions .jump-btn { width: 80px; height: 80px; }
+      .touch-left button { min-width: 56px; min-height: 56px; font-size: 0.85rem; }
+      .touch-left .dir-up, .touch-left .dir-down { min-height: 40px; font-size: 0.68rem; }
+      .touch-actions .fire-btn { width: 88px; height: 88px; min-width: 56px; min-height: 56px; }
+      .touch-actions .jump-btn { width: 84px; height: 84px; min-width: 56px; min-height: 56px; }
+      .mute-btn { top: max(4px, env(safe-area-inset-top)); right: max(6px, env(safe-area-inset-right)); z-index: 12; }
     }
-    /* Paysage mobile : croix directionnelle compacte à gauche */
+    /* Paysage mobile : pads larges mais plus bas */
     @media (orientation: landscape) {
       body.playing.mobile-fs .touch-left {
-        grid-template-columns: 48px 48px 48px;
-        grid-template-rows: 48px 48px 48px;
-        gap: 4px;
-        width: calc(48px * 3 + 8px);
-        height: calc(48px * 3 + 8px);
+        grid-template-columns: minmax(64px, 14vw) minmax(64px, 14vw);
+        grid-template-rows: 36px minmax(56px, 14vh);
+        gap: 6px;
+        max-width: 34vw;
       }
       body.playing.mobile-fs .touch-left button {
-        width: 48px; height: 48px; font-size: 1.15rem; border-radius: 12px;
+        min-width: 56px; min-height: 56px; font-size: 0.78rem; border-radius: 14px;
       }
-      body.playing.mobile-fs .touch-actions button { width: 60px; height: 60px; font-size: 0.72rem; }
-      body.playing.mobile-fs .touch-actions .jump-btn { width: 70px; height: 70px; }
-      body.playing.mobile-fs .touch-actions .fire-btn { width: 74px; height: 74px; }
+      body.playing.mobile-fs .touch-left .dir-up,
+      body.playing.mobile-fs .touch-left .dir-down { min-height: 34px; font-size: 0.62rem; }
+      body.playing.mobile-fs .touch-actions button { width: 64px; height: 64px; min-width: 56px; min-height: 56px; font-size: 0.7rem; }
+      body.playing.mobile-fs .touch-actions .jump-btn { width: 72px; height: 72px; }
+      body.playing.mobile-fs .touch-actions .fire-btn { width: 76px; height: 76px; }
       body.playing.mobile-fs .touch-weapons button { min-width: 46px; height: 36px; }
       body.playing.mobile-fs .touch-hint { display: none; }
       body.playing.mobile-fs .hud span { padding: 2px 6px; }
+      body.playing.mobile-fs .mute-btn,
+      body.playing.mobile-fs .menu-btn { min-height: 44px; }
     }
   </style>
 </head>
 <body>
   <div id="iosBanner" class="ios-banner">
-    📱 iPhone : choisis un <strong>niveau</strong> puis utilise ◀▶ SAUT TIR.<br/>
-    Conseil : <strong>paysage</strong>. Ouvre via le lien Wi‑Fi (pas un fichier).
+    📱 iPhone : choisis un <strong>niveau</strong> puis Gauche/Droite + Sauter/Tirer.<br/>
+    Portrait ou paysage OK. Ouvre via le lien Wi‑Fi (pas un fichier).
   </div>
   <div class="brand">
     <div class="game-title">LA GUERRE DES PISTACHES</div>
@@ -870,13 +905,13 @@
     <button id="muteBtn" class="mute-btn" type="button" aria-pressed="false" title="Couper le son">🔊 Son ON</button>
     <div id="playHint" class="play-hint hidden" role="status" aria-live="polite"></div>
 
-    <!-- Pad tactile (mobile / tablette) : directions à GAUCHE, actions à DROITE -->
+    <!-- Pad tactile (mobile / tablette) : Gauche/Droite à GAUCHE, Sauter/Tirer à DROITE -->
     <div id="touchUI" class="touch-ui" aria-hidden="true">
-      <div class="touch-left" role="group" aria-label="Directions">
-        <button type="button" class="dir-up" data-key="ArrowUp" aria-label="Viser en haut">↑</button>
-        <button type="button" class="dir-left" data-key="ArrowLeft" aria-label="Gauche">◀</button>
-        <button type="button" class="dir-right" data-key="ArrowRight" aria-label="Droite">▶</button>
-        <button type="button" class="dir-down" data-key="ArrowDown" aria-label="Se baisser">↓</button>
+      <div class="touch-left" role="group" aria-label="Déplacement">
+        <button type="button" class="dir-up" data-key="ArrowUp" aria-label="Viser / sauter">↑ Visée</button>
+        <button type="button" class="dir-down" data-key="ArrowDown" aria-label="Se baisser">↓ Baisser</button>
+        <button type="button" class="dir-left" data-key="ArrowLeft" aria-label="Gauche">◀ Gauche</button>
+        <button type="button" class="dir-right" data-key="ArrowRight" aria-label="Droite">Droite ▶</button>
       </div>
       <div class="touch-right">
         <div class="touch-weapons">
@@ -885,11 +920,11 @@
           <button type="button" data-weapon="2" aria-label="Grenade">💣</button>
         </div>
         <div class="touch-actions">
-          <button type="button" class="jump-btn" data-key="Space" aria-label="Sauter">SAUT</button>
-          <button type="button" class="fire-btn" data-action="fire" aria-label="Tirer">TIR</button>
+          <button type="button" class="jump-btn" data-key="Space" aria-label="Sauter">Sauter</button>
+          <button type="button" class="fire-btn" data-action="fire" aria-label="Tirer">Tirer</button>
         </div>
       </div>
-      <div class="touch-hint">← → ↑ ↓ à gauche · SAUT TIR à droite</div>
+      <div class="touch-hint">Gauche · Droite · Sauter · Tirer · Menu ☰ · Son</div>
     </div>
 
     <div id="startScreen" class="overlay" role="dialog" aria-labelledby="gameTitle" aria-modal="true">
@@ -958,11 +993,12 @@
             ♿ Texte + boutons plus grands
           </button>
           <p class="a11y-note">
-            💡 Premier lancement : « Activer le son » (surtout iPhone) · volume + · silencieux OFF
-            · <kbd>Espace</kbd>/<span class="mobile-only">SAUT</span> sauter · <kbd>X</kbd>/<span class="mobile-only">TIR</span> tirer
-            · ↑ vise en haut · <kbd>P</kbd> pause · <kbd>M</kbd> mute · <kbd>Esc</kbd> menu
-            <span class="desktop-only"> · flèches pour courir</span>
-            <span class="mobile-only"> · croix à gauche, actions à droite · paysage conseillé</span>
+            💡 Premier lancement : « Activer le son » (surtout iPhone) · volume + · silencieux OFF<br/>
+            <span class="desktop-only">Clavier : <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> / <kbd>Q</kbd><kbd>D</kbd> (AZERTY) courir ·
+            <kbd>Espace</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> / <kbd>Z</kbd> sauter ·
+            <kbd>J</kbd> ou <kbd>X</kbd> tirer · <kbd>↓</kbd> se baisser ·
+            <kbd>P</kbd> pause · <kbd>M</kbd> son · <kbd>Échap</kbd> Menu</span>
+            <span class="mobile-only">Mobile : pouce gauche = Gauche/Droite · pouce droit = Sauter/Tirer · ☰ Menu · Son · paysage ou portrait OK</span>
           </p>
         </div>
       </div>
@@ -995,16 +1031,15 @@
 
   <p class="controls">
     <span class="desktop-only">
-      <kbd>←</kbd><kbd>→</kbd> courir ·
-      <kbd>Espace</kbd> sauter ·
-      <kbd>↑</kbd> viser / tirer en haut ·
+      <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> / <kbd>Q</kbd><kbd>D</kbd> (AZERTY) courir ·
+      <kbd>Espace</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> / <kbd>Z</kbd> sauter ·
       <kbd>↓</kbd> se baisser ·
-      <kbd>X</kbd> / clic tirer ·
+      <kbd>J</kbd> / <kbd>X</kbd> / clic tirer ·
       <kbd>1</kbd> Lance · <kbd>2</kbd> Gun · <kbd>3</kbd> Grenade ·
-      <kbd>P</kbd> pause · <kbd>M</kbd> mute · <kbd>Esc</kbd> / bouton Menu
+      <kbd>P</kbd> pause · <kbd>M</kbd> son · <kbd>Échap</kbd> / ☰ Menu
     </span>
     <span class="mobile-only">
-      📱 Mobile : ←→↑↓ à gauche · SAUT/TIR à droite · paysage conseillé
+      📱 Mobile : Gauche/Droite (bas-gauche) · Sauter/Tirer (bas-droite) · ☰ Menu · Son · multi-touch OK
     </span>
   </p>
   <style>
@@ -1795,14 +1830,18 @@
   let introTimer = 0;
   let starSparkles = [];
 
-  // --- Perf light caps / culling (surgical) ---
+  // --- Perf light caps / culling / pool (surgical) ---
   const MAX_PARTICLES = 110;
   const MAX_SPARKLES = 40;
   const MAX_NAMEFX = 24;
+  const PARTICLE_POOL = [];
   let skyGradCache = { theme: null, grad: null };
   let lowFxMode = false;
   let fpsEma = 60;
   let lastFrameTs = 0;
+  let frameDt = 1; // ms clampé, pour fluidité
+  let playerSquash = 1;   // 1 = normal ; <1 aplatissage (atterrissage)
+  let playerStretch = 1;  // >1 étirement (saut)
 
   // Large Sousou map watermark (all worlds / story / difficulties)
   const sousouBgImg = new Image();
@@ -1905,7 +1944,8 @@
   // --- Input ---
   window.addEventListener('keydown', e => {
     keys[e.code] = true;
-    if (['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault();
+    // Empêche le scroll page (Espace / flèches) pendant le jeu
+    if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
     if (e.code === 'KeyP' && running) {
       paused = !paused;
       AudioFX.pause();
@@ -2774,15 +2814,24 @@
     trimNameFX();
   }
 
+  function allocParticle() {
+    return PARTICLE_POOL.pop() || { x:0, y:0, vx:0, vy:0, life:0, color:'#fff', size:2 };
+  }
+  function releaseParticle(p) {
+    if (PARTICLE_POOL.length < MAX_PARTICLES) PARTICLE_POOL.push(p);
+  }
+  function spawnParticle(x, y, vx, vy, life, color, size) {
+    const p = allocParticle();
+    p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.life = life; p.color = color; p.size = size;
+    particles.push(p);
+  }
   function explode(x, y, color, n = 12) {
     if (lowFxMode) n = Math.max(3, Math.floor(n * 0.55));
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = 1 + Math.random() * 4;
-      particles.push({
-        x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1,
-        life: 18 + Math.random() * 25, color, size: 2 + Math.random() * 4,
-      });
+      spawnParticle(x, y, Math.cos(a) * s, Math.sin(a) * s - 1,
+        18 + Math.random() * 25, color, 2 + Math.random() * 4);
     }
     trimParticles();
   }
@@ -2923,6 +2972,8 @@
     player.onGround = false;
     coyoteFrames = 0;
     jumpBuffer = 0;
+    playerStretch = 1.18;
+    playerSquash = 0.88;
     AudioFX.jump();
     AudioFX.hairSwish();
     explode(player.x, player.y, '#8d6e63', 5);
@@ -3222,13 +3273,15 @@
       return;
     }
 
-    const left = keys['ArrowLeft'] || keys['KeyA'];
+    // Déplacement : flèches + A/D (QWERTY) + Q/D (AZERTY)
+    const left = keys['ArrowLeft'] || keys['KeyA'] || keys['KeyQ'];
     const right = keys['ArrowRight'] || keys['KeyD'];
-    // Flèche haut = viser en haut (pas saut) ; saut = Espace / Z / W
+    // Visée haut si ↑ maintenu ; saut = Espace (primaire) + ↑ / W / Z
     player.aimUp = !!(keys['ArrowUp']);
-    const jumpKey = keys['Space'] || keys['KeyZ'] || keys['KeyW'];
+    const jumpKey = keys['Space'] || keys['ArrowUp'] || keys['KeyZ'] || keys['KeyW'];
     const down = keys['ArrowDown'] || keys['KeyS'];
-    const fire = keys['KeyX'];
+    // Tir : J (primaire FR) + X (alias) — le pad tactile pose KeyX
+    const fire = keys['KeyJ'] || keys['KeyX'];
 
     // crouch
     const wantCrouch = down && player.onGround && !player.aimUp;
@@ -3277,15 +3330,15 @@
         // poussière de foulée
         const dustN = lowFxMode ? 1 : 2;
         for (let i = 0; i < dustN; i++) {
-          particles.push({
-            x: player.x - player.facing * 6 + (Math.random() - 0.5) * 10,
-            y: player.y,
-            vx: -player.facing * (0.5 + Math.random()) + (Math.random() - 0.5),
-            vy: -Math.random() * 1.5,
-            life: 12 + Math.random() * 10,
-            color: '#a1887f',
-            size: 2 + Math.random() * 3,
-          });
+          spawnParticle(
+            player.x - player.facing * 6 + (Math.random() - 0.5) * 10,
+            player.y,
+            -player.facing * (0.5 + Math.random()) + (Math.random() - 0.5),
+            -Math.random() * 1.5,
+            12 + Math.random() * 10,
+            '#a1887f',
+            2 + Math.random() * 3
+          );
         }
         trimParticles();
       }
@@ -3303,11 +3356,16 @@
     }
     if (!wasOnGround && player.onGround) {
       AudioFX.land();
+      playerSquash = 0.72;
+      playerStretch = 1.12;
       explode(player.x, player.y, '#a1887f', 6);
       explode(player.x, player.y, '#c5e1a5', 3);
       // saut buffer : sauter juste après l'atterrissage
       if (jumpBuffer > 0) tryJump();
     }
+    // retour fluide squash/stretch
+    playerSquash += (1 - playerSquash) * 0.18;
+    playerStretch += (1 - playerStretch) * 0.18;
     if (player.onGround) coyoteFrames = 10;
     else coyoteFrames = Math.max(0, coyoteFrames - 1);
     wasOnGround = player.onGround;
@@ -3716,7 +3774,7 @@
     // --- Horizontal : suivi + zone morte (Sousou ne peut PAS sortir de l'écran) ---
     const lookAhead = player.facing * Math.min(90, 28 + Math.abs(player.vx) * 12);
     const targetX = player.x + lookAhead - VW * 0.38;
-    cameraX += (targetX - cameraX) * 0.28;
+    cameraX += (targetX - cameraX) * 0.22;
 
     // Contraintes dures : Sousou reste entre ~22% et ~62% de la largeur visible
     const minScreenX = VW * 0.22;
@@ -3736,7 +3794,7 @@
     if (player.onGround && player.y >= floorY - 8) {
       targetY = Math.max(0, LEVEL_H - VH);
     }
-    cameraY += (targetY - cameraY) * 0.26;
+    cameraY += (targetY - cameraY) * 0.20;
 
     // Contraintes dures verticales
     const minScreenY = VH * 0.18;
@@ -3767,7 +3825,10 @@
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life--;
-      if (p.life <= 0) particles.splice(i, 1);
+      if (p.life <= 0) {
+        const dead = particles.splice(i, 1)[0];
+        releaseParticle(dead);
+      }
     }
   }
 
@@ -3893,15 +3954,30 @@
         ctx.fillRect(sx, sy, 2, 2);
       }
       ctx.globalAlpha = 1;
-      // lune pistache
-      ctx.fillStyle = 'rgba(200, 230, 160, 0.9)';
+      // lune pistache + halo
+      const moonX = VW - 90 - (cameraX * 0.03) % 12;
+      if (!lowFxMode) {
+        ctx.fillStyle = 'rgba(200, 230, 160, 0.18)';
+        ctx.beginPath();
+        ctx.arc(moonX, 70, 52, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(200, 230, 160, 0.92)';
       ctx.beginPath();
-      ctx.arc(VW - 90, 70, 34, 0, Math.PI * 2);
+      ctx.arc(moonX, 70, 34, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(139, 195, 74, 0.5)';
+      ctx.fillStyle = 'rgba(139, 195, 74, 0.55)';
       ctx.beginPath();
-      ctx.ellipse(VW - 82, 65, 10, 14, 0.2, 0, Math.PI * 2);
+      ctx.ellipse(moonX + 8, 65, 10, 14, 0.2, 0, Math.PI * 2);
       ctx.fill();
+      // silhouettes collines nocturnes
+      ctx.fillStyle = 'rgba(26, 6, 40, 0.45)';
+      for (let i = 0; i < 4; i++) {
+        const hx = ((i * 260) - cameraX * 0.15) % (VW + 260);
+        ctx.beginPath();
+        ctx.ellipse(hx + 90, VH - 20, 110, 42, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
       // nébuleuses
       ctx.fillStyle = 'rgba(236, 64, 122, 0.12)';
       ctx.beginPath();
@@ -3912,19 +3988,43 @@
       ctx.ellipse(VW * 0.3, 180, 120, 50, -0.2, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      // Parc jour
+      // Parc jour — ciel + soleil + collines parallaxe (bon marché)
       ctx.fillStyle = getSkyGradient('park');
       ctx.fillRect(0, 0, VW, VH);
-      ctx.fillStyle = '#7cb342';
-      for (let i = 0; i < 6; i++) {
-        const hx = ((i * 280) - cameraX * 0.3 % 280);
+      // soleil pistache
+      if (!lowFxMode) {
+        const sunX = VW * 0.82 - (cameraX * 0.02) % 20;
+        const sunY = 56;
+        const sg = ctx.createRadialGradient(sunX, sunY, 4, sunX, sunY, 48);
+        sg.addColorStop(0, 'rgba(255,241,118,0.95)');
+        sg.addColorStop(0.45, 'rgba(255,213,79,0.55)');
+        sg.addColorStop(1, 'rgba(255,213,79,0)');
+        ctx.fillStyle = sg;
         ctx.beginPath();
-        ctx.ellipse(hx + 100, VH - 40, 120, 50, 0, 0, Math.PI * 2);
+        ctx.arc(sunX, sunY, 48, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      // collines lointaines (lentes)
+      ctx.fillStyle = '#9ccc65';
       for (let i = 0; i < 5; i++) {
-        const cx = ((i * 220 + 50) - cameraX * 0.2) % (VW + 200) - 50;
+        const hx = ((i * 320) - (cameraX * 0.12)) % (VW + 320);
+        ctx.beginPath();
+        ctx.ellipse(hx + 80, VH - 18, 140, 55, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // collines proches
+      ctx.fillStyle = '#7cb342';
+      for (let i = 0; i < 6; i++) {
+        const hx = ((i * 280) - (cameraX * 0.3)) % (VW + 280);
+        ctx.beginPath();
+        ctx.ellipse(hx + 100, VH - 36, 120, 50, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // nuages (parallaxe moyenne)
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      const cloudN = lowFxMode ? 3 : 5;
+      for (let i = 0; i < cloudN; i++) {
+        const cx = ((i * 220 + 50) - cameraX * 0.18) % (VW + 200) - 50;
         drawCloud(cx, 40 + (i % 3) * 25, 1 + (i % 2) * 0.3);
       }
     }
@@ -4265,42 +4365,54 @@
           const isTop = !'12345678IB'.includes(above);
           if (levelDef.theme === 'ship') {
             // pont métallique vert pistache
-            ctx.fillStyle = isTop ? '#7cb342' : '#33691e';
+            ctx.fillStyle = isTop ? '#8bc34a' : '#1b5e20';
             ctx.fillRect(x, y, T, T);
             if (isTop) {
+              ctx.fillStyle = '#dcedc8';
+              ctx.fillRect(x, y, T, 5);
               ctx.fillStyle = '#aed581';
-              ctx.fillRect(x, y, T, 7);
-              ctx.fillStyle = '#c5e1a5';
+              ctx.fillRect(x, y + 5, T, 5);
+              ctx.fillStyle = '#f1f8e9';
               ctx.fillRect(x + 4, y + 2, 8, 2);
             } else {
-              ctx.strokeStyle = 'rgba(200,230,160,0.25)';
+              ctx.strokeStyle = 'rgba(200,230,160,0.3)';
               ctx.strokeRect(x + 4, y + 4, T - 8, T - 8);
             }
-            ctx.strokeStyle = '#1b5e20';
+            ctx.strokeStyle = '#0d2818';
+            ctx.lineWidth = 2;
             ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
           } else if (levelDef.theme === 'cosmo') {
-            ctx.fillStyle = isTop ? '#5e35b1' : '#311b92';
+            ctx.fillStyle = isTop ? '#7e57c2' : '#311b92';
             ctx.fillRect(x, y, T, T);
             if (isTop) {
-              ctx.fillStyle = '#7e57c2';
-              ctx.fillRect(x, y, T, 8);
-              ctx.fillStyle = '#b39ddb';
+              ctx.fillStyle = '#ce93d8';
+              ctx.fillRect(x, y, T, 5);
+              ctx.fillStyle = '#9575cd';
+              ctx.fillRect(x, y + 5, T, 6);
+              ctx.fillStyle = '#e1bee7';
               for (let i = 0; i < 3; i++) ctx.fillRect(x + 8 + i * 10, y + 3, 3, 3);
             }
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+            ctx.lineWidth = 2;
             ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
           } else {
-            ctx.fillStyle = isTop ? '#7cb342' : '#6d4c41';
+            ctx.fillStyle = isTop ? '#8bc34a' : '#5d4037';
             ctx.fillRect(x, y, T, T);
+            // silhouette / contraste plateforme
+            ctx.strokeStyle = 'rgba(27, 42, 18, 0.55)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
             if (isTop) {
-              ctx.fillStyle = '#8bc34a';
-              ctx.fillRect(x, y, T, 10);
-              ctx.strokeStyle = '#558b2f';
+              ctx.fillStyle = '#c5e1a5';
+              ctx.fillRect(x, y, T, 5);
+              ctx.fillStyle = '#9ccc65';
+              ctx.fillRect(x, y + 5, T, 7);
+              ctx.strokeStyle = '#33691e';
               ctx.lineWidth = 2;
               for (let i = 0; i < 4; i++) {
                 ctx.beginPath();
-                ctx.moveTo(x + 6 + i * 10, y + 10);
-                ctx.lineTo(x + 6 + i * 10 + Math.sin(frame * 0.08 + c + i) * 2, y);
+                ctx.moveTo(x + 6 + i * 10, y + 12);
+                ctx.lineTo(x + 6 + i * 10 + Math.sin(frame * 0.08 + c + i) * 2, y + 1);
                 ctx.stroke();
               }
             } else {
@@ -4574,17 +4686,39 @@
 
   function drawCoin(c) {
     const y = c.pop ? c.y : c.baseY + Math.sin(c.bob) * 6;
-    const pulse = 1 + Math.sin(frame * 0.12 + c.bob) * 0.08;
-    drawBigPistachio(c.x, y, 1.15 * pulse, Math.sin(c.bob) * 0.25, true);
-    // anneau pointillé
+    const pulse = 1 + Math.sin(frame * 0.12 + c.bob) * 0.1;
+    // halo juice
+    if (!lowFxMode) {
+      ctx.save();
+      ctx.globalAlpha = 0.22 + 0.1 * Math.sin(frame * 0.2 + c.bob);
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.arc(c.x, y, 28 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    drawBigPistachio(c.x, y, 1.18 * pulse, Math.sin(c.bob) * 0.25, true);
+    // silhouette claire
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 235, 59, 0.7)';
+    ctx.strokeStyle = 'rgba(27, 58, 22, 0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(c.x, y, 14 * pulse, 18 * pulse, Math.sin(c.bob) * 0.25, 0, Math.PI * 2);
+    ctx.stroke();
+    // anneau pointillé
+    ctx.strokeStyle = 'rgba(255, 235, 59, 0.85)';
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.arc(c.x, y, 24 + Math.sin(frame * 0.15 + c.bob) * 2, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
+    // sparkles
+    if (!lowFxMode && (frame + Math.floor(c.bob * 10)) % 7 === 0) {
+      ctx.fillStyle = '#fffde7';
+      ctx.fillRect(c.x + 12, y - 14, 3, 3);
+      ctx.fillRect(c.x - 16, y + 4, 2, 2);
+    }
     ctx.restore();
   }
 
@@ -4921,8 +5055,11 @@
     // rebond vertical comique + penchant vers l'avant
     const bounce = isRun ? Math.abs(s2) * 5 : (isAir ? 0 : Math.sin(frame * 0.08) * 1.2);
     const lean = isRun ? 0.18 + spd * 0.02 : (isAir ? -0.08 : 0.02);
-    const squash = isRun ? 1 + Math.abs(s2) * 0.06 : 1;
-    const stretch = isRun ? 1 - Math.abs(s2) * 0.05 : 1;
+    const runSquash = isRun ? 1 + Math.abs(s2) * 0.06 : 1;
+    const runStretch = isRun ? 1 - Math.abs(s2) * 0.05 : 1;
+    // land/jump squash-stretch (playerSquash / playerStretch)
+    const squash = runSquash * playerSquash;
+    const stretch = runStretch * playerStretch;
 
     ctx.save();
     ctx.translate(x, y - bounce);
@@ -4930,6 +5067,16 @@
     ctx.rotate(lean); // penché en avant (local +x = direction du regard)
     if (flash) ctx.globalAlpha = 0.28;
     else if (invuln > 0) ctx.globalAlpha = 0.85;
+
+    // silhouette sombre pour lisibilité sur fond map
+    ctx.save();
+    ctx.globalAlpha = flash ? 0.2 : 0.55;
+    ctx.strokeStyle = '#0d1a0a';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, crouch ? -18 : -28, crouch ? 23 : 21, crouch ? 23 : 35, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
 
     // aura invuln (contour cyan) — lisible même sans clignotement fort
     if (invuln > 0) {
@@ -5330,10 +5477,14 @@
 
   function loop(ts) {
     if (lastFrameTs) {
-      const dt = Math.max(1, Math.min(50, ts - lastFrameTs));
+      // dt clamp : évite les sauts de physique après un onglet en veille
+      const dt = Math.max(1, Math.min(33, ts - lastFrameTs));
+      frameDt = dt;
       const inst = 1000 / dt;
       fpsEma = fpsEma * 0.9 + inst * 0.1;
-      lowFxMode = fpsEma < 48;
+      // lowFx plus tôt sur mobile pour éviter régression perf
+      const mobileBias = (typeof isTouchDevice !== 'undefined' && isTouchDevice) ? 52 : 48;
+      lowFxMode = fpsEma < mobileBias;
     }
     lastFrameTs = ts || performance.now();
     try {
