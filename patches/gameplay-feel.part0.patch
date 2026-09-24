@@ -1,0 +1,117 @@
+--- a/index.html
++++ b/index.html
+@@ -517,17 +517,17 @@
+       box-shadow: 0 4px 0 rgba(0,0,0,0.35);
+     }
+     .touch-actions .jump-btn {
+-      background: rgba(255, 180, 0, 0.65);
++      background: rgba(255, 180, 0, 0.72);
+       border-color: #ffd54f;
+-      width: 78px;
+-      height: 78px;
+-      font-size: 0.9rem;
++      width: 88px;
++      height: 88px;
++      font-size: 0.95rem;
+     }
+     .touch-actions .fire-btn {
+-      background: rgba(100, 180, 40, 0.7);
++      background: rgba(100, 180, 40, 0.75);
+       border-color: #c5e1a5;
+-      width: 84px;
+-      height: 84px;
++      width: 90px;
++      height: 90px;
+       font-size: 0.95rem;
+     }
+     .touch-weapons {
+@@ -815,8 +815,8 @@
+         height: calc(54px * 3 + 12px);
+       }
+       .touch-left button { width: 54px; height: 54px; font-size: 1.3rem; }
+-      .touch-actions .fire-btn { width: 76px; height: 76px; }
+-      .touch-actions .jump-btn { width: 70px; height: 70px; }
++      .touch-actions .fire-btn { width: 82px; height: 82px; }
++      .touch-actions .jump-btn { width: 80px; height: 80px; }
+     }
+     /* Paysage mobile : croix directionnelle compacte à gauche */
+     @media (orientation: landscape) {
+@@ -830,9 +830,9 @@
+       body.playing.mobile-fs .touch-left button {
+         width: 48px; height: 48px; font-size: 1.15rem; border-radius: 12px;
+       }
+-      body.playing.mobile-fs .touch-actions button { width: 56px; height: 56px; font-size: 0.7rem; }
+-      body.playing.mobile-fs .touch-actions .jump-btn { width: 62px; height: 62px; }
+-      body.playing.mobile-fs .touch-actions .fire-btn { width: 68px; height: 68px; }
++      body.playing.mobile-fs .touch-actions button { width: 60px; height: 60px; font-size: 0.72rem; }
++      body.playing.mobile-fs .touch-actions .jump-btn { width: 70px; height: 70px; }
++      body.playing.mobile-fs .touch-actions .fire-btn { width: 74px; height: 74px; }
+       body.playing.mobile-fs .touch-weapons button { min-width: 46px; height: 36px; }
+       body.playing.mobile-fs .touch-hint { display: none; }
+       body.playing.mobile-fs .hud span { padding: 2px 6px; }
+@@ -1496,8 +1496,8 @@
+       banner: 'MONDE 1-1 · PARC PISTACHE',
+       theme: 'park',
+       time: 400,
+-      gravity: 0.48,
+-      jumpV: -17.8,
++      gravity: 0.52,
++      jumpV: -17.5,
+       music: 'day',
+       rows: [
+         '........................................................................................',
+@@ -1526,8 +1526,8 @@
+       banner: 'MONDE 2-1 · NUIT COSMIQUE ★',
+       theme: 'cosmo',
+       time: 450,
+-      gravity: 0.40, // un peu plus stable qu'avant
+-      jumpV: -17.2,  // sauts généreux
++      gravity: 0.44, // moins flottant, toujours généreux
++      jumpV: -16.9,  // sauts généreux
+       music: 'night',
+       rows: [
+         // Version FACILE : grands ponts, petits trous, peu de lave, peu d'ennemis
+@@ -1557,8 +1557,8 @@
+       banner: 'MONDE 3-1 · VAISSEAU PISTACHE 🚀 vs RAISINS SECS 👽',
+       theme: 'ship',
+       time: 450,
+-      gravity: 0.42,
+-      jumpV: -16.5,
++      gravity: 0.46,
++      jumpV: -16.3,
+       music: 'ship',
+       rows: [
+         // Coque en forme de pistache dans l'espace : salles, ponts, hublots, raisins aliens R
+@@ -1713,10 +1713,10 @@
+       maxEnemies: 22,
+       spawnEveryMul: 1,
+       meteorEvery: 160,
+-      invulnHit: 140,
+-      invulnStart: 80,
++      invulnHit: 160,
++      invulnStart: 90,
+       jumpBonus: 0,
+-      gravityMul: 1,
++      gravityMul: 1.02,
+       enemySpeedMul: 1,
+       contactLivesLost: 1,
+       extraCoins: false,
+@@ -1730,10 +1730,10 @@
+       maxEnemies: 32,
+       spawnEveryMul: 0.7,
+       meteorEvery: 90,
+-      invulnHit: 80,
+-      invulnStart: 40,
++      invulnHit: 100,
++      invulnStart: 50,
+       jumpBonus: 1.2, // saut un peu plus faible (moins négatif)
+-      gravityMul: 1.08,
++      gravityMul: 1.1,
+       enemySpeedMul: 1.25,
+       contactLivesLost: 1,
+       extraCoins: false,
+@@ -2405,6 +2405,7 @@
+         await AudioFX.resume();
+         const n = window.__nextLevel;
+         window.__nextLevel = undefined;
++        window.__retryLevel = undefined;
