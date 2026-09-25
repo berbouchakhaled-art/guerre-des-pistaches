@@ -7,6 +7,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
+  <meta name="apple-mobile-web-app-title" content="Pistaches" />
+  <meta name="application-name" content="Pistaches" />
+  <meta name="theme-color" content="#0d1a0c" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
   <title>La guerre des pistaches — starring Sousou</title>
   <style>
     /* Polices système d'abord (plus fiable hors réseau / iOS) */
@@ -911,25 +917,28 @@
 
     <!-- Pad tactile (mobile / tablette) : Gauche/Droite à GAUCHE, Sauter/Tirer à DROITE -->
     <div id="touchUI" class="touch-ui" aria-hidden="true">
-      <div class="touch-left" role="group" aria-label="Déplacement">
-        <button type="button" class="dir-up" data-key="ArrowUp" aria-label="Viser / sauter">↑ Visée</button>
-        <button type="button" class="dir-down" data-key="ArrowDown" aria-label="Se baisser">↓ Baisser</button>
-        <button type="button" class="dir-left" data-key="ArrowLeft" aria-label="Gauche">◀ Gauche</button>
-        <button type="button" class="dir-right" data-key="ArrowRight" aria-label="Droite">Droite ▶</button>
+      <!-- Pouce gauche : zone glissable ◀ ▶ (+ petits ▲ viser / ▼ se baisser) -->
+      <div class="touch-left" id="padLeft" role="group" aria-label="Déplacement">
+        <button type="button" class="tbtn dir-up" data-key="ArrowUp" aria-label="Viser en haut"><i class="ic s1 ic-up"></i></button>
+        <button type="button" class="tbtn dir-down" data-key="ArrowDown" aria-label="Se baisser"><i class="ic s1 ic-down"></i></button>
+        <button type="button" class="tbtn dir-left" data-key="ArrowLeft" aria-label="Gauche"><i class="ic ic-left"></i></button>
+        <button type="button" class="tbtn dir-right" data-key="ArrowRight" aria-label="Droite"><i class="ic ic-right"></i></button>
       </div>
+      <!-- Pouce droit : SAUT (grand) + TIR, armes au-dessus -->
       <div class="touch-right">
         <div class="touch-weapons">
-          <button type="button" data-weapon="0" class="selected" aria-label="Lance">🗡️</button>
-          <button type="button" data-weapon="1" aria-label="Gun">🔫</button>
-          <button type="button" data-weapon="2" aria-label="Grenade">💣</button>
+          <button type="button" class="tbtn selected" data-weapon="0" aria-label="Lance"><i class="ic s1 ic-w0" style="background-position:-240px 0"></i></button>
+          <button type="button" class="tbtn" data-weapon="1" aria-label="Gun"><i class="ic s1 ic-w1" style="background-position:-264px 0"></i></button>
+          <button type="button" class="tbtn" data-weapon="2" aria-label="Grenade"><i class="ic s1 ic-w2" style="background-position:-288px 0"></i></button>
         </div>
-        <div class="touch-actions">
-          <button type="button" class="jump-btn" data-key="Space" aria-label="Sauter">Sauter</button>
-          <button type="button" class="fire-btn" data-action="fire" aria-label="Tirer">Tirer</button>
+        <div class="touch-actions" id="padRight">
+          <button type="button" class="tbtn fire-btn" data-action="fire" aria-label="Tirer"><i class="ic ic-fire"></i><span class="lb">TIR</span></button>
+          <button type="button" class="tbtn jump-btn" data-key="Space" aria-label="Sauter"><i class="ic ic-jump"></i><span class="lb">SAUT</span></button>
         </div>
       </div>
       <div class="touch-hint">Gauche · Droite · Sauter · Tirer · Menu ☰ · Son</div>
     </div>
+    <button id="fsBtn" class="fs-btn" type="button" aria-label="Plein écran" title="Plein écran">Plein écran</button>
 
     <div id="startScreen" class="overlay" role="dialog" aria-labelledby="gameTitle" aria-modal="true">
       <div class="overlay-inner">
@@ -1004,6 +1013,11 @@
             <kbd>P</kbd> pause · <kbd>M</kbd> son · <kbd>Échap</kbd> Menu</span>
             <span class="mobile-only">Mobile : pouce gauche = Gauche/Droite · pouce droit = Sauter/Tirer · ☰ Menu · Son · paysage ou portrait OK</span>
           </p>
+          <div class="touch-help" aria-label="Commandes tactiles">
+            <div><i class="ic ic-left"></i><span><b>Pouce gauche</b> : glisse sur ◀ ▶ pour courir</span></div>
+            <div><i class="ic ic-jump"></i><span><b>Pouce droit</b> : SAUT · TIR · touche une arme pour changer</span></div>
+          </div>
+          <p class="rotate-tip">📱↻ Tourne en <b>paysage</b> pour jouer en grand !</p>
         </div>
       </div>
     </div>
@@ -1033,6 +1047,15 @@
     </div>
   </div>
 
+  <div id="rotatePrompt" role="dialog" aria-modal="true" aria-labelledby="rotTitle">
+    <div class="rot-img" aria-hidden="true"></div>
+    <h2 id="rotTitle">Tourne ton téléphone !</h2>
+    <p>Sousou court bien mieux <strong>en paysage</strong> : tu vois plus loin et tes deux pouces ont de la place.</p>
+    <p class="rot-sub">Rien ne se passe ? Désactive le verrouillage de la rotation.</p>
+    <button type="button" id="rotPortraitBtn">Jouer en portrait quand même</button>
+    <button type="button" id="rotMenuBtn" class="rot-back">☰ Retour au menu</button>
+  </div>
+
   <p class="controls">
     <span class="desktop-only">
       <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> / <kbd>Q</kbd><kbd>D</kbd> (AZERTY) courir ·
@@ -1053,6 +1076,8 @@
       .mobile-only { display: inline !important; }
     }
   </style>
+
+  <link rel="stylesheet" href="css/mobile.css" />
 
   <script src="js/gfx.js"></script>
   <script>
@@ -1521,8 +1546,11 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
-  const VW = canvas.width;
-  const VH = canvas.height;
+  // Taille de vue logique : 960x540 sur ordinateur ; sur téléphone elle est
+  // recalculée (applyView) pour un zoom entier « pixel-perfect » (Sousou ≈ 15 % de l'écran).
+  let VW = canvas.width;
+  let VH = canvas.height;
+  const VIEW = window.VIEW = { mobile: false, k: 1, cssScale: 1, portrait: false, hudL: 118, hudR: 110, hudT: 10 };
   const T = 40; // taille tuile
 
   // Légende tuiles:
@@ -1866,20 +1894,23 @@
   function drawSousouMapBackground() {
     if (window.GFX && GFX.skipSousouOnce) { GFX.skipSousouOnce = false; return; }
     if (!sousouBgReady || !sousouBgImg.naturalWidth) return;
-    // ~70% of canvas height, slightly left of center so play stays readable
-    const targetH = VH * (lowFxMode ? 0.62 : 0.72);
-    const scale = targetH / sousouBgImg.naturalHeight;
-    const dw = Math.round(sousouBgImg.naturalWidth * scale);
-    const dh = Math.round(targetH);
+    // Portrait pixel 64x64 (assets/sousou-bg.png = 64 px x9) agrandi d'un facteur ENTIER
+    // en plus-proche-voisin : net, « vrai pixel art », grand (~65-72 % de la hauteur).
+    const base = sousouBgImg.dataset.fallback ? sousouBgImg.naturalHeight : 64;
+    let s = Math.max(2, Math.round((VH * (lowFxMode ? 0.6 : 0.68)) / base));
+    while (s > 2 && base * s > VH * 0.82) s--;
+    const dw = Math.round(sousouBgImg.naturalWidth / sousouBgImg.naturalHeight * base) * s;
+    const dh = base * s;
     const dx = Math.round(VW * 0.5 - dw * 0.5 - VW * 0.04);
     const dy = Math.round(VH * 0.5 - dh * 0.5 + VH * 0.02);
-    const alpha = lowFxMode ? 0.28 : 0.38;
+    const th = levelDef && levelDef.theme;
+    const alpha = (th === 'park' ? 0.72 : th === 'cosmo' ? 0.64 : 0.62) - (lowFxMode ? 0.08 : 0);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.imageSmoothingEnabled = false;
-    // world-ish feel: mild parallax so it drifts with the map, still always on-screen
-    const px = dx - Math.floor((cameraX * 0.08) % 24);
-    const py = dy - Math.floor((cameraY * 0.06) % 16);
+    // légère parallaxe, alignée sur la grille de pixels du portrait
+    const px = dx - Math.floor(((cameraX * 0.08) % 24) / s) * s;
+    const py = dy - Math.floor(((cameraY * 0.06) % 16) / s) * s;
     ctx.drawImage(sousouBgImg, 0, 0, sousouBgImg.naturalWidth, sousouBgImg.naturalHeight, px, py, dw, dh);
     ctx.restore();
   }
@@ -1992,8 +2023,20 @@
     || (navigator.maxTouchPoints > 0)
     || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
+  const forceTouch = /[?&]touch=1/.test(location.search);
+  const TOUCH = isTouchDevice || forceTouch;
+  document.documentElement.classList.toggle('is-touch', TOUCH);
+  // Téléphone = petit côté < 600 px CSS (les tablettes jouent aussi en portrait sans invite)
+  const isPhone = () => Math.min(window.innerWidth, window.innerHeight) < 600;
+  const canFullscreen = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && !/iPhone|iPod/.test(ua);
+  document.body.classList.toggle('can-fs', canFullscreen);
+  function haptic(pattern) {
+    if (!TOUCH || !navigator.vibrate) return;
+    try { navigator.vibrate(pattern); } catch (_) {}
+  }
+
   // Banner aide iPhone
-  if (iosBanner && (isIOS || isTouchDevice)) {
+  if (iosBanner && (isIOS || isTouchDevice) && false) {
     iosBanner.classList.add('show');
   }
 
@@ -2025,30 +2068,108 @@
       wrap.style.width = w + 'px';
       wrap.style.height = h + 'px';
     }
+    applyView(w, h);
+  }
+
+  // ---------- Vue mobile : zoom ENTIER en pixels écran ----------
+  // La toile a la taille de la vue logique (VW x VH) ; le navigateur l'agrandit
+  // d'un facteur entier k de pixels physiques (image-rendering: pixelated) →
+  // pixel art net, peu de pixels à dessiner (bon pour la batterie / 60 fps).
+  let safeProbe = null;
+  function safeInsets() {
+    if (!safeProbe) {
+      safeProbe = document.createElement('div');
+      safeProbe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+        'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+      document.body.appendChild(safeProbe);
+    }
+    const cs = getComputedStyle(safeProbe);
+    return { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
+  }
+  function setViewSize(w, h) {
+    const oldW = VW;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w; canvas.height = h;
+    }
+    VW = w; VH = h;
+    ctx.imageSmoothingEnabled = false;
+    if (typeof skyGradCache !== 'undefined') skyGradCache = { theme: null, grad: null };
+    // recentre les titres écran déjà lancés
+    if (oldW !== w && typeof nameFX !== 'undefined') {
+      for (const n of nameFX) if (n.style === 'title' || n.style === 'star') n.x += (w - oldW) / 2;
+    }
+  }
+  function applyView(cssW, cssH) {
+    const root = document.documentElement.style;
+    const fs = document.body.classList.contains('mobile-fs');
+    if (!fs) {
+      VIEW.mobile = false; VIEW.portrait = false;
+      document.body.classList.remove('portrait-play');
+      setViewSize(960, 540);
+      VIEW.hudL = 118; VIEW.hudR = 110; VIEW.hudT = 10;
+      return;
+    }
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 4));
+    const ins = safeInsets();
+    const portrait = cssH > cssW;
+    const portraitPlay = portrait && (!isPhone() || portraitOK);
+    document.body.classList.toggle('portrait-play', portraitPlay);
+    let areaX = 0, areaY = 0, areaW = cssW, areaH = cssH;
+    const TOPBAR = 56;
+    if (portraitPlay) {
+      // barre du haut (☰ armes 🔊) · jeu · panneau de commandes (reste de l'écran)
+      areaY = ins.t + TOPBAR;
+      areaH = cssH - areaY - (240 + ins.b);
+    }
+    const devW = areaW * dpr, devH = areaH * dpr;
+    let k;
+    if (portraitPlay) {
+      k = Math.max(1, Math.round(devW / (isPhone() ? 420 : 560)));
+    } else {
+      const target = cssH >= 600 ? 520 : 400; // tablette : un peu plus de champ
+      k = Math.max(1, Math.round(devH / target));
+    }
+    let vw = Math.ceil(devW / k), vh = Math.ceil(devH / k);
+    vh = Math.min(vh, 17 * T);             // jamais plus haut que le niveau (17 rangées)
+    vw = Math.min(vw, 1280);
+    const cs = k / dpr;                    // px CSS par pixel logique
+    const cw = vw * cs, ch = vh * cs;
+    const cx = Math.round(areaX + (areaW - cw) / 2);
+    const cy = Math.round(portraitPlay ? areaY : areaY + Math.max(0, (areaH - ch) / 2));
+    if (portraitPlay) root.setProperty('--panel-h', Math.max(200, Math.floor(cssH - cy - ch)) + 'px');
+    root.setProperty('--cv-w', cw + 'px');
+    root.setProperty('--cv-h', ch + 'px');
+    root.setProperty('--cv-x', cx + 'px');
+    root.setProperty('--cv-y', cy + 'px');
+    setViewSize(vw, vh);
+    VIEW.mobile = true; VIEW.portrait = portraitPlay; VIEW.k = k; VIEW.cssScale = cs;
+    if (portraitPlay) { VIEW.hudL = 6; VIEW.hudR = 6; VIEW.hudT = 6; return; }
+    const offX = cx, offY = cy;
+    // HUD entre le bouton ☰ (gauche) et 🔊 / plein écran (droite), sous l'encoche
+    VIEW.hudL = Math.ceil((Math.max(8, ins.l) + 2 + 44 + 8 - offX) / cs);
+    VIEW.hudR = Math.ceil((Math.max(8, ins.r) + 2 + 44 + (document.body.classList.contains('can-fs') && !isFullscreen() ? 52 : 0) + 8 + 3 * 44 + 12 + 8 + offX) / cs);
+    VIEW.hudT = Math.max(4, Math.ceil((Math.max(6, ins.t) + 8 - offY) / cs));
   }
 
   function showTouchUI(on) {
     if (!touchUI) return;
+    if (!on) ['padLeft', 'padRight'].forEach((id) => { const z = document.getElementById(id); if (z && z._release) z._release(); });
     // iPhone / tactile / petit écran → pads visibles dès que la partie tourne
-    const force = !!on && (isTouchDevice || isIOS || window.innerWidth <= 920);
-    const useFs = !!on && (isTouchDevice || isIOS || window.innerWidth <= 920);
+    const force = !!on && (TOUCH || isIOS || window.innerWidth <= 920);
+    const useFs = !!on && (TOUCH || isIOS || window.innerWidth <= 920);
     touchUI.classList.toggle('active', force);
     touchUI.style.display = force ? 'block' : '';
     touchUI.setAttribute('aria-hidden', force ? 'false' : 'true');
     document.body.classList.toggle('playing', !!on);
     document.body.classList.toggle('mobile-fs', useFs);
     fitMobileViewport();
+    checkOrientation();
     if (iosBanner) {
-      if (on) iosBanner.classList.remove('show');
-      else if (isIOS || isTouchDevice) iosBanner.classList.add('show');
+      iosBanner.classList.remove('show');
     }
     // Tente le mode plein écran navigateur (Android / iOS 17+ selon support)
     if (useFs) {
-      const el = document.documentElement;
-      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen;
-      if (req) {
-        try { req.call(el).catch(() => {}); } catch (_) {}
-      }
+      enterFullscreen();
     } else {
       const exit = document.exitFullscreen || document.webkitExitFullscreen;
       if (exit && (document.fullscreenElement || document.webkitFullscreenElement)) {
@@ -2064,8 +2185,78 @@
     }
   }
 
+  // ---------- Plein écran (Android) + verrou paysage ----------
+  function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function enterFullscreen() {
+    if (!canFullscreen || isFullscreen()) return;
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    try {
+      const pr = req.call(el, { navigationUI: 'hide' });
+      if (pr && pr.then) pr.then(() => {
+        try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (_) {}
+      }).catch(() => {});
+    } catch (_) {}
+  }
+  const fsBtn = document.getElementById('fsBtn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); enterFullscreen(); });
+  }
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach((ev) => document.addEventListener(ev, () => {
+    document.body.classList.toggle('is-fs', isFullscreen());
+    setTimeout(fitMobileViewport, 60);
+  }));
+
+  // ---------- Portrait : invite « Tourne ton téléphone » (+ option portrait) ----------
+  // Choix : le niveau est très horizontal (88 colonnes, ennemis qui arrivent de côté).
+  // En portrait on ne verrait que ~10 tuiles devant Sousou et les pouces couvriraient
+  // le jeu : on invite donc à tourner le téléphone, en gardant une vraie mise en page
+  // portrait (jeu en haut, commandes en bas) pour qui préfère ne pas tourner.
+  let portraitOK = false;
+  try { portraitOK = sessionStorage.getItem('gdp_portrait_ok') === '1'; } catch (_) {}
+  let rotateHold = false;
+  function checkOrientation() {
+    const playingFs = running && document.body.classList.contains('mobile-fs');
+    const portrait = window.innerHeight > window.innerWidth;
+    const need = playingFs && portrait && isPhone() && !portraitOK;
+    if (need && !rotateHold) {
+      rotateHold = true;
+      document.body.classList.add('rotate-wait');
+      if (!paused) {
+        paused = true;
+        try { AudioFX.stopMusic(); } catch (_) {}
+      }
+      keys = {};
+    } else if (!need && rotateHold) {
+      rotateHold = false;
+      document.body.classList.remove('rotate-wait');
+      if (running && paused) {
+        paused = false;
+        if (!AudioFX.isMuted()) { try { AudioFX.startMusic(hurry, levelDef.music); } catch (_) {} }
+      }
+    }
+    if (!running) document.body.classList.remove('rotate-wait');
+  }
+  const rotPortraitBtn = document.getElementById('rotPortraitBtn');
+  if (rotPortraitBtn) rotPortraitBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    portraitOK = true;
+    try { sessionStorage.setItem('gdp_portrait_ok', '1'); } catch (_) {}
+    fitMobileViewport();
+    checkOrientation();
+    if (running) snapCamera();
+  });
+  const rotMenuBtn = document.getElementById('rotMenuBtn');
+  if (rotMenuBtn) rotMenuBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    rotateHold = false;
+    document.body.classList.remove('rotate-wait');
+    returnToMenu();
+  });
+
   window.addEventListener('resize', () => {
     fitMobileViewport();
+    checkOrientation();
     if (running) snapCamera();
   });
   window.addEventListener('orientationchange', () => {
@@ -2076,6 +2267,7 @@
     // 2e passe après la fin de l'anim de rotation iOS
     setTimeout(() => {
       fitMobileViewport();
+      checkOrientation();
       if (running) snapCamera();
     }, 400);
   });
@@ -2129,31 +2321,95 @@
     btn.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  // ---------- Commandes tactiles « zones » (multi-touch, pouce glissant) ----------
+  // Chaque doigt est suivi (pointerId). Le pouce gauche peut glisser de ◀ à ▶ sans
+  // se lever ; à droite, un pouce posé entre TIR et SAUT appuie sur les deux.
+  function bindZone(zone, resolve, down, up) {
+    if (!zone) return;
+    const fingers = new Map(); // pointerId -> Set(btn)
+    const pressed = new Set();
+    function sync() {
+      const now = new Set();
+      fingers.forEach((set) => set.forEach((b) => now.add(b)));
+      for (const b of Array.from(pressed)) if (!now.has(b)) { pressed.delete(b); b.classList.remove('active'); up(b); }
+      for (const b of now) if (!pressed.has(b)) { pressed.add(b); b.classList.add('active'); down(b); }
+    }
+    const onDown = (e) => {
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+      try { AudioFX.resume(); } catch (_) {}
+      try { zone.setPointerCapture(e.pointerId); } catch (_) {}
+      fingers.set(e.pointerId, resolve(e.clientX, e.clientY, true));
+      sync();
+    };
+    const onMove = (e) => {
+      if (!fingers.has(e.pointerId)) return;
+      if (e.cancelable) e.preventDefault();
+      fingers.set(e.pointerId, resolve(e.clientX, e.clientY, false));
+      sync();
+    };
+    const onUp = (e) => {
+      if (!fingers.has(e.pointerId)) return;
+      fingers.delete(e.pointerId);
+      sync();
+    };
+    zone.addEventListener('pointerdown', onDown);
+    zone.addEventListener('pointermove', onMove);
+    zone.addEventListener('pointerup', onUp);
+    zone.addEventListener('pointercancel', onUp);
+    zone.addEventListener('lostpointercapture', onUp);
+    zone.addEventListener('touchstart', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+    zone.addEventListener('contextmenu', (e) => e.preventDefault());
+    zone._release = () => { fingers.clear(); sync(); };
+  }
+  const inRect = (r, x, y, m) => x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m;
+
   function bindTouchControls() {
     if (!touchUI) return;
+    const keyOf = (b) => b.dataset.key || (b.dataset.action === 'fire' ? 'KeyX' : null);
+    const press = (b) => {
+      const code = keyOf(b);
+      if (!code) return;
+      keys[code] = true;
+      if (code === 'Space' && running && !paused) { const g = player.onGround || coyoteFrames > 0; tryJump(); if (g) haptic(8); }
+      if (code === 'KeyX' && running && !paused) tryShoot();
+    };
+    const release = (b) => { const code = keyOf(b); if (code) keys[code] = false; };
 
-    touchUI.querySelectorAll('[data-key]').forEach((btn) => {
-      const code = btn.dataset.key;
-      bindHoldButton(
-        btn,
-        () => {
-          keys[code] = true;
-          if (code === 'Space' && running && !paused) tryJump();
-        },
-        () => { keys[code] = false; }
-      );
-    });
-
-    touchUI.querySelectorAll('[data-action="fire"]').forEach((btn) => {
-      bindHoldButton(
-        btn,
-        () => {
-          keys['KeyX'] = true;
-          if (running && !paused) tryShoot();
-        },
-        () => { keys['KeyX'] = false; }
-      );
-    });
+    // Pouce gauche : ▲/▼ si on touche ces petits boutons, sinon ◀ ou ▶ selon le côté
+    // (le pouce peut glisser de l'un à l'autre, même un peu hors du pad).
+    const pl = document.getElementById('padLeft');
+    if (pl) {
+      const bL = pl.querySelector('.dir-left'), bR = pl.querySelector('.dir-right');
+      const bU = pl.querySelector('.dir-up'), bD = pl.querySelector('.dir-down');
+      bindZone(pl, (x, y) => {
+        const out = new Set();
+        const rU = bU.getBoundingClientRect(), rD = bD.getBoundingClientRect();
+        const rL = bL.getBoundingClientRect(), rR = bR.getBoundingClientRect();
+        if (y < rL.top - 4 && inRect(rU, x, y, 6)) { out.add(bU); return out; }
+        if (y < rL.top - 4 && inRect(rD, x, y, 6)) { out.add(bD); return out; }
+        const mid = (rL.right + rR.left) / 2;
+        out.add(x < mid ? bL : bR);
+        return out;
+      }, press, release);
+    }
+    // Pouce droit : TIR / SAUT ; un pouce posé sur la jonction appuie sur les deux
+    const pr = document.getElementById('padRight');
+    if (pr) {
+      const bF = pr.querySelector('.fire-btn'), bJ = pr.querySelector('.jump-btn');
+      bindZone(pr, (x, y) => {
+        const out = new Set();
+        const rF = bF.getBoundingClientRect(), rJ = bJ.getBoundingClientRect();
+        if (inRect(rF, x, y, 8)) out.add(bF);
+        if (inRect(rJ, x, y, 8)) out.add(bJ);
+        if (!out.size) {
+          const dF = Math.hypot(x - (rF.left + rF.right) / 2, y - (rF.top + rF.bottom) / 2);
+          const dJ = Math.hypot(x - (rJ.left + rJ.right) / 2, y - (rJ.top + rJ.bottom) / 2);
+          out.add(dF < dJ ? bF : bJ);
+        }
+        return out;
+      }, press, release);
+    }
 
     touchUI.querySelectorAll('[data-weapon]').forEach((btn) => {
       const fire = (e) => {
@@ -2181,6 +2437,23 @@
       }
     }
   }, { passive: false });
+  // Tap sur l'écran = reprendre après une pause auto (appel, verrouillage…)
+  canvas.addEventListener('pointerdown', () => {
+    if (running && paused && !rotateHold && TOUCH) {
+      paused = false;
+      try { AudioFX.resume(); if (!AudioFX.isMuted()) AudioFX.startMusic(hurry, levelDef.music); } catch (_) {}
+    }
+  });
+  // Double-tap zoom (iOS) : bloqué pendant la partie hors boutons de menu
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    if (!document.body.classList.contains('playing')) return;
+    const now = Date.now();
+    if (now - lastTouchEnd < 320 && e.cancelable && !(e.target.closest && e.target.closest('.overlay, #rotatePrompt'))) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
   // Pinch-zoom / gesture iOS pendant le jeu
   ['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) => {
     document.addEventListener(ev, (e) => {
@@ -2304,7 +2577,11 @@
 
   // Reprend le son après onglet en arrière-plan / verrouillage iPhone
   document.addEventListener('visibilitychange', async () => {
-    if (document.hidden) return;
+    if (document.hidden) {
+      // téléphone : appel / verrouillage / changement d'appli → pause automatique
+      if (running && !paused && TOUCH) { paused = true; keys = {}; try { AudioFX.stopMusic(); } catch (_) {} }
+      return;
+    }
     await AudioFX.resume();
     if (running && !paused && !AudioFX.isMuted()) {
       const lm = AudioFX.getLastMusic();
@@ -2652,6 +2929,7 @@
     player.crouching = false;
     player.h = 52;
     player.anim = 0;
+    showTouchUI(true);   // fixe la vue mobile (VW/VH) avant caméra + titres
     snapCamera();
 
     populateLevelEntities();
@@ -2670,9 +2948,9 @@
     try {
       const hintEl = document.getElementById('playHint');
       if (hintEl && !localStorage.getItem('gdp_hint_v1')) {
-        const mobile = isTouchDevice;
+        const mobile = TOUCH;
         hintEl.innerHTML = mobile
-          ? '📱 <strong>Astuce</strong> : croix à gauche · <strong>SAUT</strong> / <strong>TIR</strong> à droite<br>Collecte les <strong>pistaches</strong> ★ · paysage conseillé'
+          ? '👈 Glisse le pouce sur ◀ ▶ · 👉 <strong>SAUT</strong> / <strong>TIR</strong><br>Touche une arme pour changer'
           : '💡 <strong>Astuce</strong> : <kbd>Espace</kbd> sauter · <kbd>X</kbd> tirer · flèches courir<br>Collecte les <strong>pistaches</strong> ★ · <kbd>P</kbd> pause';
         hintEl.classList.remove('hidden');
         playHintTimer = 280; // ~4.5 s
@@ -3112,6 +3390,7 @@
     lives -= difficulty.contactLivesLost || 1;
     invuln = difficulty.invulnHit;
     if (window.GFX) GFX.onHurt();
+    haptic([30, 40, 30]);
     screenShake = 14;
     AudioFX.hit();
     floatScore(player.x, player.y - 40, '💥 OUCH');
@@ -4136,7 +4415,9 @@
     }
 
     // pause
-    if (paused && running) {
+    if (paused && running && window.GFX && GFX.drawPause(ctx)) {
+      // pause en police pixel (js/gfx.js)
+    } else if (paused && running) {
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.fillRect(0, 0, VW, VH);
       ctx.fillStyle = '#ffeb3b';
@@ -4282,6 +4563,7 @@
   }
 
   function drawNameFXScreen(n) {
+    if (window.GFX && GFX.drawNameScreen(ctx, n)) return;
     // pour intro : positions déjà en coords écran
     const alpha = Math.min(1, n.life / 20);
     if (alpha <= 0) return;
@@ -4312,6 +4594,7 @@
   }
 
   function drawIntroBanner() {
+    if (window.GFX && GFX.drawIntro(ctx, introTimer)) return;
     const t = introTimer;
     const fade = t > 120 ? (150 - t) / 30 : t < 25 ? t / 25 : 1;
     ctx.save();
@@ -5505,6 +5788,8 @@
     ctx.closePath();
   }
 
+  const STEP_MS = 1000 / 60;
+  let stepAcc = STEP_MS;
   function loop(ts) {
     if (lastFrameTs) {
       // dt clamp : évite les sauts de physique après un onglet en veille
@@ -5518,7 +5803,15 @@
     }
     lastFrameTs = ts || performance.now();
     try {
-      update();
+      // Pas de temps fixe 60 Hz : même vitesse de jeu sur écrans 90/120 Hz (Android)
+      // et sur appareils lents. À 60 Hz : exactement 1 update par image (inchangé).
+      let d = frameDt;
+      if (d > 13 && d < 21) d = STEP_MS;          // tolérance : écran 60 Hz = 1 pas
+      stepAcc += d;
+      let steps = 0;
+      while (stepAcc >= STEP_MS - 0.5 && steps < 3) { update(); stepAcc -= STEP_MS; steps++; }
+      if (steps === 3) stepAcc = 0;
+      if (stepAcc < 0) stepAcc = 0;
       draw();
     } catch (err) {
       // Empêche un plantage unique de geler tout le jeu
