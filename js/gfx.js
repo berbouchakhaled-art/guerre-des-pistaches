@@ -304,7 +304,7 @@
   // ---------------------------------------------------------------
   // TUILES : pré-rendu par niveau (autotile + variantes + décor)
   // ---------------------------------------------------------------
-  let cache = null, cacheKey = null;
+  let cacheKey = null;
   const CELL = 40;
   function tileAt(r, c) {
     if (r < 0) return '.';
@@ -315,15 +315,23 @@
   function blitTile(x, img, col, row, dx, dy) {
     x.drawImage(img, col * CELL, row * CELL, CELL, CELL, dx, dy, CELL, CELL);
   }
-  function buildCache() {
+  // Grands niveaux (170 x 40 tuiles = 6800 x 1600 px) : cache découpé en morceaux de
+  // 16 x 12 tuiles, construits à la demande et libérés loin de la caméra (mémoire mobile).
+  const CHW = 16, CHH = 12;
+  function buildChunk(cx0, cy0) {
     const th = themeOf();
     const img = tilesImg();
-    const [c, x] = mkCanvas(COLS * T, ROWS * T);
+    const [c, x] = mkCanvas(CHW * T, CHH * T);
     const deco = G.img.decor;
     const decoRow = th === 'park' ? 0 : th === 'cosmo' ? 1 : 2;
-    for (let r = 0; r < ROWS; r++) {
-      for (let col = 0; col < COLS; col++) {
+    const c0 = cx0 * CHW, r0 = cy0 * CHH;
+    x.translate(-c0 * T, -r0 * T);
+    let empty = true;
+    for (let r = r0; r < Math.min(ROWS, r0 + CHH + 1); r++) {
+      for (let col = Math.max(0, c0 - 1); col < Math.min(COLS, c0 + CHW + 1); col++) {
         const ch = LEVEL_ROWS[r][col];
+        if (ch === '.' || ch === 'C' || ch === 'E') continue;
+        empty = false;
         const dx = col * T, dy = r * T;
         if (ch === '1') {
           let m = 0;
@@ -355,19 +363,67 @@
         }
       }
     }
-    return c;
+    return empty ? null : c;
+  }
+  const chunks = new Map();
+  function chunkAt(cx, cy) {
+    const k = cx + ',' + cy;
+    let e = chunks.get(k);
+    if (!e) { e = { cv: buildChunk(cx, cy), t: 0 }; chunks.set(k, e); }
+    e.t = frame;
+    return e.cv;
   }
   G.invalidateTiles = () => { cacheKey = null; };
+  G.invalidateTile = (c, r) => {
+    // la case touche éventuellement le morceau voisin (autotile + débord du décor)
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      chunks.delete(Math.floor((c + dx) / CHW) + ',' + Math.floor((r + dy) / CHH));
+    }
+  };
+  /** Vue d'ensemble du niveau entier (tuiles réelles + objets), réduite : pour la carte. */
+  G.renderLevelMap = function (scale) {
+    const W = Math.ceil(COLS * T * scale), Hh = Math.ceil(ROWS * T * scale);
+    const [c, x] = mkCanvas(W, Hh);
+    const th = themeOf();
+    const sky = th === 'park' ? '#8fd3ff' : th === 'cosmo' ? '#1a1240' : '#0b1020';
+    x.fillStyle = sky; x.fillRect(0, 0, W, Hh);
+    x.imageSmoothingEnabled = true;
+    for (let cy = 0; cy * CHH < ROWS; cy++) for (let cx = 0; cx * CHW < COLS; cx++) {
+      const cv = buildChunk(cx, cy);
+      if (cv) x.drawImage(cv, cx * CHW * T * scale, cy * CHH * T * scale, CHW * T * scale, CHH * T * scale);
+    }
+    const dot = (px, py, col, r) => { x.fillStyle = '#000'; x.fillRect(px * scale - r - 1, py * scale - r - 1, 2 * r + 2, 2 * r + 2); x.fillStyle = col; x.fillRect(px * scale - r, py * scale - r, 2 * r, 2 * r); };
+    for (let r = 0; r < ROWS; r++) for (let col = 0; col < COLS; col++) {
+      const ch = LEVEL_ROWS[r][col], px = col * T + T / 2, py = r * T + T / 2;
+      if (ch === 'C') dot(px, py, '#ffe45c', Math.max(1.5, 8 * scale));
+      else if (ch === 'E' || ch === 'R') dot(px, py + 8, '#e53935', Math.max(2, 13 * scale));
+      else if (ch === 'F') dot(px, py, '#ab47bc', Math.max(2, 12 * scale));
+      else if (ch === 'P') dot(px, py, '#29b6f6', Math.max(2, 14 * scale));
+      else if (ch === 'H') { x.strokeStyle = '#fff59d'; x.lineWidth = Math.max(1, 3 * scale); x.setLineDash([3, 2]); x.strokeRect(col * T * scale, r * T * scale, T * scale, T * scale); x.setLineDash([]); }
+      else if (ch === 'S') dot(px, py, '#ffffff', Math.max(3, 16 * scale));
+      else if (ch === 'K') { x.fillStyle = '#7cb342'; x.fillRect(px * scale, (py - 60) * scale, Math.max(2, 5 * scale), 80 * scale); x.fillRect(px * scale, (py - 60) * scale, 28 * scale, 18 * scale); }
+      else if (ch === 'G') { x.fillStyle = '#ffc93c'; x.fillRect(px * scale, (py - 220) * scale, Math.max(2, 6 * scale), 240 * scale); x.fillRect(px * scale, (py - 220) * scale, 40 * scale, 26 * scale); }
+    }
+    return c;
+  };
   G.drawTiles = function (ctx) {
     if (!G.ready) return false;
     const key = (levelDef && levelDef.id) + '|' + themeOf() + '|' + LEVEL_ROWS.length + '|' + (LEVEL_ROWS[0] || '').length;
-    if (!cache || cacheKey !== key || G._rowsRef !== LEVEL_ROWS) {
-      cache = buildCache(); cacheKey = key; G._rowsRef = LEVEL_ROWS;
+    if (cacheKey !== key || G._rowsRef !== LEVEL_ROWS) {
+      chunks.clear(); cacheKey = key; G._rowsRef = LEVEL_ROWS;
     }
     ctx.imageSmoothingEnabled = false;
-    const sx = Math.max(0, Math.floor(cameraX) - 40), sy = Math.max(0, Math.floor(cameraY) - 40);
-    const sw = Math.min(cache.width - sx, VW + 80), sh = Math.min(cache.height - sy, VH + 80);
-    if (sw > 0 && sh > 0) ctx.drawImage(cache, sx, sy, sw, sh, sx, sy, sw, sh);
+    const CW = CHW * T, CH = CHH * T;
+    const x0 = Math.max(0, Math.floor((cameraX - 40) / CW)), x1 = Math.floor((cameraX + VW + 40) / CW);
+    const y0 = Math.max(0, Math.floor((cameraY - 40) / CH)), y1 = Math.floor((cameraY + VH + 40) / CH);
+    for (let cy = y0; cy <= y1 && cy * CHH < ROWS; cy++) {
+      for (let cx = x0; cx <= x1 && cx * CHW < COLS; cx++) {
+        const cv = chunkAt(cx, cy);
+        if (cv) ctx.drawImage(cv, cx * CW, cy * CH);
+      }
+    }
+    // libère les morceaux hors champ depuis ~4 s
+    if (frame % 120 === 0) for (const [k, e] of chunks) if (frame - e.t > 240) chunks.delete(k);
     // tuiles animées visibles
     const img = tilesImg();
     const c0 = Math.max(0, Math.floor(cameraX / T) - 1), c1 = Math.min(COLS - 1, Math.floor((cameraX + VW) / T) + 1);
