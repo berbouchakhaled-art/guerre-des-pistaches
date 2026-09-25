@@ -1,0 +1,179 @@
+diff --git a/index.html b/index.html
+index 3e63cb7..b26a96c 100644
+--- a/index.html
++++ b/index.html
+@@ -2068,8 +2068,12 @@
+   function setViewSize(w, h) {
+     const oldW = VW;
+     const rs = VIEW.rs;
+-    if (canvas.width !== w * rs || canvas.height !== h * rs) {
+-      canvas.width = w * rs; canvas.height = h * rs;
++    // taille de toile multiple de VIEW.bq → taille CSS exactement représentable (pas de
++    // rangée de pixels écran perdue/doublée par l'arrondi du navigateur)
++    const q = VIEW.bq || 1;
++    const bw = Math.floor(w * rs / q + 1e-6) * q, bh = Math.floor(h * rs / q + 1e-6) * q;
++    if (canvas.width !== bw || canvas.height !== bh) {
++      canvas.width = bw; canvas.height = bh;
+     }
+     VW = w; VH = h;
+     ctx.imageSmoothingEnabled = false;
+@@ -2085,6 +2089,7 @@
+     if (!fs) {
+       VIEW.mobile = false; VIEW.portrait = false;
+       document.body.classList.remove('portrait-play');
++      VIEW.rs = 2; VIEW.bq = 1;
+       setViewSize(960, 540);
+       VIEW.hudL = 118; VIEW.hudR = 110; VIEW.hudT = 10;
+       return;
+@@ -2131,7 +2136,16 @@
+     vh = Math.min(vh, 17 * T);             // jamais plus haut que le niveau (17 rangées)
+     vw = Math.min(vw, 1280);
+     const cs = k / dpr;                    // px CSS par pixel logique
+-    const cw = vw * cs, ch = vh * cs;
++    // Résolution de rendu : 1 pixel de toile = m pixels écran (entier, jamais fractionnaire).
++    // Sousou HD est dessiné à 1 pixel d'art = 1 pixel de toile → pixels carrés et réguliers ;
++    // m est choisi pour qu'il garde ~70 px monde de haut (153 px d'art).
++    const m = k >= 1.8 ? Math.max(1, Math.round(k * 70 / 153)) : 1;
++    VIEW.rs = k / m;
++    // plus petit q tel que q pixels de toile = un nombre exact de 1/64 px CSS (unité de mise en page)
++    VIEW.bq = 1;
++    for (let q = 1; q <= 64; q++) { const u = q * m / dpr * 64; if (Math.abs(u - Math.round(u)) < 1e-4) { VIEW.bq = q; break; } }
++    setViewSize(vw, vh);
++    const cw = canvas.width * m / dpr, ch = canvas.height * m / dpr;
+     const cx = Math.round(areaX + (areaW - cw) / 2);
+     const cy = Math.round(portraitPlay ? areaY : areaY + Math.max(0, (areaH - ch) / 2));
+     if (portraitPlay) root.setProperty('--panel-h', Math.max(200, Math.floor(cssH - cy - ch)) + 'px');
+@@ -2139,7 +2153,6 @@
+     root.setProperty('--cv-h', ch + 'px');
+     root.setProperty('--cv-x', cx + 'px');
+     root.setProperty('--cv-y', cy + 'px');
+-    setViewSize(vw, vh);
+     VIEW.mobile = true; VIEW.portrait = portraitPlay; VIEW.k = k; VIEW.cssScale = cs;
+     if (portraitPlay) { VIEW.hudL = 6; VIEW.hudR = 6; VIEW.hudT = 6; return; }
+     if (sidePads) {
+diff --git a/js/gfx.js b/js/gfx.js
+index 449e079..6e7b9a0 100644
+--- a/js/gfx.js
++++ b/js/gfx.js
+@@ -25,10 +25,11 @@
+   // cellule 48x64, pieds sur la ligne du bas, centre du corps x=22
+   // ---------------------------------------------------------------
+   const SP = { w: 48, h: 64, ax: 22, ay: 64 };
+-  // Sprite HD (assets/sousou-sprite-hd.png, 792x528) : même design, 2,75x plus détaillé
+-  // (cellule 132x176). Dessiné à 0,5 px monde par pixel d'art → 66x88 px monde (1,375x,
+-  // Sousou ≈ 70 px de haut), net car la toile est rendue en x2 (VIEW.rs).
+-  const HD = { f: 2.75, w: 132, h: 176, dw: 66, dh: 88, ax: 30.5 };
++  // Sprite HD (assets/sousou-sprite-hd.png, 864x576) : le sprite approuvé 48x64 agrandi
++  // x3 fidèlement (Scale3x + visage affiné), cellule 144x192. Toujours dessiné à 1 pixel
++  // d'art = 1 pixel de toile (taille monde = art / VIEW.rs) → pixels carrés et réguliers,
++  // jamais d'échelle fractionnaire ni de déformation.
++  const HD = { f: 3, w: 144, h: 192, ax: 66 };
+   const SP_FRAMES = {
+     idle_0: [0, 0], idle_1: [48, 0], idle_2: [96, 0], idle_3: [144, 0],
+     run_0: [192, 0], run_1: [240, 0], run_2: [0, 64], run_3: [48, 64],
+@@ -711,24 +712,22 @@
+     const name = pickFrame();
+     const fr = SP_FRAMES[name];
+     const flip = p.facing < 0;
+-    // squash/stretch subtil (50% de l'effet d'origine), tailles entières
+-    const sq = typeof playerSquash === 'number' ? playerSquash : 1;
+-    const st = typeof playerStretch === 'number' ? playerStretch : 1;
+-    let sx = 1, sy = 1;
+-    if (st > 1) { sy = 1 + (st - 1) * 0.5; sx = 1 - (st - 1) * 0.3; }
+-    if (sq > 1) { sx = 1 + (sq - 1) * 0.5; sy = 1 - (sq - 1) * 0.35; }
+-    const hd = !!G.img.sousouHD && (window.VIEW ? VIEW.rs >= 2 : false);
++    // pas de squash/stretch sur Sousou : il garde toujours ses proportions exactes
++    const rs = window.VIEW ? VIEW.rs : 1;
++    const hd = !!G.img.sousouHD && rs >= 1.5;
+     const img = hd ? G.img.sousouHD : G.img.sousou;
+     const f = hd ? HD.f : 1, cw = hd ? HD.w : SP.w, ch = hd ? HD.h : SP.h;
+-    const q = hd ? 2 : 1; // arrondi au demi-pixel monde (= pixel de rendu) en HD
+-    const dw = Math.round((hd ? HD.dw : SP.w) * sx * q) / q, dh = Math.round((hd ? HD.dh : SP.h) * sy * q) / q;
+-    const ax = Math.round((hd ? HD.ax : SP.ax) * sx * q) / q;
+-    const sc = hd ? 1.375 : 1;
++    // HD : 1 pixel d'art = 1 pixel de toile ; sinon 1 pixel d'art = 1 pixel monde
++    const dw = hd ? HD.w / rs : SP.w, dh = hd ? HD.h / rs : SP.h;
++    const ax = hd ? HD.ax / rs : SP.ax;
++    const sc = hd ? HD.f / rs : 1; // px monde par pixel du sprite de base
+     // ombre
+     if (p.onGround) { ctx.save(); ctx.globalAlpha *= 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(p.x - 16), Math.round(p.y - 2), 32, 3); ctx.fillRect(Math.round(p.x - 11), Math.round(p.y - 3), 22, 5); ctx.restore(); }
+     if (themeOf() !== 'park') glow(ctx, p.x, p.y - 32, 48, '#fff8e1', 0.16);
+     ctx.save();
+     ctx.translate(Math.round(p.x), Math.round(p.y));
++    // origine calée sur un pixel entier de la toile (sinon colonnes/rangées inégales)
++    if (ctx.getTransform) { const m = ctx.getTransform(); ctx.setTransform(m.a, m.b, m.c, m.d, Math.round(m.e), Math.round(m.f)); }
+     if (flip) ctx.scale(-1, 1);
+     const ghost = buffs.ghost > 0;
+     if (ghost) ctx.globalAlpha *= 0.6;
+diff --git a/js/menu.js b/js/menu.js
+index 9ed9b58..7bdf1c1 100644
+--- a/js/menu.js
++++ b/js/menu.js
+@@ -13,7 +13,7 @@
+   const ctx = cv.getContext('2d');
+   const MENU = window.MENU = { active: false };
+   const LOGO_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÉ!*-'";
+-  const HDC = { w: 132, h: 176, cx: 61, top: 36 };           // cellule sprite HD, centre du corps
++  const HDC = { w: 144, h: 192, cx: 66, top: 39 };           // cellule sprite HD (x3), centre du corps
+   const FR = {
+     idle: [[0, 0], [1, 0], [2, 0], [3, 0]], jump: [4, 1], fall: [5, 1],
+     shoot0: [0, 2], shoot1: [1, 2], blink: [2, 2], run: [[4, 0], [5, 0], [0, 1], [1, 1], [2, 1], [3, 1]],
+@@ -28,14 +28,17 @@
+   // ---------------------------------------------------------------- taille
+   function resize() {
+     const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+-    const m = dpr >= 2.5 ? 2 : 1;           // pixel de rendu = 2 pixels écran sur dpr 3
+-    bs = dpr / m;
+-    // plafond de pixels de rendu (grandes tablettes) pour garder 60 i/s
++    // pixel de rendu = m pixels écran, m ENTIER (2 sur dpr 3) → pixels d'art carrés et réguliers ;
++    // plafond de pixels de rendu (grandes tablettes) pour garder 60 i/s, toujours en m entier
+     const area = window.innerWidth * window.innerHeight;
+-    if (area * bs * bs > 1.5e6) bs = Math.max(1, Math.sqrt(1.5e6 / area));
++    let m = dpr >= 2.5 ? 2 : 1;
++    while (area * (dpr / m) * (dpr / m) > 1.5e6 && dpr / (m + 1) >= 0.75) m++;
++    bs = dpr / m;
+     const cw = Math.max(1, Math.round(window.innerWidth * bs));
+     const ch = Math.max(1, Math.round(window.innerHeight * bs));
+     if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
++    // 1 px de rendu = m px écran exactement (pas d'étirement CSS fractionnaire)
++    cv.style.setProperty('width', cw / bs + 'px', 'important'); cv.style.setProperty('height', ch / bs + 'px', 'important');
+     W = cw; H = ch;
+     ctx.imageSmoothingEnabled = false;
+     px = Math.max(1, Math.round(Math.min(W, H) / 300));
+@@ -250,11 +253,11 @@
+     const sp = img('sousouHD');
+     if (!stageR || !sp) return;
+     const tiles = img('tiles_' + th) || img('tiles_park');
+-    // échelle entière : Sousou (140 px d'art) remplit ~80 % de la scène
+-    // (demi-pas autorisés sous 2 : les pixels d'art HD restent plus petits qu'un pixel CSS)
+-    const fit = (stageR.h * 0.94 - 20) / 146;
+-    let s = fit >= 2 ? Math.floor(fit) : Math.max(1, Math.floor(fit * 2) / 2);
+-    while (s > 1 && 70 * s > stageR.w * 0.95) s -= s > 2 ? 1 : 0.5;
++    // échelle ENTIÈRE uniquement : Sousou (153 px d'art) remplit ~80 % de la scène,
++    // chaque pixel d'art = s x s pixels de rendu → jamais déformé
++    const fit = (stageR.h * 0.94 - 20) / 160;
++    let s = Math.max(1, Math.floor(fit));
++    while (s > 1 && 76 * s > stageR.w * 0.95) s--;
+     const cx = Math.round(stageR.x + stageR.w / 2);
+     const platH = 22 * s;
+     const groundY = Math.round(stageR.y + stageR.h - platH * 1.25);
+@@ -299,7 +302,7 @@
+     const x0 = Math.round(cx - HDC.cx * s);
+     const y0 = Math.round(feet - HDC.h * s - Math.round(S.y) * s);
+     ctx.drawImage(sp, fr[0] * HDC.w, fr[1] * HDC.h, HDC.w, HDC.h, x0, y0, HDC.w * s, HDC.h * s);
+-    lastGeo = { mx: x0 + 128 * s, my: y0 + 102 * s, s };
++    lastGeo = { mx: x0 + 138 * s, my: y0 + 110 * s, s };
+     // tirs de pistaches
+     const it = img('items');
+     for (let i = shots.length - 1; i >= 0; i--) {
+diff --git a/tools/gfx/manifest.txt b/tools/gfx/manifest.txt
+index f4f6f91..436d710 100644
+--- a/tools/gfx/manifest.txt
++++ b/tools/gfx/manifest.txt
+@@ -35,5 +35,5 @@ assets/gfx/ui.png 4d6539d8fe8f32fc9de1c1c2511b403b07c6e040a5bc84469c876095b1ed8b
+ assets/icons/apple-touch-icon.png cbd5222c851d8d6b824bb16bcd802b8ba3163e919fbb6eb61ac173b0d0402c27 180x180
+ assets/icons/icon-192.png 7fd789d81c37bd63be025023c9e46a779f8158b48e909b544773ce0e21c834a3 192x192
+ assets/icons/icon-512.png 79ea7edc20e91e43c300d1caa29c8d20253414629039eee89ea628a99ffc4c6a 512x512
+-assets/sousou-sprite-hd.png f6ccdee87082f0fad5669cd71a3d74807070f3a0833fcff4475ec35e63e5efb1 792x528
++assets/sousou-sprite-hd.png 989668810a4dc719d963ad2d429dc3ef691e9f21f639a9e481339ae20219a4c5 864x576
+ assets/sousou-sprite.png b636fe6a095d2e3f48175dcf6c13d332b165fd2c1bad0f15e54f257053947740 288x192
