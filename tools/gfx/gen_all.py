@@ -12,7 +12,12 @@ items.build(OUT); fx.build(OUT); enemies.build(OUT); tiles.build(OUT); bg.build(
 sp = os.path.join(ROOT, 'tools', 'sousou-sprite')
 subprocess.check_call([sys.executable, 'build.py'], cwd=sp)
 shutil.copyfile(os.path.join(sp, 'sousou_sprite.png'), os.path.join(ROOT, 'assets', 'sousou-sprite.png'))
+# HD version (same poses, 2.75x, detailed face) -> assets/sousou-sprite-hd.png
+subprocess.check_call([sys.executable, 'build_hd.py', os.path.join(ROOT, 'assets', 'sousou-sprite-hd.png')], cwd=sp)
 for f in ('sousou_sprite.png', 'sousou_sprite.json', 'sousou_sprite_preview_6x.png'):
     p = os.path.join(sp, f)
     if os.path.exists(p): os.remove(p)
 print('assets written to', OUT)
+# mobile UI (touch buttons, rotate prompt, app icons)
+import ui
+ui.build(OUT)

@@ -1,0 +1,305 @@
+/* =====================================================================
+   MOBILE FIRST (téléphones) — vue zoomée pixel-perfect, commandes pouces,
+   HUD compact, invite « Tourne ton téléphone », zones sûres (encoche).
+   ===================================================================== */
+html.is-touch .desktop-only { display: none !important; }
+html.is-touch .mobile-only { display: inline !important; }
+html.is-touch, html.is-touch body { -webkit-touch-callout: none; }
+html.is-touch body.playing {
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  overscroll-behavior: none;
+}
+canvas#game { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+/* Canvas : taille exacte calculée en JS (échelle entière en pixels écran) */
+html body.playing.mobile-fs canvas#game {
+  left: var(--cv-x, 0px) !important;
+  top: var(--cv-y, 0px) !important;
+  width: var(--cv-w, 100%) !important;
+  height: var(--cv-h, 100%) !important;
+  transform: none !important;
+  object-fit: fill !important;
+  max-width: none !important;
+  max-height: none !important;
+  image-rendering: pixelated;
+}
+html body.playing.mobile-fs .wrap { background: #050a05; }
+
+/* ---------- boutons pixel (9-slice) ---------- */
+.touch-ui .tbtn { position: relative; }
+.touch-ui .tbtn,
+body.mobile-fs .menu-btn,
+body.mobile-fs .mute-btn,
+.fs-btn {
+  box-sizing: border-box;
+  background: none !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  border-width: 1px !important;
+  border-image: url(../assets/gfx/btn_green.png) 4 fill / 12px / 0 stretch;
+  overflow: visible;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  image-rendering: pixelated;
+  padding: 0 !important;
+  margin: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #fffde7 !important;
+  font-family: inherit;
+  font-weight: 800;
+  text-shadow: 0 2px 0 rgba(0,0,0,.65);
+  letter-spacing: .06em;
+  line-height: 1;
+  animation: none !important;
+  filter: none !important;
+  transition: transform .05s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-ui .tbtn.active {
+  background: none !important; box-shadow: none !important;
+  border-image-source: url(../assets/gfx/btn_green_on.png);
+  transform: translateY(2px) scale(0.95) !important;
+  color: #1b3a16 !important; text-shadow: none;
+}
+.touch-ui .tbtn.jump-btn { border-image-source: url(../assets/gfx/btn_jump.png); color: #3e2723 !important; text-shadow: 0 1px 0 rgba(255,255,255,.4); }
+.touch-ui .tbtn.jump-btn.active { border-image-source: url(../assets/gfx/btn_jump_on.png); }
+.touch-ui .tbtn.fire-btn { border-image-source: url(../assets/gfx/btn_fire.png); color: #10240c !important; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.touch-ui .tbtn.fire-btn.active { border-image-source: url(../assets/gfx/btn_fire_on.png); }
+.touch-ui .touch-weapons .tbtn { border-image-source: url(../assets/gfx/btn_dark.png); }
+.touch-ui .touch-weapons .tbtn.selected { border-image-source: url(../assets/gfx/btn_green_on.png); }
+body.mobile-fs .menu-btn, body.mobile-fs .mute-btn, .fs-btn { border-image-source: url(../assets/gfx/btn_dark.png); }
+body.mobile-fs .menu-btn:active, body.mobile-fs .mute-btn:active, .fs-btn:active { border-image-source: url(../assets/gfx/btn_dark_on.png); transform: translateY(2px); }
+
+.ic {
+  display: block; flex: none;
+  width: 48px; height: 48px;
+  background: url(../assets/gfx/ui.png) no-repeat;
+  background-size: 768px 48px;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.ic.s1 { width: 24px; height: 24px; background-size: 384px 24px; }
+.ic-left  { background-position: 0 0; }
+.ic-right { background-position: -48px 0; }
+.ic-up    { background-position: -96px 0; }
+.ic-down  { background-position: -144px 0; }
+.ic-jump  { background-position: -192px 0; }
+.ic-fire  { background-position: -240px 0; }
+.ic-menu  { background-position: -288px 0; }
+.ic-snd   { background-position: -336px 0; }
+.ic-mute  { background-position: -384px 0; }
+.ic-full  { background-position: -432px 0; }
+.ic-w0    { background-position: -480px 0; }
+.ic-w1    { background-position: -528px 0; }
+.ic-w2    { background-position: -576px 0; }
+.ic.s1.ic-up   { background-position: -48px 0; }
+.ic.s1.ic-down { background-position: -72px 0; }
+.tbtn .lb { font-size: 10px; margin-top: -2px; pointer-events: none; }
+
+/* ---------- disposition pouces (paysage téléphone) ---------- */
+body.mobile-fs .touch-ui .touch-left {
+  position: absolute;
+  left: calc(max(8px, env(safe-area-inset-left)) + 4px) !important;
+  bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  display: grid !important;
+  grid-template-columns: var(--pad, 76px) var(--pad, 76px) !important;
+  grid-template-rows: 40px var(--pad, 76px) !important;
+  gap: 8px 12px !important;
+  max-width: none !important;
+  transform: none;
+  touch-action: none;
+}
+body.mobile-fs .touch-ui .touch-left .tbtn { width: 100% !important; height: 100% !important; min-width: 0 !important; min-height: 0 !important; }
+body.mobile-fs .touch-ui .touch-left .dir-up   { grid-column: 1; grid-row: 1; width: 60% !important; justify-self: center; }
+body.mobile-fs .touch-ui .touch-left .dir-down { grid-column: 2; grid-row: 1; width: 60% !important; justify-self: center; }
+body.mobile-fs .touch-ui .touch-right {
+  position: absolute;
+  right: calc(max(8px, env(safe-area-inset-right)) + 4px) !important;
+  bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  display: flex !important; flex-direction: column; align-items: flex-end; gap: 8px !important;
+}
+body.mobile-fs .touch-ui .touch-actions { display: flex !important; align-items: flex-end; gap: 12px !important; touch-action: none; }
+#padLeft, #padRight { pointer-events: auto !important; touch-action: none; -webkit-user-select: none; user-select: none; }
+body.mobile-fs .touch-ui .touch-actions .fire-btn { width: var(--fire, 78px) !important; height: var(--fire, 78px) !important; min-width: 0 !important; min-height: 0 !important; margin-bottom: 0; }
+body.mobile-fs .touch-ui .touch-actions .jump-btn { width: var(--jump, 88px) !important; height: var(--jump, 88px) !important; min-width: 0 !important; min-height: 0 !important; margin-bottom: 22px; }
+/* armes : en haut à droite (à côté du son), hors de la zone de jeu des pouces */
+body.mobile-fs .touch-ui .touch-weapons {
+  display: flex !important; gap: 6px !important;
+  position: fixed; top: calc(max(6px, env(safe-area-inset-top)) + 2px);
+  right: calc(max(8px, env(safe-area-inset-right)) + 2px + 44px + 8px);
+}
+body.mobile-fs.can-fs:not(.is-fs) .touch-ui .touch-weapons { right: calc(max(8px, env(safe-area-inset-right)) + 2px + 96px + 8px); }
+body.mobile-fs .touch-ui .touch-weapons .tbtn { width: 44px !important; height: 40px !important; min-width: 0 !important; }
+body.mobile-fs .touch-ui .touch-hint { display: none !important; }
+body.large-ui.mobile-fs { --pad: 86px; --fire: 86px; --jump: 96px; }
+/* tablettes : commandes plus grandes */
+@media (min-width: 700px) and (min-height: 700px) {
+  body.mobile-fs { --pad: 96px !important; --fire: 96px !important; --jump: 110px !important; }
+  body.mobile-fs .touch-ui .touch-weapons .tbtn { width: 54px !important; height: 48px !important; }
+  body.mobile-fs .touch-ui .touch-left { grid-template-rows: 48px var(--pad) !important; }
+}
+body.large-ui.mobile-fs .touch-left, body.large-ui.mobile-fs .touch-actions button { transform: none !important; }
+
+/* ☰ Menu / 🔊 / plein écran : petites icônes dans les coins sûrs */
+body.mobile-fs .menu-btn {
+  top: calc(max(6px, env(safe-area-inset-top))) !important;
+  left: calc(max(8px, env(safe-area-inset-left)) + 2px) !important;
+  width: 44px !important; height: 44px !important; min-width: 0 !important; min-height: 0 !important;
+  font-size: 0 !important;
+}
+body.mobile-fs .mute-btn {
+  top: calc(max(6px, env(safe-area-inset-top))) !important;
+  right: calc(max(8px, env(safe-area-inset-right)) + 2px) !important;
+  width: 44px !important; height: 44px !important; min-width: 0 !important; min-height: 0 !important;
+  font-size: 0 !important;
+}
+body.mobile-fs .menu-btn::before, body.mobile-fs .mute-btn::before, .fs-btn::before {
+  content: ''; width: 24px; height: 24px;
+  background: url(../assets/gfx/ui.png) no-repeat; background-size: 384px 24px; image-rendering: pixelated;
+}
+body.mobile-fs .menu-btn::before { background-position: -144px 0; }
+body.mobile-fs .mute-btn::before { background-position: -168px 0; }
+body.mobile-fs .mute-btn[aria-pressed="true"]::before { background-position: -192px 0; }
+.fs-btn { display: none; position: absolute; z-index: 12; width: 44px; height: 44px; font-size: 0; }
+.fs-btn::before { background-position: -216px 0; }
+body.mobile-fs.can-fs:not(.is-fs) .fs-btn {
+  display: flex;
+  top: calc(max(6px, env(safe-area-inset-top)));
+  right: calc(max(8px, env(safe-area-inset-right)) + 52px);
+}
+body.mobile-fs .play-hint { top: auto; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 6px); font-size: .8rem; max-width: 44%; padding: 8px 10px; }
+
+/* ---------- portrait jouable : jeu en haut, commandes en bas ---------- */
+body.mobile-fs.portrait-play .touch-ui::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+  height: var(--panel-h, 280px);
+  background:
+    linear-gradient(180deg, #8bc34a 0 4px, #3d6b2e 4px 8px, transparent 8px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, #5d4037, #3e2723 60%, #2b1b17);
+  pointer-events: none;
+}
+body.mobile-fs.portrait-play { --pad: 80px; --fire: 80px; --jump: 92px; }
+body.mobile-fs.portrait-play .touch-ui .touch-left { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 8px) !important; }
+body.mobile-fs.portrait-play .touch-ui .touch-right { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 8px) !important; }
+body.mobile-fs.portrait-play .touch-ui .touch-actions { flex-direction: column-reverse; align-items: flex-end; gap: 10px !important; }
+body.mobile-fs.portrait-play .touch-ui .touch-actions .jump-btn { margin-bottom: 0; }
+body.mobile-fs.portrait-play .touch-ui .touch-actions .fire-btn { margin-right: 34px; }
+body.mobile-fs.portrait-play .touch-ui .touch-left { grid-template-rows: 44px var(--pad) !important; }
+
+/* ---------- invite « Tourne ton téléphone » ---------- */
+#rotatePrompt {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  padding: max(16px, env(safe-area-inset-top)) 20px max(16px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(139,195,74,.28), transparent 60%),
+    linear-gradient(180deg, #102010, #07100a);
+  color: #fffde7; text-align: center;
+  touch-action: manipulation;
+}
+body.rotate-wait #rotatePrompt { display: flex; }
+#rotatePrompt .rot-img {
+  width: 192px; height: 144px;
+  background: url(../assets/gfx/rotate.png) center / 192px 144px no-repeat;
+  image-rendering: pixelated;
+  animation: rotPhone 2.4s ease-in-out infinite;
+}
+@keyframes rotPhone {
+  0%, 15% { transform: rotate(-90deg) scale(.8); }
+  45%, 85% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(-90deg) scale(.8); }
+}
+#rotatePrompt h2 { font-size: 1.6rem; color: #ffeb3b; text-shadow: 0 3px 0 #3e2723, 0 0 16px rgba(255,235,59,.5); margin: 0; }
+#rotatePrompt p { margin: 0; font-size: 1rem; line-height: 1.4; color: #dcedc8; max-width: 320px; }
+#rotatePrompt .rot-sub { font-size: .78rem; opacity: .75; }
+#rotatePrompt button {
+  margin-top: 8px; animation: none; font-size: .95rem; padding: 12px 20px;
+  background: linear-gradient(180deg, #dcedc8, #8bc34a); color: #1b3a16;
+  touch-action: manipulation;
+}
+#rotatePrompt .rot-back { background: rgba(255,255,255,.12); color: #fffde7; box-shadow: none; font-size: .85rem; padding: 10px 16px; margin-top: 0; }
+
+/* ---------- écran de fin sur téléphone (le menu principal : css/menu.css) ---------- */
+html.is-touch #endScreen .level-pick { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+html.is-touch #endScreen .level-pick .level-label { grid-column: 1 / -1; }
+html.is-touch #endScreen .level-btn { min-height: 56px; padding: 8px 8px !important; border-radius: 14px; }
+html.is-touch #endScreen .level-btn .lv-name { font-size: 1rem; }
+html.is-touch #endScreen .level-btn .lv-desc { display: none; }
+
+/* =====================================================================
+   TÉLÉPHONE EN PAYSAGE : commandes dans deux colonnes latérales
+   Le jeu est posé entre les colonnes (applyView → --gut-l / --gut-r) :
+   aucun bouton ne recouvre Sousou, les ennemis, le sol ou les trous.
+   ===================================================================== */
+.gut-tip { display: none; }
+body.side-pads.mobile-fs .touch-ui::before,
+body.side-pads.mobile-fs .touch-ui::after {
+  content: ''; position: absolute; top: 0; bottom: 0; pointer-events: none; z-index: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, transparent 2px 10px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 2px, transparent 2px 20px),
+    linear-gradient(180deg, #17321a, #0c1c0e 70%, #09150a);
+}
+body.side-pads.mobile-fs .touch-ui::before {
+  left: 0; width: var(--gut-l, 110px);
+  box-shadow: inset -2px 0 0 #8bc34a, inset -4px 0 0 #1b3a16, inset -10px 0 12px rgba(0,0,0,.35);
+}
+body.side-pads.mobile-fs .touch-ui::after {
+  right: 0; width: var(--gut-r, 110px);
+  box-shadow: inset 2px 0 0 #8bc34a, inset 4px 0 0 #1b3a16, inset 10px 0 12px rgba(0,0,0,.35);
+}
+/* pouce gauche : ▲ ▼ puis ◀ ▶ ; toute la moitié basse de la colonne est tactile */
+body.side-pads.mobile-fs .touch-ui .touch-left {
+  left: 0 !important; bottom: 0 !important;
+  width: var(--gut-l, 110px) !important; max-width: none !important;
+  box-sizing: border-box;
+  padding: 48px 6px max(12px, env(safe-area-inset-bottom)) calc(max(4px, env(safe-area-inset-left)) + 4px);
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: 38px 92px !important;
+  gap: 8px 6px !important;
+}
+body.side-pads.mobile-fs .touch-ui .touch-left .dir-up,
+body.side-pads.mobile-fs .touch-ui .touch-left .dir-down { width: 100% !important; }
+/* pouce droit : TIR au-dessus de SAUT, colonne entière tactile en bas */
+body.side-pads.mobile-fs .touch-ui .touch-right {
+  right: 0 !important; bottom: 0 !important;
+  width: var(--gut-r, 110px); box-sizing: border-box;
+  padding: 0 calc(max(4px, env(safe-area-inset-right)) + 4px) max(12px, env(safe-area-inset-bottom)) 6px;
+  align-items: stretch;
+}
+body.side-pads.mobile-fs .touch-ui .touch-actions {
+  flex-direction: column !important; align-items: center !important; gap: 10px !important;
+  padding-top: 36px;
+}
+body.side-pads.mobile-fs .touch-ui .touch-actions .fire-btn { width: 88px !important; height: 72px !important; margin: 0 !important; }
+body.side-pads.mobile-fs .touch-ui .touch-actions .jump-btn { width: 96px !important; height: 96px !important; margin: 0 !important; }
+/* arme : un seul bouton (l'arme en cours) qui passe à la suivante */
+body.side-pads.mobile-fs .touch-ui .touch-weapons {
+  top: calc(max(6px, env(safe-area-inset-top)) + 2px);
+  right: calc(max(4px, env(safe-area-inset-right)) + 4px) !important;
+}
+body.side-pads.mobile-fs .touch-ui .touch-weapons .tbtn { width: 48px !important; height: 44px !important; }
+body.side-pads.mobile-fs .touch-ui .touch-weapons .tbtn:not(.selected) { display: none !important; }
+body.side-pads.mobile-fs .touch-ui .touch-weapons .tbtn.selected { border-image-source: url(../assets/gfx/btn_dark.png); }
+body.side-pads.mobile-fs.can-fs:not(.is-fs) .fs-btn { right: calc(max(4px, env(safe-area-inset-right)) + 4px + 48px + 6px); }
+/* ☰ et 🔊 en haut de la colonne gauche */
+body.side-pads.mobile-fs .menu-btn { left: calc(max(4px, env(safe-area-inset-left)) + 4px) !important; }
+body.side-pads.mobile-fs .mute-btn {
+  right: auto !important;
+  left: calc(max(4px, env(safe-area-inset-left)) + 4px + 44px + 6px) !important;
+}
+/* astuce du 1er lancement : dans les colonnes, jamais sur le jeu (puis fondu) */
+body.side-pads.mobile-fs .play-hint { display: none !important; }
+body.side-pads.mobile-fs .gut-tip {
+  display: block; position: absolute; top: 30%; box-sizing: border-box;
+  padding: 0 6px; text-align: center; pointer-events: none;
+  font-size: .74rem; font-weight: 800; line-height: 1.35; color: #fff59d;
+  text-shadow: 0 2px 0 rgba(0,0,0,.7);
+  opacity: 0; transition: opacity .5s ease; z-index: 2;
+}
+body.side-pads.mobile-fs .gut-tip.gt-l { left: 0; width: var(--gut-l, 110px); padding-left: calc(max(4px, env(safe-area-inset-left)) + 4px); }
+body.side-pads.mobile-fs .gut-tip.gt-r { right: 0; width: var(--gut-r, 110px); padding-right: calc(max(4px, env(safe-area-inset-right)) + 4px); }
+body.side-pads.mobile-fs #playHint:not(.hidden) ~ #touchUI .gut-tip { opacity: 1; animation: gutTip 1s ease-in-out infinite alternate; }
+@keyframes gutTip { from { transform: translateY(0); } to { transform: translateY(-4px); } }
