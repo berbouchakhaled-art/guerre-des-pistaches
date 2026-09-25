@@ -9,7 +9,7 @@ Checks, for every world (parc, cosmique, vaisseau — the Histoire mode chains t
  2. CEILINGS  : no solid ceiling (run of >= 4 solid tiles) within a NORMAL jump above a
     reachable standable tile (isolated ?-blocks / bricks are allowed, they are meant to be hit).
  3. REACHABILITY : frame-by-frame simulation of the game physics (same integration as
-    resolvePlayer, hardest "Défi" jump), never crouching: start -> checkpoint -> goal must be
+    resolvePlayer, hardest "Défi" jump, run speed x PACE read from index.html), never crouching: start -> checkpoint -> goal must be
     reachable; secret area reachable once hidden ?-blocks are revealed.
 Exit code 1 on any failure.
 """
@@ -33,6 +33,8 @@ def physics():
     diff = {}
     for m in re.finditer(r"(\w+): \{\s*id: '(\w+)'.*?jumpBonus: (-?[\d.]+).*?gravityMul: ([\d.]+)", src, re.S):
         diff[m.group(2)] = (float(m.group(3)), float(m.group(4)))
+    m = re.search(r"const PACE = ([\d.]+);", src)
+    phys['pace'] = float(m.group(1)) if m else 1.0
     return phys, diff
 
 
@@ -89,14 +91,14 @@ def clearance(m):
     return bad, crouch
 
 
-def simulate(m, x, y, vx0, dirn, spd, vy0, g, vmax_air, tramp_v):
+def simulate(m, x, y, vx0, dirn, spd, vy0, g, vmax_air, tramp_v, pace=1.0):
     """Returns landing cell (c, r) or None. Integration identical to resolvePlayer()."""
     hw = PW / 2
     vx, vyy = vx0, vy0
     for f in range(400):
         # air control
         if dirn:
-            vx += 0.52 * dirn
+            vx += 0.52 * pace * dirn
             if abs(vx) > spd:
                 vx = spd * dirn
         else:
@@ -147,7 +149,8 @@ def reach(m, theme, phys, diff, level='hard'):
     jb, gm = diff[level]
     g = grav * gm
     jump = jv + jb
-    vmax_air = 5.9 if theme == 'cosmo' else 5.6
+    P = phys.get('pace', 1.0)
+    vmax_air = (5.9 if theme == 'cosmo' else 5.6) * P
     tramp = -18 if theme == 'cosmo' else -16
     start = m.find('S')[0]
     s0 = (start[0], start[1] + 1)
@@ -169,14 +172,15 @@ def reach(m, theme, phys, diff, level='hard'):
             launches = [(jump, c * T + T / 2)]
         for vy0, x0 in launches:
             for dirn, spd in ((0, 0), (1, 2), (1, 3.5), (1, 5.6), (-1, 2), (-1, 3.5), (-1, 5.6)):
-                res = simulate(m, x0, feet, dirn * spd, dirn, spd, vy0, g, vmax_air, tramp)
+                spd *= P
+                res = simulate(m, x0, feet, dirn * spd, dirn, spd, vy0, g, vmax_air, tramp, P)
                 if res:
                     nxt.append(res[:2])
         # se laisser tomber d'un bord
         for d in (-1, 1):
             if not m.standable(c + d, r) and not m.wall(c + d, r - 1):
-                for spd in (1.5, 3.5, 5.6):
-                    res = simulate(m, c * T + T / 2 + d * 16, feet, d * spd, d, spd, 0, g, vmax_air, tramp)
+                for spd in (1.5 * P, 3.5 * P, 5.6 * P):
+                    res = simulate(m, c * T + T / 2 + d * 16, feet, d * spd, d, spd, 0, g, vmax_air, tramp, P)
                     if res:
                         nxt.append(res[:2])
         for n in nxt:
@@ -232,6 +236,17 @@ def check(name, theme, rows, phys, diff, new=True):
         hit = cell in R
         print('  start -> %-10s reachable (Défi physics, no crouch, secrets hidden): %s' % (label, 'YES' if hit else 'NO'))
         ok &= hit
+    # briques cassables : le chemin ne doit jamais dépendre d'une brique (toutes cassées)
+    if new:
+        nb = [row.replace('2', '.') for row in rows]
+        Rb = reach(Map(nb), theme, phys, diff, 'hard')
+        Rbn = reach(Map(nb, reveal=True), theme, phys, diff, 'hard')
+        mb = Map(nb)
+        okb = all((mb.find(k)[0][0], mb.find(k)[0][1] + 1) in Rb for k in 'KG')
+        topb = min(r for c, r in m.find('4') + m.find('I'))
+        okb &= any(cell[1] <= topb + 1 for cell in Rbn)
+        print('  with ALL bricks broken: checkpoint, goal and secret still reachable: %s' % ('YES' if okb else 'NO'))
+        ok &= okb
     coins = m.find('C')
     def coin_ok(S, c, r):   # standing below it, or within a jump arc (pits)
         return any((c + dc, rr) in S for dc in range(-4, 5) for rr in range(r + 1, r + 6))
@@ -242,6 +257,9 @@ def check(name, theme, rows, phys, diff, new=True):
     sec = [cell for cell in Rn if cell[1] <= top + 1]
     print('  hidden ?-blocks: %d · pistachios reachable: %d/%d (all %d/%d once hidden blocks are found)'
           % (len(hid), cz, len(coins), czs, len(coins)))
+    miss = [(c, r) for c, r in coins if not coin_ok(Rn, c, r)]
+    if miss:
+        print('  unreachable pistachios (col, row):', miss)
     print('  secret sky area (row %d, %d tiles above ground) reachable via hidden blocks: %s'
           % (top, 35 - top, 'YES' if sec else 'NO'))
     ok &= bool(sec)

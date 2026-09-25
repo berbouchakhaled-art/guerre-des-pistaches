@@ -217,17 +217,32 @@
     const maxCamY = Math.max(0, LEVEL_H - VH);
     return Math.max(0, maxCamY - cameraY);
   }
+  // Hauteur (px) de la caméra au-dessus de sa position « au sol » (vue de départ).
+  // Sert à faire suivre le décor verticalement avec parallaxe (couches lointaines = moins).
+  function groundCamY() {
+    const maxCamY = Math.max(0, LEVEL_H - VH);
+    const sy = (typeof startPos !== 'undefined' && startPos) ? startPos.y : LEVEL_H - 5 * T;
+    return Math.max(0, Math.min(maxCamY, sy - VH * 0.72));
+  }
+  G.bgRise = 0;
   function sousouBackdrop(ctx) {
     if (typeof drawSousouMapBackground !== 'function') return;
+    // portrait = couche très lointaine : descend un peu quand on monte (parallaxe 0.06, max 40 % de la vue)
+    G.bgPortraitDY = Math.round(Math.min(G.bgRise * 0.06, VH * 0.4));
     drawSousouMapBackground();
+    G.bgPortraitDY = 0;
     G.skipSousouOnce = true; // l'appel suivant (dans draw()) est ignoré
   }
-  function starsTwinkle(ctx, n, seed, fy) {
+  function starsTwinkle(ctx, n, seed, fy, dy) {
+    dy = dy || 0;
     for (let i = 0; i < n; i++) {
       const sx = Math.floor((hash(i, 1, seed) * 1400 - cameraX * 0.02) % 1400);
       const x = sx < 0 ? sx + 1400 : sx;
       if (x > VW) continue;
-      const y = Math.floor(hash(i, 2, seed) * fy);
+      // champ d'étoiles répété tous les fy px, décalé par la parallaxe verticale
+      let y = Math.floor((hash(i, 2, seed) * fy + dy) % fy);
+      if (y < 0) y += fy;
+      if (y > VH) continue;
       const t = (frame * 0.05 + hash(i, 3, seed) * 6.28);
       const a = 0.35 + 0.65 * Math.abs(Math.sin(t));
       const big = hash(i, 4, seed) > 0.85;
@@ -250,29 +265,60 @@
     if (oy > 0) ctx.drawImage(im, 0, 0, im.width, 1, 0, 0, w, oy + 1);
     if (oy + im.height < VH) ctx.drawImage(im, 0, im.height - 1, im.width, 1, 0, oy + im.height - 1, w, VH - oy - im.height + 1);
   }
+  // Couche répétée verticalement vers le haut (nuages, planètes, cloison du vaisseau) :
+  // copies tous les `step` px au-dessus de y, seulement celles visibles.
+  function wrapLayerUp(ctx, key, factor, y, drift, step, xShift) {
+    const im = G.img[key];
+    if (!im) return;
+    const w = im.width;
+    for (let k = 0, yy = y; yy + im.height > 0; k++, yy -= step) {
+      if (yy >= VH) continue;
+      let ox = -((cameraX * factor + (drift || 0) + k * (xShift || 0)) % w);
+      if (ox > 0) ox -= w;
+      ox = Math.floor(ox);
+      const iy = Math.round(yy);
+      for (let x = ox; x < VW; x += w) ctx.drawImage(im, x, iy);
+      if (k > 8) break;
+    }
+  }
   G.drawBackground = function (ctx) {
     if (!G.ready) return false;
     const th = themeOf();
     const oy = VH - 540;           // < 0 sur téléphone (vue plus basse), > 0 en portrait tablette
     const soy = Math.round(oy * 0.45); // éléments de ciel : compressés, pas coupés
-    const up = Math.min(camRaise(), 200);
+    // décalage « au sol » d'origine (inchangé au niveau du sol), figé quand on monte
+    const gcy = groundCamY();
+    const maxCamY = Math.max(0, LEVEL_H - VH);
+    const up = Math.min(Math.max(0, maxCamY - Math.max(cameraY, gcy)), 200);
+    // hauteur au-dessus du sol : toutes les couches descendent, les lointaines moins
+    const rise = Math.max(0, gcy - cameraY);
+    G.bgRise = rise;
     ctx.imageSmoothingEnabled = false;
     if (th === 'park') {
       if (!has('park_sky')) return false;
-      skyFill(ctx, 'park_sky', oy);
-      wrapLayer(ctx, 'park_clouds', 0.05, 18 + soy + up * 0.05, frame * 0.12);
-      wrapLayer(ctx, 'park_far', 0.12, 222 + oy + up * 0.18);
-      wrapLayer(ctx, 'park_mid', 0.28, 212 + oy + up * 0.35);
+      skyFill(ctx, 'park_sky', oy + Math.round(rise * 0.02));
+      if (rise > 0) {
+        // plus haut = ciel plus profond (bleu plus soutenu), sans dégradé recalculé
+        ctx.globalAlpha = Math.min(0.55, rise / 1800);
+        ctx.fillStyle = '#2f6fd0';
+        ctx.fillRect(0, 0, VW, VH);
+        ctx.globalAlpha = 1;
+      }
+      wrapLayerUp(ctx, 'park_clouds', 0.05, 18 + soy + up * 0.05 + rise * 0.1, frame * 0.12, 230, 377);
+      wrapLayer(ctx, 'park_far', 0.12, 222 + oy + up * 0.18 + rise * 0.16);
+      wrapLayer(ctx, 'park_mid', 0.28, 212 + oy + up * 0.35 + rise * 0.3);
       sousouBackdrop(ctx);
-      wrapLayer(ctx, 'park_near', 0.5, 352 + oy + up * 0.55);
+      wrapLayer(ctx, 'park_near', 0.5, 352 + oy + up * 0.55 + rise * 0.55);
     } else if (th === 'cosmo') {
       if (!has('cosmo_sky')) return false;
-      skyFill(ctx, 'cosmo_sky', oy);
-      starsTwinkle(ctx, lowFxMode ? 25 : 60, 7, Math.round(VH * 0.8));
-      wrapLayer(ctx, 'cosmo_planets', 0.03, soy + up * 0.05, frame * 0.02);
-      wrapLayer(ctx, 'cosmo_far', 0.14, 250 + oy + up * 0.2);
+      skyFill(ctx, 'cosmo_sky', oy + Math.round(rise * 0.02));
+      const fy = rise > 0 ? Math.max(VH, 540) : Math.round(VH * 0.8);
+      starsTwinkle(ctx, lowFxMode ? 25 : 60, 7, fy, Math.round(rise * 0.04));
+      if (rise > VH * 0.5) starsTwinkle(ctx, lowFxMode ? 12 : 30, 11, Math.max(VH, 540), Math.round(rise * 0.09));
+      wrapLayerUp(ctx, 'cosmo_planets', 0.03, soy + up * 0.05 + rise * 0.06, frame * 0.02, 520, 611);
+      wrapLayer(ctx, 'cosmo_far', 0.14, 250 + oy + up * 0.2 + rise * 0.2);
       sousouBackdrop(ctx);
-      wrapLayer(ctx, 'cosmo_near', 0.34, 292 + oy + up * 0.45);
+      wrapLayer(ctx, 'cosmo_near', 0.34, 292 + oy + up * 0.45 + rise * 0.45);
     } else {
       if (!has('ship_space')) return false;
       skyFill(ctx, 'ship_space', oy);
@@ -288,16 +334,27 @@
         ctx.fillRect(Math.floor(x), y, len, 2);
       }
       ctx.globalAlpha = 1;
-      const wy = Math.max(oy, -120) + (oy > 0 ? 0 : 0);
-      wrapLayer(ctx, 'ship_wall', 0.3, wy);
+      // cloison (hublots) : se répète vers le haut = grand hangar sur plusieurs ponts
+      const wy = Math.max(oy, -120) + Math.round(rise * 0.3);
+      const wh = G.img.ship_wall ? G.img.ship_wall.height : 540;
+      wrapLayerUp(ctx, 'ship_wall', 0.3, wy, 0, wh, 0);
       const lk = (frame >> 5) % 2 ? 'ship_lights1' : 'ship_lights0';
-      wrapLayer(ctx, lk, 0.3, wy);
+      wrapLayerUp(ctx, lk, 0.3, wy, 0, wh, 0);
       sousouBackdrop(ctx);
-      wrapLayer(ctx, 'ship_mid', 0.55, 244 + oy + up * 0.5);
+      wrapLayer(ctx, 'ship_mid', 0.55, 244 + oy + up * 0.5 + rise * 0.5);
       // voile sombre : fait ressortir le pont de jeu devant la cloison
       ctx.fillStyle = 'rgba(6, 10, 22, 0.42)';
       ctx.fillRect(0, 0, VW, VH);
     }
+    return true;
+  };
+
+  /** Morceau de brique cassée (quart q = 0..3 de la tuile brique du thème), position entière. */
+  G.drawBrickPiece = function (ctx, q, x, y) {
+    const img = tilesImg();
+    if (!img) return false;
+    const sx = (q & 1) * 20, sy = 2 * 40 + (q >> 1) * 20;
+    ctx.drawImage(img, sx, sy, 20, 20, Math.round(x) - 10, Math.round(y) - 10, 20, 20);
     return true;
   };
 

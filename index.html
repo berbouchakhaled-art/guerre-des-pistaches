@@ -1577,6 +1577,9 @@
   ];
 
   let currentLevelIndex = 0;
+  // Rythme général (retour joueur : « trop rapide ») : course, accélération, ennemis et
+  // projectiles ~22 % plus lents. Le saut (hauteur) est inchangé. Lu aussi par tools/levels/check_levels.py.
+  const PACE = 0.78;
   let LEVEL_ROWS = LEVEL_DEFS[0].rows;
   let levelDef = LEVEL_DEFS[0];
   let ROWS = LEVEL_ROWS.length;
@@ -1598,6 +1601,7 @@
   let lastSafe = null;       // dernier sol sûr (réapparition après une chute)
   let camGroundY = 0;        // caméra verticale : dernier sol touché
   let meteors = []; // niv2 projectiles cosmiques
+  let brickDebris = []; // morceaux de briques cassées (style Mario)
   let meteorTimer = 0;
 
   const CHAR_TYPE = {
@@ -1888,7 +1892,8 @@
     ctx.imageSmoothingEnabled = false;
     // légère parallaxe, alignée sur la grille de pixels du portrait
     const px = dx - Math.floor(((cameraX * 0.08) % 24) / s) * s;
-    const py = dy - Math.floor(((cameraY * 0.06) % 16) / s) * s;
+    // suivi vertical (GFX.bgPortraitDY) : le portrait descend un peu quand la caméra monte (couche lointaine)
+    const py = dy + Math.floor(((window.GFX && GFX.bgPortraitDY) || 0) / s) * s;
     ctx.drawImage(sousouBgImg, 0, 0, sousouBgImg.naturalWidth, sousouBgImg.naturalHeight, px, py, dw, dh);
     ctx.restore();
   }
@@ -2808,6 +2813,7 @@
     coins = [];
     enemies = [];
     meteors = [];
+    brickDebris = [];
     powerups = [];
     mines = [];
     buffs = {
@@ -2961,7 +2967,8 @@
       * (type === 'jumbo' || type === 'raisinBoss' ? 0.7 : 1)
       * (flying ? (levelDef.theme === 'cosmo' ? 0.65 : 1.0) : 1)
       * (levelDef.theme === 'cosmo' && !flying ? 0.75 : 1)
-      * difficulty.enemySpeedMul;
+      * difficulty.enemySpeedMul
+      * PACE;
     return {
       x, y,
       baseY: y,
@@ -3227,8 +3234,56 @@
       explode(c * T + T / 2, r * T, '#ffeb3b', 10);
       updateHud();
     } else if (LEVEL_ROWS[r] && LEVEL_ROWS[r][c] === '2') {
-      AudioFX.bump();
-      screenShake = 3;
+      breakBrick(c, r);
+    }
+  }
+
+  /** Brique tapée par-dessous : elle se casse en 4 morceaux (comme Mario), +50,
+   *  et les ennemis posés dessus sont éjectés. Les niveaux ne dépendent jamais d'une brique
+   *  (vérifié par tools/levels/check_levels.py : « with ALL bricks broken »). */
+  function breakBrick(c, r) {
+    setCell(c, r, '.');
+    const cx = c * T + T / 2, cy = r * T + T / 2;
+    for (let q = 0; q < 4; q++) {
+      const sx = q & 1 ? 1 : -1, top = q < 2;
+      brickDebris.push({
+        q, x: cx + sx * 10, y: cy + (top ? -10 : 10),
+        vx: sx * (top ? 1.6 : 1.1), vy: top ? -7.5 : -5,
+        life: 90,
+      });
+    }
+    score += 50;
+    floatScore(cx, r * T, '+50');
+    AudioFX.shellCrack();
+    AudioFX.bump();
+    screenShake = Math.max(screenShake, 3);
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} }
+    // ennemis debout sur la brique : éjectés
+    for (const e of enemies) {
+      if (!e.alive || e.flat || e.flying) continue;
+      if (Math.abs(e.y - r * T) <= 6 && Math.abs(e.x - cx) < T / 2 + e.w / 2 - 4) {
+        e.hp = 0;
+        squashEnemy(e, false);
+        e.vy = -6;
+      }
+    }
+    updateHud();
+  }
+  function updateBrickDebris() {
+    for (let i = brickDebris.length - 1; i >= 0; i--) {
+      const d = brickDebris[i];
+      d.vy = Math.min(12, d.vy + 0.45);
+      d.x += d.vx; d.y += d.vy;
+      if (--d.life <= 0 || d.y > cameraY + VH + 60) brickDebris.splice(i, 1);
+    }
+  }
+  function drawBrickDebris() {
+    for (const d of brickDebris) {
+      if (!inViewXY(d.x, d.y, 30)) continue;
+      if (!(window.GFX && GFX.drawBrickPiece(ctx, d.q, d.x, d.y))) {
+        ctx.fillStyle = '#a0522d';
+        ctx.fillRect(Math.round(d.x) - 8, Math.round(d.y) - 8, 16, 16);
+      }
     }
   }
 
@@ -3275,6 +3330,11 @@
 
   function fireBullet(kind, x, y, vx, vy, extra = {}) {
     const mega = buffs.mega > 0;
+    // tirs droits plus lents mais même portée (durée de vie allongée) ; la grenade garde sa courbe
+    if (kind !== 'grenade') {
+      vx *= PACE; vy *= PACE;
+      extra = { ...extra, life: Math.round((extra.life || 80) / PACE) };
+    }
     bullets.push({
       kind, x, y, vx, vy,
       rot: 0,
@@ -3591,9 +3651,9 @@
     // run — accélération / freinage plus réactifs (glace reste un peu glissante)
     const gt = player.onGround ? groundTileUnderPlayer() : null;
     const onIce = gt && gt.type === 11;
-    const accel = player.onGround ? (onIce ? 0.55 : 0.9) : 0.52;
-    let maxSpd = player.crouching ? 2.4 : (onIce ? 6.2 : 5.6);
-    if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.9;
+    const accel = (player.onGround ? (onIce ? 0.55 : 0.9) : 0.52) * PACE;
+    let maxSpd = (player.crouching ? 2.4 : (onIce ? 6.2 : 5.6)) * PACE;
+    if (levelDef.theme === 'cosmo' && !player.onGround) maxSpd = 5.9 * PACE;
     if (buffs.turbo > 0) maxSpd *= 1.55;
     if (left) { player.vx -= accel; player.facing = -1; }
     if (right) { player.vx += accel; player.facing = 1; }
@@ -3734,7 +3794,7 @@
           x: mx,
           y: cameraY - 30,
           vx: (Math.random() - 0.5) * 0.8,
-          vy: 2.2 + Math.random() * 1.2,
+          vy: (2.2 + Math.random() * 1.2) * PACE,
           rot: Math.random() * 6,
           r: 10 + Math.random() * 4,
         });
@@ -3818,6 +3878,8 @@
       }
     }
 
+    updateBrickDebris();
+
     // bullets / grenades
     for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
@@ -3826,7 +3888,7 @@
       b.rot += b.kind === 'grenade' ? 0.2 : 0.35;
       b.life--;
       if (b.kind === 'grenade') b.vy += 0.35; // gravité
-      else if (b.kind === 'lance') b.vy += 0.04;
+      else if (b.kind === 'lance') b.vy += 0.04 * PACE * PACE; // même trajectoire malgré PACE
 
       const hitSolid = isWallAt(b.x, b.y) || b.y > LEVEL_H;
       if (b.life <= 0 || hitSolid) {
@@ -4389,6 +4451,7 @@
       ctx.restore();
     }
     if (window.GFX) GFX.drawFx(ctx);
+    drawBrickDebris();
     if (!(window.GFX && GFX.drawParticles(ctx))) for (const p of particles) {
       if (!inViewXY(p.x, p.y, 40)) continue;
       ctx.globalAlpha = Math.min(1, p.life / 15);
