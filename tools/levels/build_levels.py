@@ -120,7 +120,7 @@ def park():
     L.set(64, GR - 1, 'E'); L.set(71, GR - 1, 'E')
     L.row(69, GR - 4, '2P2')
     L.ground(79, 110)                            # trou 75-78
-    L.arc(74, 79, GR - 4, 3)
+    L.arc(74, 79, GR - 3, 2)
     L.set(81, GR - 4, 'H')                       # bloc caché n°2
     L.pipe(86, 4)
     L.set(83, GR - 1, 'E'); L.set(91, GR - 1, 'E')
