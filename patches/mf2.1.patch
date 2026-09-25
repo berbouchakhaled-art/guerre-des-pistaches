@@ -1,0 +1,201 @@
+-            <span class="mobile-only">Mobile : pouce gauche = Gauche/Droite · pouce droit = Sauter/Tirer · ☰ Menu · Son · paysage ou portrait OK</span>
+-          </p>
+-          <div class="touch-help" aria-label="Commandes tactiles">
+-            <div><i class="ic ic-left"></i><span><b>Pouce gauche</b> : glisse sur ◀ ▶ pour courir</span></div>
+-            <div><i class="ic ic-jump"></i><span><b>Pouce droit</b> : SAUT · TIR · touche une arme pour changer</span></div>
++          <div class="level-pick m2-worlds" role="group" aria-label="Choisis ton monde">
++            <button type="button" class="m2-card park" id="levelBtn0" data-level="0" aria-label="Monde 1 : Parc Pistache">
++              <canvas class="wprev" width="120" height="68" data-theme="park"></canvas>
++              <span class="c-name">1 · Parc</span>
++            </button>
++            <button type="button" class="m2-card cosmo" id="levelBtn1" data-level="1" aria-label="Monde 2 : Nuit Cosmique">
++              <canvas class="wprev" width="120" height="68" data-theme="cosmo"></canvas>
++              <span class="c-name">2 · Cosmos</span>
++            </button>
++            <button type="button" class="m2-card ship" id="levelBtn2" data-level="2" aria-label="Monde 3 : Vaisseau Pistache">
++              <canvas class="wprev" width="120" height="68" data-theme="ship"></canvas>
++              <span class="c-name">3 · Vaisseau</span>
++            </button>
+           </div>
++          <div class="a11y-row m2-toggles">
++            <button type="button" id="soundUnlockBtn" class="m2-tog" aria-pressed="false">🔊 Activer le son</button>
++            <button type="button" id="a11yToggle" class="m2-tog" aria-pressed="false" aria-label="Texte et boutons plus grands">♿ Plus grand</button>
++          </div>
++          <p class="m2-hint">
++            <span class="desktop-only"><kbd>←</kbd><kbd>→</kbd> courir · <kbd>Espace</kbd> sauter · <kbd>X</kbd> tirer · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> armes · <kbd>P</kbd> pause</span>
++            <span class="mobile-only">👈 glisse sur ◀ ▶ · 👉 SAUT / TIR · touche une arme</span>
++          </p>
+           <p class="rotate-tip">📱↻ Tourne en <b>paysage</b> pour jouer en grand !</p>
+         </div>
+       </div>
+@@ -1078,8 +1048,10 @@
+   </style>
+ 
+   <link rel="stylesheet" href="css/mobile.css" />
++  <link rel="stylesheet" href="css/menu.css" />
+ 
+   <script src="js/gfx.js"></script>
++  <script src="js/menu.js"></script>
+   <script>
+   // =========================================================
+   // AUDIO MAX — musique + bruitages pistache/Mario-like
+@@ -1550,7 +1522,11 @@
+   // recalculée (applyView) pour un zoom entier « pixel-perfect » (Sousou ≈ 15 % de l'écran).
+   let VW = canvas.width;
+   let VH = canvas.height;
+-  const VIEW = window.VIEW = { mobile: false, k: 1, cssScale: 1, portrait: false, hudL: 118, hudR: 110, hudT: 10 };
++  // rs = échelle de rendu : la toile est dessinée en x2 (pixel monde = 2x2 pixels de rendu)
++  // → sprite HD de Sousou (demi-pixels) net, décor inchangé (facteurs entiers).
++  const VIEW = window.VIEW = { mobile: false, k: 1, cssScale: 1, portrait: false, hudL: 118, hudR: 110, hudT: 10, rs: 2 };
++  canvas.width = VW * VIEW.rs; canvas.height = VH * VIEW.rs;
++  ctx.imageSmoothingEnabled = false;
+   const T = 40; // taille tuile
+ 
+   // Légende tuiles:
+@@ -2088,8 +2064,9 @@
+   }
+   function setViewSize(w, h) {
+     const oldW = VW;
+-    if (canvas.width !== w || canvas.height !== h) {
+-      canvas.width = w; canvas.height = h;
++    const rs = VIEW.rs;
++    if (canvas.width !== w * rs || canvas.height !== h * rs) {
++      canvas.width = w * rs; canvas.height = h * rs;
+     }
+     VW = w; VH = h;
+     ctx.imageSmoothingEnabled = false;
+@@ -2122,12 +2099,20 @@
+       areaH = cssH - areaY - (240 + ins.b);
+     }
+     const devW = areaW * dpr, devH = areaH * dpr;
++    // k = pixels écran (physiques) par pixel monde. Téléphone paysage : ~290 px monde
++    // de haut → Sousou (≈69 px monde) ≈ 24 % de l'écran. Entier si possible (net),
++    // sinon multiple de 0,5 (écrans dpr 2) pour garder le même zoom.
++    const pickK = (dev, target) => {
++      const raw = dev / target;
++      let k0 = Math.max(1, Math.round(raw));
++      if (Math.abs(k0 - raw) / raw > 0.14) k0 = Math.max(1, Math.round(raw * 2) / 2);
++      return k0;
++    };
+     let k;
+     if (portraitPlay) {
+-      k = Math.max(1, Math.round(devW / (isPhone() ? 420 : 560)));
++      k = pickK(devW, isPhone() ? 400 : 560);
+     } else {
+-      const target = cssH >= 600 ? 520 : 400; // tablette : un peu plus de champ
+-      k = Math.max(1, Math.round(devH / target));
++      k = pickK(devH, cssH >= 600 ? 420 : 290); // tablette : un peu plus de champ
+     }
+     let vw = Math.ceil(devW / k), vh = Math.ceil(devH / k);
+     vh = Math.min(vh, 17 * T);             // jamais plus haut que le niveau (17 rangées)
+@@ -2623,7 +2608,7 @@
+     if (t) {
+       t.setAttribute('aria-pressed', largeUI ? 'true' : 'false');
+       t.classList.toggle('active', largeUI);
+-      t.textContent = largeUI ? '♿ Mode grand : ON' : '♿ Texte + boutons plus grands';
++      t.textContent = largeUI ? '♿ Plus grand : OUI' : '♿ Plus grand';
+     }
+     try { localStorage.setItem('gdp_largeui', largeUI ? '1' : '0'); } catch (_) {}
+   }
+@@ -2690,6 +2675,15 @@
+         if (e.cancelable) e.preventDefault();
+         e.stopPropagation();
+       }
++      // 2e appui = couper le son (bouton bascule)
++      if (soundUnlockBtn.classList.contains('active') && !AudioFX.isMuted()) {
++        AudioFX.setMuted(true);
++        syncMuteBtn();
++        soundUnlockBtn.textContent = '🔇 Son : NON';
++        soundUnlockBtn.classList.remove('active');
++        soundUnlockBtn.setAttribute('aria-pressed', 'false');
++        return;
++      }
+       AudioFX.setMuted(false);
+       syncMuteBtn();
+       await AudioFX.resume();
+@@ -2699,11 +2693,9 @@
+         AudioFX.coin();
+         setTimeout(() => AudioFX.powerup(), 120);
+       } catch (_) {}
+-      soundUnlockBtn.textContent = '🔊 Son activé !';
+-      soundUnlockBtn.style.background = 'linear-gradient(180deg,#81c784,#388e3c)';
+-      setTimeout(() => {
+-        if (soundUnlockBtn) soundUnlockBtn.textContent = '🔊 Son OK — retester';
+-      }, 1500);
++      soundUnlockBtn.textContent = '🔊 Son : OUI';
++      soundUnlockBtn.classList.add('active');
++      soundUnlockBtn.setAttribute('aria-pressed', 'true');
+     };
+     soundUnlockBtn.addEventListener('touchstart', (e) => { try { AudioFX.resume(); } catch (_) {} }, { passive: true });
+     soundUnlockBtn.addEventListener('touchend', doUnlock, { passive: false });
+@@ -5812,11 +5804,12 @@
+       while (stepAcc >= STEP_MS - 0.5 && steps < 3) { update(); stepAcc -= STEP_MS; steps++; }
+       if (steps === 3) stepAcc = 0;
+       if (stepAcc < 0) stepAcc = 0;
+-      draw();
++      ctx.setTransform(VIEW.rs, 0, 0, VIEW.rs, 0, 0);
++      if (running || !(window.MENU && MENU.active)) draw();
+     } catch (err) {
+       // Empêche un plantage unique de geler tout le jeu
+       console.error('Erreur frame:', err);
+-      try { ctx.setTransform(1, 0, 0, 1, 0, 0); } catch (_) {}
++      try { ctx.setTransform(VIEW.rs, 0, 0, VIEW.rs, 0, 0); } catch (_) {}
+     }
+     requestAnimationFrame(loop);
+   }
+diff --git a/js/gfx.js b/js/gfx.js
+index 6f7d465..449e079 100644
+--- a/js/gfx.js
++++ b/js/gfx.js
+@@ -25,6 +25,10 @@
+   // cellule 48x64, pieds sur la ligne du bas, centre du corps x=22
+   // ---------------------------------------------------------------
+   const SP = { w: 48, h: 64, ax: 22, ay: 64 };
++  // Sprite HD (assets/sousou-sprite-hd.png, 792x528) : même design, 2,75x plus détaillé
++  // (cellule 132x176). Dessiné à 0,5 px monde par pixel d'art → 66x88 px monde (1,375x,
++  // Sousou ≈ 70 px de haut), net car la toile est rendue en x2 (VIEW.rs).
++  const HD = { f: 2.75, w: 132, h: 176, dw: 66, dh: 88, ax: 30.5 };
+   const SP_FRAMES = {
+     idle_0: [0, 0], idle_1: [48, 0], idle_2: [96, 0], idle_3: [144, 0],
+     run_0: [192, 0], run_1: [240, 0], run_2: [0, 64], run_3: [48, 64],
+@@ -38,9 +42,9 @@
+   };
+ 
+   const FILES = {
+-    sousou: 'sousou-sprite.png',
++    sousou: 'sousou-sprite.png', sousouHD: 'sousou-sprite-hd.png',
+     items: 'gfx/items.png', fxs: 'gfx/fx.png', boom: 'gfx/boom.png',
+-    enemies: 'gfx/enemies.png', decor: 'gfx/decor.png', font: 'gfx/font.png',
++    enemies: 'gfx/enemies.png', decor: 'gfx/decor.png', font: 'gfx/font.png', logoFont: 'gfx/logo_font.png',
+     tiles_park: 'gfx/tiles_park.png', tiles_cosmo: 'gfx/tiles_cosmo.png', tiles_ship: 'gfx/tiles_ship.png',
+     park_sky: 'gfx/bg_park_sky.png', park_clouds: 'gfx/bg_park_clouds.png', park_far: 'gfx/bg_park_far.png',
+     park_mid: 'gfx/bg_park_mid.png', park_near: 'gfx/bg_park_near.png',
+@@ -114,6 +118,10 @@
+       G.sousouWhite = silhouette(G.img.sousou, '#ffffff');
+       G.sousouGold = silhouette(G.img.sousou, 'rgba(255,220,90,0.45)');
+     }
++    if (G.img.sousouHD) {
++      G.sousouWhiteHD = silhouette(G.img.sousouHD, '#ffffff');
++      G.sousouGoldHD = silhouette(G.img.sousouHD, 'rgba(255,220,90,0.45)');
++    }
+     ['park_far', 'park_mid', 'park_near', 'cosmo_far', 'cosmo_near', 'ship_mid'].forEach(sampleBottom);
+     // halo doux pré-rendu (utilisé en mode additif, jamais recalculé)
+     const [hc, hx] = mkCanvas(64, 64);
+@@ -709,27 +717,34 @@
+     let sx = 1, sy = 1;
+     if (st > 1) { sy = 1 + (st - 1) * 0.5; sx = 1 - (st - 1) * 0.3; }
+     if (sq > 1) { sx = 1 + (sq - 1) * 0.5; sy = 1 - (sq - 1) * 0.35; }
+-    const dw = Math.round(SP.w * sx), dh = Math.round(SP.h * sy);
+-    const ax = Math.round(SP.ax * sx);
++    const hd = !!G.img.sousouHD && (window.VIEW ? VIEW.rs >= 2 : false);
++    const img = hd ? G.img.sousouHD : G.img.sousou;
++    const f = hd ? HD.f : 1, cw = hd ? HD.w : SP.w, ch = hd ? HD.h : SP.h;
++    const q = hd ? 2 : 1; // arrondi au demi-pixel monde (= pixel de rendu) en HD
++    const dw = Math.round((hd ? HD.dw : SP.w) * sx * q) / q, dh = Math.round((hd ? HD.dh : SP.h) * sy * q) / q;
++    const ax = Math.round((hd ? HD.ax : SP.ax) * sx * q) / q;
++    const sc = hd ? 1.375 : 1;
+     // ombre
+-    if (p.onGround) { ctx.save(); ctx.globalAlpha *= 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(p.x - 13), Math.round(p.y - 2), 26, 3); ctx.fillRect(Math.round(p.x - 9), Math.round(p.y - 3), 18, 5); ctx.restore(); }
+-    if (themeOf() !== 'park') glow(ctx, p.x, p.y - 26, 40, '#fff8e1', 0.16);
++    if (p.onGround) { ctx.save(); ctx.globalAlpha *= 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(p.x - 16), Math.round(p.y - 2), 32, 3); ctx.fillRect(Math.round(p.x - 11), Math.round(p.y - 3), 22, 5); ctx.restore(); }
++    if (themeOf() !== 'park') glow(ctx, p.x, p.y - 32, 48, '#fff8e1', 0.16);
