@@ -25,10 +25,11 @@
   // cellule 48x64, pieds sur la ligne du bas, centre du corps x=22
   // ---------------------------------------------------------------
   const SP = { w: 48, h: 64, ax: 22, ay: 64 };
-  // Sprite HD (assets/sousou-sprite-hd.png, 792x528) : même design, 2,75x plus détaillé
-  // (cellule 132x176). Dessiné à 0,5 px monde par pixel d'art → 66x88 px monde (1,375x,
-  // Sousou ≈ 70 px de haut), net car la toile est rendue en x2 (VIEW.rs).
-  const HD = { f: 2.75, w: 132, h: 176, dw: 66, dh: 88, ax: 30.5 };
+  // Sprite HD (assets/sousou-sprite-hd.png, 864x576) : le sprite approuvé 48x64 agrandi
+  // x3 fidèlement (Scale3x + visage affiné), cellule 144x192. Toujours dessiné à 1 pixel
+  // d'art = 1 pixel de toile (taille monde = art / VIEW.rs) → pixels carrés et réguliers,
+  // jamais d'échelle fractionnaire ni de déformation.
+  const HD = { f: 3, w: 144, h: 192, ax: 66 };
   const SP_FRAMES = {
     idle_0: [0, 0], idle_1: [48, 0], idle_2: [96, 0], idle_3: [144, 0],
     run_0: [192, 0], run_1: [240, 0], run_2: [0, 64], run_3: [48, 64],
@@ -711,24 +712,22 @@
     const name = pickFrame();
     const fr = SP_FRAMES[name];
     const flip = p.facing < 0;
-    // squash/stretch subtil (50% de l'effet d'origine), tailles entières
-    const sq = typeof playerSquash === 'number' ? playerSquash : 1;
-    const st = typeof playerStretch === 'number' ? playerStretch : 1;
-    let sx = 1, sy = 1;
-    if (st > 1) { sy = 1 + (st - 1) * 0.5; sx = 1 - (st - 1) * 0.3; }
-    if (sq > 1) { sx = 1 + (sq - 1) * 0.5; sy = 1 - (sq - 1) * 0.35; }
-    const hd = !!G.img.sousouHD && (window.VIEW ? VIEW.rs >= 2 : false);
+    // pas de squash/stretch sur Sousou : il garde toujours ses proportions exactes
+    const rs = window.VIEW ? VIEW.rs : 1;
+    const hd = !!G.img.sousouHD && rs >= 1.5;
     const img = hd ? G.img.sousouHD : G.img.sousou;
     const f = hd ? HD.f : 1, cw = hd ? HD.w : SP.w, ch = hd ? HD.h : SP.h;
-    const q = hd ? 2 : 1; // arrondi au demi-pixel monde (= pixel de rendu) en HD
-    const dw = Math.round((hd ? HD.dw : SP.w) * sx * q) / q, dh = Math.round((hd ? HD.dh : SP.h) * sy * q) / q;
-    const ax = Math.round((hd ? HD.ax : SP.ax) * sx * q) / q;
-    const sc = hd ? 1.375 : 1;
+    // HD : 1 pixel d'art = 1 pixel de toile ; sinon 1 pixel d'art = 1 pixel monde
+    const dw = hd ? HD.w / rs : SP.w, dh = hd ? HD.h / rs : SP.h;
+    const ax = hd ? HD.ax / rs : SP.ax;
+    const sc = hd ? HD.f / rs : 1; // px monde par pixel du sprite de base
     // ombre
     if (p.onGround) { ctx.save(); ctx.globalAlpha *= 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(p.x - 16), Math.round(p.y - 2), 32, 3); ctx.fillRect(Math.round(p.x - 11), Math.round(p.y - 3), 22, 5); ctx.restore(); }
     if (themeOf() !== 'park') glow(ctx, p.x, p.y - 32, 48, '#fff8e1', 0.16);
     ctx.save();
     ctx.translate(Math.round(p.x), Math.round(p.y));
+    // origine calée sur un pixel entier de la toile (sinon colonnes/rangées inégales)
+    if (ctx.getTransform) { const m = ctx.getTransform(); ctx.setTransform(m.a, m.b, m.c, m.d, Math.round(m.e), Math.round(m.f)); }
     if (flip) ctx.scale(-1, 1);
     const ghost = buffs.ghost > 0;
     if (ghost) ctx.globalAlpha *= 0.6;

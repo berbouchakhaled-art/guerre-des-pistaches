@@ -2068,8 +2068,12 @@
   function setViewSize(w, h) {
     const oldW = VW;
     const rs = VIEW.rs;
-    if (canvas.width !== w * rs || canvas.height !== h * rs) {
-      canvas.width = w * rs; canvas.height = h * rs;
+    // taille de toile multiple de VIEW.bq → taille CSS exactement représentable (pas de
+    // rangée de pixels écran perdue/doublée par l'arrondi du navigateur)
+    const q = VIEW.bq || 1;
+    const bw = Math.floor(w * rs / q + 1e-6) * q, bh = Math.floor(h * rs / q + 1e-6) * q;
+    if (canvas.width !== bw || canvas.height !== bh) {
+      canvas.width = bw; canvas.height = bh;
     }
     VW = w; VH = h;
     ctx.imageSmoothingEnabled = false;
@@ -2085,6 +2089,7 @@
     if (!fs) {
       VIEW.mobile = false; VIEW.portrait = false;
       document.body.classList.remove('portrait-play');
+      VIEW.rs = 2; VIEW.bq = 1;
       setViewSize(960, 540);
       VIEW.hudL = 118; VIEW.hudR = 110; VIEW.hudT = 10;
       return;
@@ -2131,7 +2136,16 @@
     vh = Math.min(vh, 17 * T);             // jamais plus haut que le niveau (17 rangées)
     vw = Math.min(vw, 1280);
     const cs = k / dpr;                    // px CSS par pixel logique
-    const cw = vw * cs, ch = vh * cs;
+    // Résolution de rendu : 1 pixel de toile = m pixels écran (entier, jamais fractionnaire).
+    // Sousou HD est dessiné à 1 pixel d'art = 1 pixel de toile → pixels carrés et réguliers ;
+    // m est choisi pour qu'il garde ~70 px monde de haut (153 px d'art).
+    const m = k >= 1.8 ? Math.max(1, Math.round(k * 70 / 153)) : 1;
+    VIEW.rs = k / m;
+    // plus petit q tel que q pixels de toile = un nombre exact de 1/64 px CSS (unité de mise en page)
+    VIEW.bq = 1;
+    for (let q = 1; q <= 64; q++) { const u = q * m / dpr * 64; if (Math.abs(u - Math.round(u)) < 1e-4) { VIEW.bq = q; break; } }
+    setViewSize(vw, vh);
+    const cw = canvas.width * m / dpr, ch = canvas.height * m / dpr;
     const cx = Math.round(areaX + (areaW - cw) / 2);
     const cy = Math.round(portraitPlay ? areaY : areaY + Math.max(0, (areaH - ch) / 2));
     if (portraitPlay) root.setProperty('--panel-h', Math.max(200, Math.floor(cssH - cy - ch)) + 'px');
@@ -2139,7 +2153,6 @@
     root.setProperty('--cv-h', ch + 'px');
     root.setProperty('--cv-x', cx + 'px');
     root.setProperty('--cv-y', cy + 'px');
-    setViewSize(vw, vh);
     VIEW.mobile = true; VIEW.portrait = portraitPlay; VIEW.k = k; VIEW.cssScale = cs;
     if (portraitPlay) { VIEW.hudL = 6; VIEW.hudR = 6; VIEW.hudT = 6; return; }
     if (sidePads) {
