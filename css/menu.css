@@ -1,0 +1,172 @@
+/* =====================================================================
+   MENU PRINCIPAL « arcade pixel » (mobile d'abord : paysage + portrait)
+   Le décor, le logo et Sousou sont dessinés par js/menu.js dans #menuFx,
+   dans les emplacements .m2-logo / .m2-stage ; les boutons sont en HTML.
+   ===================================================================== */
+#startScreen.menu2 {
+  display: block;
+  background: #0d1a0c;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  overflow-y: auto; overflow-x: hidden;
+  text-align: left;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+#menuFx {
+  position: fixed; inset: 0; width: 100% !important; height: 100% !important; max-height: none !important; max-width: none !important;
+  background: #0d1a0c !important; cursor: default;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  z-index: 0; pointer-events: none;
+}
+#startScreen.menu2 .m2 {
+  position: relative; z-index: 1;
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 44%);
+  grid-template-areas: "hero panel";
+  gap: 10px 16px;
+  align-items: stretch;
+  max-width: 1100px; margin: 0 auto;
+}
+#startScreen.menu2 .m2-hero { grid-area: hero; display: flex; flex-direction: column; min-height: 0; }
+#startScreen.menu2 .m2-logo {
+  margin: 0; flex: 0 0 auto; height: clamp(78px, 27vh, 190px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #ffd54f; text-align: center;
+}
+#startScreen.menu2.fx-on .m2-fallback { visibility: hidden; }
+#startScreen.menu2 .m2-stage { flex: 1 1 auto; min-height: 150px; }
+
+/* ---------- panneau de boutons ---------- */
+#startScreen.menu2 .m2-panel {
+  grid-area: panel; align-self: center;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px;
+  border-style: solid; border-width: 12px; border-color: transparent;
+  border-image: url(../assets/gfx/btn_dark.png) 4 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+}
+#startScreen.menu2 .m2 button {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-family: "Fredoka", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-weight: 800; color: #fffde7;
+  letter-spacing: .03em;
+  text-shadow: 0 2px 0 rgba(0,0,0,.6);
+  border-style: solid; border-width: 12px; border-color: transparent;
+  border-image: url(../assets/gfx/btn_dark.png) 4 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  transition: transform .06s ease, filter .15s ease;
+  position: relative;
+}
+#startScreen.menu2 .m2 button:active { transform: translateY(2px) scale(.97); }
+#startScreen.menu2 .m2 button:focus-visible { outline: 3px solid #ffeb3b; outline-offset: 2px; }
+
+/* difficulté : pilules segmentées */
+#startScreen.menu2 .m2-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+#startScreen.menu2 .m2-pills button { height: 40px; padding: 0 2px; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
+#startScreen.menu2 .m2-pills button.active {
+  border-image-source: url(../assets/gfx/btn_green_on.png);
+  color: #10240c; text-shadow: 0 1px 0 rgba(255,255,255,.45);
+}
+#startScreen.menu2 .m2-pills .d-sub { display: none; }
+
+/* JOUER : gros bouton doré qui pulse */
+#startScreen.menu2 .m2 .m2-play {
+  flex-direction: column; gap: 0;
+  min-height: 64px; padding: 2px 8px;
+  border-image-source: url(../assets/gfx/btn_jump_on.png);
+  color: #3e2410; text-shadow: 0 2px 0 rgba(255,255,255,.35);
+  animation: m2glow 1.6s ease-in-out infinite;
+}
+#startScreen.menu2 .m2 .m2-play:active { border-image-source: url(../assets/gfx/btn_jump.png); }
+#startScreen.menu2 .m2-play .p-main { font-size: 1.7rem; line-height: 1; letter-spacing: .08em; }
+#startScreen.menu2 .m2-play .p-sub { font-size: .72rem; font-weight: 700; opacity: .85; margin-top: 2px; }
+#startScreen.menu2 .m2-play canvas.p-lbl { display: block; max-height: none; max-width: 100%; background: transparent; image-rendering: pixelated; image-rendering: crisp-edges; }
+#startScreen.menu2 .m2-play.lbl-on .p-main { display: none; }
+@keyframes m2glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 214, 64, .55)) brightness(1); }
+  50% { filter: drop-shadow(0 0 14px rgba(255, 214, 64, .95)) brightness(1.08); }
+}
+
+/* mondes : cartes pixel avec mini aperçu animé */
+#startScreen.menu2 .m2-worlds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+#startScreen.menu2 .m2 .m2-card {
+  flex-direction: column; justify-content: flex-end;
+  padding: 0; min-height: 0; border-width: 8px;
+  border-image-source: url(../assets/gfx/btn_green.png);
+  overflow: hidden;
+}
+#startScreen.menu2 .m2 .m2-card.cosmo { border-image-source: url(../assets/gfx/btn_dark.png); }
+#startScreen.menu2 .m2-card canvas.wprev {
+  display: block; width: 100%; margin: 0; aspect-ratio: 120 / 68; height: auto; max-height: none;
+  background: transparent; border-radius: 0; cursor: pointer;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+#startScreen.menu2 .m2-card .c-name {
+  display: block; width: 100%; font-size: .8rem; line-height: 1.1; padding: 3px 0 0;
+  text-transform: uppercase; white-space: nowrap;
+}
+#startScreen.menu2.fx-on .m2-card .c-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* son / accessibilité */
+#startScreen.menu2 .m2-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#startScreen.menu2 .m2-toggles button { height: 40px; font-size: .76rem; padding: 0 2px; line-height: 1.1; white-space: nowrap; }
+#startScreen.menu2 .m2-toggles button.active { border-image-source: url(../assets/gfx/btn_green_on.png); color: #10240c; text-shadow: none; }
+#startScreen.menu2 .m2-hint { margin: 0; font-size: .72rem; line-height: 1.3; color: #c5e1a5; text-align: center; max-width: none; }
+#startScreen.menu2 .m2-hint kbd { font-size: .66rem; padding: 0 4px; }
+#startScreen.menu2 .rotate-tip { display: none; }
+
+/* texte + boutons plus grands */
+body.large-ui #startScreen.menu2 .m2-pills button, body.large-ui #startScreen.menu2 .m2-toggles button { height: 48px; font-size: .95rem; }
+body.large-ui #startScreen.menu2 .m2-play .p-sub, body.large-ui #startScreen.menu2 .m2-hint { font-size: .9rem; }
+@media (orientation: landscape) {
+  body.large-ui #startScreen.menu2 .m2 { grid-template-columns: minmax(0, 1fr) minmax(320px, 52%); }
+}
+
+/* petites hauteurs (téléphone paysage) */
+@media (max-height: 430px) {
+  #startScreen.menu2 .m2-panel { padding: 6px; gap: 6px; border-width: 10px; }
+  #startScreen.menu2 .m2-pills button, #startScreen.menu2 .m2-toggles button { height: 36px; }
+  #startScreen.menu2 .m2 .m2-play { min-height: 56px; }
+  #startScreen.menu2 .m2-logo { height: clamp(70px, 30vh, 120px); }
+}
+@media (max-height: 370px) {
+  #startScreen.menu2 .m2-hint { display: none; }
+  #startScreen.menu2 .m2-pills button, #startScreen.menu2 .m2-toggles button { height: 34px; }
+}
+
+/* grands écrans (ordinateur, tablette paysage) : panneau plus grand */
+@media (min-width: 1000px) and (min-height: 700px) {
+  #startScreen.menu2 .m2 { grid-template-columns: minmax(0, 1fr) minmax(440px, 46%); gap: 16px 28px; max-width: 1280px; }
+  #startScreen.menu2 .m2-panel { gap: 12px; padding: 14px; }
+  #startScreen.menu2 .m2-pills button, #startScreen.menu2 .m2-toggles button { height: 54px; font-size: 1rem; }
+  #startScreen.menu2 .m2 .m2-play { min-height: 104px; }
+  #startScreen.menu2 .m2-play .p-sub { font-size: .95rem; }
+  #startScreen.menu2 .m2-hint { font-size: .9rem; }
+  #startScreen.menu2 .m2-hint kbd { font-size: .8rem; }
+}
+
+/* portrait : logo, Sousou en grand, puis panneau */
+@media (orientation: portrait) {
+  #startScreen.menu2 .m2 {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "hero" "panel";
+    grid-template-rows: minmax(0, 1fr) auto;
+    max-width: 560px;
+  }
+  #startScreen.menu2 .m2-logo { height: clamp(90px, 16vh, 170px); }
+  #startScreen.menu2 .m2-stage { min-height: 200px; }
+  #startScreen.menu2 .m2-panel { align-self: end; }
+  html.is-touch #startScreen.menu2 .rotate-tip {
+    display: block; margin: 0; text-align: center; font-size: .72rem; color: #fff59d;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #startScreen.menu2 .m2 .m2-play { animation: none; }
+}
