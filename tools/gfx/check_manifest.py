@@ -3,7 +3,10 @@ python3 tools/gfx/check_manifest.py [--write]"""
 import hashlib, os, sys
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
-files = sorted(['assets/sousou-sprite.png'] + ['assets/gfx/' + f for f in os.listdir(os.path.join(ROOT, 'assets/gfx')) if f.endswith('.png')])
+ICONS = os.path.join(ROOT, 'assets/icons')
+files = sorted(['assets/sousou-sprite.png']
+               + ['assets/gfx/' + f for f in os.listdir(os.path.join(ROOT, 'assets/gfx')) if f.endswith('.png')]
+               + (['assets/icons/' + f for f in os.listdir(ICONS) if f.endswith('.png')] if os.path.isdir(ICONS) else []))
 def h(f):
     im = Image.open(os.path.join(ROOT, f)).convert('RGBA')
     return hashlib.sha256(im.tobytes()).hexdigest() + ' %dx%d' % im.size

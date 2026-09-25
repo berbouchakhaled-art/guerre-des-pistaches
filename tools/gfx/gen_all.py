@@ -16,3 +16,6 @@ for f in ('sousou_sprite.png', 'sousou_sprite.json', 'sousou_sprite_preview_6x.p
     p = os.path.join(sp, f)
     if os.path.exists(p): os.remove(p)
 print('assets written to', OUT)
+# mobile UI (touch buttons, rotate prompt, app icons)
+import ui
+ui.build(OUT)
