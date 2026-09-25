@@ -217,7 +217,11 @@
       cursor: crosshair;
       background: #5dade2;
       touch-action: none;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
+    /* HUD pixel dessiné dans le canvas (js/gfx.js) : on masque l'ancien HUD HTML */
+    body.gfx-hud .hud { display: none !important; }
     .hud {
       position: absolute; top: 8px; left: 10px; right: 10px;
       display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap;
@@ -887,7 +891,7 @@
       <span class="star-name">SOUSOU</span>
       <span class="spin-star">★</span>
     </div>
-    <div class="tag">La star aux cheveux courts — 100% pistaches, 0% arachide</div>
+    <div class="tag">La star aux cheveux ondulés — 100% pistaches, 0% arachide</div>
   </div>
 
   <div class="wrap">
@@ -1050,6 +1054,7 @@
     }
   </style>
 
+  <script src="js/gfx.js"></script>
   <script>
   // =========================================================
   // AUDIO MAX — musique + bruitages pistache/Mario-like
@@ -1515,6 +1520,7 @@
   // =========================================================
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
   const VW = canvas.width;
   const VH = canvas.height;
   const T = 40; // taille tuile
@@ -1858,6 +1864,7 @@
   sousouBgImg.src = 'assets/sousou-bg.png';
 
   function drawSousouMapBackground() {
+    if (window.GFX && GFX.skipSousouOnce) { GFX.skipSousouOnce = false; return; }
     if (!sousouBgReady || !sousouBgImg.naturalWidth) return;
     // ~70% of canvas height, slightly left of center so play stays readable
     const targetH = VH * (lowFxMode ? 0.62 : 0.72);
@@ -2999,6 +3006,7 @@
     let cd = w.cd;
     if (buffs.rapid > 0) cd = Math.max(4, Math.floor(cd * 0.45));
     shootCD = cd;
+    if (window.GFX) GFX.onShoot();
     const dir = player.facing;
     const aimUp = player.aimUp || keys['ArrowUp'];
     const y = player.crouching ? player.y - 18 : player.y - 32;
@@ -3046,6 +3054,7 @@
   }
 
   function explodeGrenade(x, y) {
+    if (window.GFX) GFX.spawnFx('boom', x, y, 2);
     AudioFX.crunch();
     AudioFX.shellCrack();
     screenShake = 14;
@@ -3102,6 +3111,7 @@
     }
     lives -= difficulty.contactLivesLost || 1;
     invuln = difficulty.invulnHit;
+    if (window.GFX) GFX.onHurt();
     screenShake = 14;
     AudioFX.hit();
     floatScore(player.x, player.y - 40, '💥 OUCH');
@@ -3473,6 +3483,7 @@
       }
       if (!c.pop && Math.hypot(player.x - c.x, (player.y - player.h / 2) - cy) < 44) {
         c.taken = true;
+        if (window.GFX) GFX.spawnFx('spark', c.x, cy, 1.5);
         pistaches++;
         const coinPts = buffs.double > 0 ? 100 : 50;
         score += coinPts;
@@ -3543,7 +3554,7 @@
           explode(b.x, b.y, '#ffab40', 4);
           continue;
         }
-        if (hitSolid) { AudioFX.shellCrack(); explode(b.x, b.y, '#aed581', 6); }
+        if (hitSolid) { AudioFX.shellCrack(); explode(b.x, b.y, '#aed581', 6); if (window.GFX) GFX.spawnFx('hit', b.x, b.y, 0.8); }
         bullets.splice(i, 1);
         continue;
       }
@@ -3560,6 +3571,8 @@
             break;
           }
           e.hp -= b.dmg || 1;
+          e.hitT = 8;
+          if (window.GFX) GFX.spawnFx(b.kind === 'gun' ? 'hitOrange' : 'hit', b.x, b.y, b.r > 18 ? 1.6 : 1);
           if (buffs.ricochet > 0 && (b.bounce || 0) < 2) {
             b.bounce = (b.bounce || 0) + 1;
             b.vx *= -0.9;
@@ -3748,6 +3761,7 @@
 
   function squashEnemy(e, stomped) {
     e.flat = true;
+    e.shot = !stomped;
     e.flatTimer = 30;
     e.vx = 0;
     let pts = e.type === 'jumbo' || e.type === 'raisinBoss' ? 250 : e.type === 'angry' ? 150 : (e.species === 'raisin' ? 120 : 100);
@@ -3841,7 +3855,10 @@
       ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
     }
 
-    if (levelDef.theme === 'ship') {
+    ctx.imageSmoothingEnabled = false;
+    if (window.GFX && GFX.drawBackground(ctx)) {
+      // fond pixel-art parallaxe (js/gfx.js)
+    } else if (levelDef.theme === 'ship') {
       // Espace profond + silhouettes de vaisseaux-pistaches en guerre
       ctx.fillStyle = getSkyGradient('ship');
       ctx.fillRect(0, 0, VW, VH);
@@ -4076,7 +4093,8 @@
       ctx.stroke();
       ctx.restore();
     }
-    for (const p of particles) {
+    if (window.GFX) GFX.drawFx(ctx);
+    if (!(window.GFX && GFX.drawParticles(ctx))) for (const p of particles) {
       if (!inViewXY(p.x, p.y, 40)) continue;
       ctx.globalAlpha = Math.min(1, p.life / 15);
       ctx.fillStyle = p.color;
@@ -4087,6 +4105,7 @@
     ctx.globalAlpha = 1;
     for (const f of floatingScores) {
       if (!inViewXY(f.x, f.y, 20)) continue;
+      if (window.GFX && GFX.drawFloat(ctx, f)) continue;
       ctx.globalAlpha = Math.min(1, f.life / 20);
       ctx.fillStyle = '#fff59d';
       ctx.font = 'bold 16px Fredoka, sans-serif';
@@ -4133,7 +4152,9 @@
     }
 
     // watermark + buffs actifs
-    if (running && !paused) {
+    if (running && !paused && window.GFX && GFX.drawHud(ctx)) {
+      // HUD pixel-art (js/gfx.js)
+    } else if (running && !paused) {
       ctx.save();
       ctx.globalAlpha = 0.55 + Math.sin(frame * 0.08) * 0.15;
       ctx.font = 'bold 14px Fredoka, sans-serif';
@@ -4168,6 +4189,7 @@
   }
 
   function drawMine(m) {
+    if (window.GFX && GFX.drawMine(ctx, m)) return;
     ctx.save();
     ctx.translate(m.x, m.y);
     const armed = m.arm <= 0;
@@ -4196,6 +4218,7 @@
   }
 
   function drawPowerup(p) {
+    if (window.GFX && GFX.drawPowerup(ctx, p)) return;
     const y = p.baseY + Math.sin(p.bob) * 6;
     const def = POWER_DEFS[p.type] || { color: '#fff', icon: '?', name: '?' };
     ctx.save();
@@ -4329,6 +4352,7 @@
   }
 
   function drawMeteor(m) {
+    if (window.GFX && GFX.drawMeteor(ctx, m)) return;
     ctx.save();
     ctx.translate(m.x, m.y);
     ctx.rotate(m.rot);
@@ -4352,6 +4376,7 @@
   }
 
   function drawTiles() {
+    if (window.GFX && GFX.drawTiles(ctx)) return;
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const ch = LEVEL_ROWS[r][c];
@@ -4546,6 +4571,7 @@
   }
 
   function drawFlag() {
+    if (window.GFX && GFX.drawGoal(ctx)) return;
     const x = flag.x, y = flag.y;
     if (levelDef.theme === 'cosmo' || levelDef.theme === 'ship') {
       const pulse = 1 + Math.sin(frame * 0.12) * 0.08;
@@ -4685,6 +4711,7 @@
   }
 
   function drawCoin(c) {
+    if (window.GFX && GFX.drawCoin(ctx, c)) return;
     const y = c.pop ? c.y : c.baseY + Math.sin(c.bob) * 6;
     const pulse = 1 + Math.sin(frame * 0.12 + c.bob) * 0.1;
     // halo juice
@@ -4723,6 +4750,7 @@
   }
 
   function drawBullet(b) {
+    if (window.GFX && GFX.drawBullet(ctx, b)) return;
     if (b.kind === 'grenade') {
       ctx.save();
       // aura explosive
@@ -4948,6 +4976,7 @@
   }
 
   function drawEnemy(e) {
+    if (window.GFX && GFX.drawEnemy(ctx, e)) return;
     const y = e.y;
     const bob = Math.sin(e.bob) * 2;
     const scale = (e.type === 'jumbo' || e.type === 'raisinBoss') ? 1.35 : e.type === 'angry' ? 1.15 : 1.05;
@@ -5029,6 +5058,7 @@
 
   // --- SOUSOU : foulée comique bien visible + cheveux mal coiffés ---
   function drawSousou() {
+    if (window.GFX && GFX.drawPlayer(ctx)) return;
     const x = player.x;
     const y = player.y;
     const f = player.facing;
