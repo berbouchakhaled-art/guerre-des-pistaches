@@ -1,0 +1,29 @@
+name: Apply side-column touch controls patch
+on:
+  push:
+    branches: [mobile/mobile-first]
+    paths:
+      - ".github/workflows/pads-apply.yml"
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mobile/mobile-first
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply patch, commit, remove itself
+        run: |
+          set -euo pipefail
+          sed 's/^$/ /' patches/pads.patch > /tmp/pads.patch
+          git apply --whitespace=nowarn /tmp/pads.patch
+          grep -q 'side-pads' index.html
+          grep -q 'gut-tip' css/mobile.css
+          git rm -q patches/pads.patch .github/workflows/pads-apply.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html css/mobile.css
+          git commit -m "mobile: touch controls in side columns on phones (landscape) so buttons never cover the game"
+          git push origin HEAD:mobile/mobile-first
