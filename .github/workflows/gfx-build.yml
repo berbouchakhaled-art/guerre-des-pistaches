@@ -1,0 +1,41 @@
+name: Build pixel-art assets
+# Régénère toutes les images pixel-art (tools/gfx + tools/sousou-sprite, déterministe)
+# et branche js/gfx.js dans index.html, puis commit le résultat sur la branche.
+on:
+  push:
+    branches: [gfx/pixel-overhaul]
+    paths:
+      - "tools/gfx/**"
+      - "tools/sousou-sprite/**"
+      - ".github/workflows/gfx-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gfx/pixel-overhaul
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Generate assets
+        run: |
+          set -euo pipefail
+          pip install "pillow==12.3.0" "numpy==2.2.4"
+          python3 tools/gfx/gen_all.py
+          python3 tools/gfx/check_manifest.py
+          python3 tools/gfx/patch_index.py index.html
+          grep -q 'src="js/gfx.js"' index.html
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/gfx assets/sousou-sprite.png index.html
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "gfx: generated pixel-art assets + index.html hooks"
+          git push origin HEAD:gfx/pixel-overhaul
