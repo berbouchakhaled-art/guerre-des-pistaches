@@ -221,69 +221,9 @@ body.rotate-wait #rotatePrompt { display: flex; }
 }
 #rotatePrompt .rot-back { background: rgba(255,255,255,.12); color: #fffde7; box-shadow: none; font-size: .85rem; padding: 10px 16px; margin-top: 0; }
 
-/* ---------- MENU sur téléphone ---------- */
-.rotate-tip { display: none; }
-html.is-touch .rotate-tip {
-  display: block; font-size: .8rem; color: #fff59d; background: rgba(255,235,59,.12);
-  border: 2px dashed rgba(255,235,59,.45); border-radius: 12px; padding: 6px 10px; margin: 0; width: 100%;
-}
-@media (orientation: landscape) { html.is-touch .rotate-tip { display: none; } }
-.touch-help { display: none; }
-html.is-touch .touch-help {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%;
-  font-size: .74rem; line-height: 1.25; color: #e8f5e9; text-align: left;
-}
-html.is-touch .touch-help > div {
-  display: flex; align-items: center; gap: 6px; padding: 6px 8px;
-  background: rgba(0,0,0,.28); border: 2px solid rgba(174,213,129,.35); border-radius: 10px;
-}
-html.is-touch .touch-help .ic { width: 24px; height: 24px; background-size: 384px 24px; }
-html.is-touch .touch-help .ic-left { background-position: 0 0; }
-html.is-touch .touch-help .ic-jump { background-position: -96px 0; }
-html.is-touch .a11y-note .mobile-only { display: none !important; }
-
-html.is-touch .level-pick { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
-html.is-touch .level-pick .level-label { grid-column: 1 / -1; }
-html.is-touch .level-btn { min-height: 62px; padding: 8px 8px !important; border-radius: 14px; }
-html.is-touch .level-btn .lv-name { font-size: 1rem; }
-html.is-touch .level-btn .lv-desc { display: none; }
-html.is-touch .level-btn.story { min-height: 62px; font-size: .95rem; }
-html.is-touch .a11y-row { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px; }
-html.is-touch .a11y-row .a11y-note, html.is-touch .a11y-row .touch-help, html.is-touch .a11y-row .rotate-tip { grid-column: 1 / -1; }
-html.is-touch #soundUnlockBtn, html.is-touch #a11yToggle { min-height: 44px; font-size: .78rem; }
-@media (max-width: 400px) {
-  html.is-touch .level-btn .lv-name, html.is-touch .level-btn.story { font-size: .88rem; }
-}
-
-/* téléphone en paysage : 2 colonnes — Sousou en grand à gauche, boutons à droite */
-@media (orientation: landscape) and (max-height: 520px) {
-  html.is-touch #startScreen { justify-content: center; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
-  html.is-touch #startScreen .overlay-inner {
-    width: min(860px, 100%);
-    display: grid !important;
-    grid-template-columns: minmax(220px, 40%) 1fr;
-    grid-template-areas: "logo diff" "pic worlds" "pic extra";
-    grid-template-rows: auto auto 1fr;
-    gap: 6px 18px; align-items: start; padding-bottom: 6px;
-  }
-  html.is-touch #startScreen .title-logo { grid-area: logo; margin: 0; align-self: end; }
-  html.is-touch #startScreen .sousou-portrait-wrap { grid-area: pic; margin: 0; align-self: start; }
-  html.is-touch #startScreen .diff-pick { grid-area: diff; }
-  html.is-touch #startScreen .level-pick { grid-area: worlds; }
-  html.is-touch #startScreen .a11y-row { grid-area: extra; }
-  html.is-touch #startScreen .sousou-portrait {
-    width: min(34vh + 90px, 230px) !important; height: min(34vh + 90px, 230px) !important; max-width: 100% !important;
-  }
-  html.is-touch #startScreen .diff-pick .level-label, html.is-touch #startScreen .level-pick .level-label { display: none; }
-  html.is-touch #startScreen .diff-btn { min-height: 40px; padding: 4px; }
-  html.is-touch #startScreen .diff-btn .d-sub { display: none; }
-  html.is-touch #startScreen .level-btn { min-height: 54px; }
-  html.is-touch #startScreen .level-btn .lv-code { font-size: .62rem; }
-  html.is-touch #startScreen .a11y-note { display: none; }
-}
-/* téléphone en portrait : Sousou très grand, boutons pleine largeur */
-@media (orientation: portrait) and (max-width: 600px) {
-  html.is-touch #startScreen .sousou-portrait { width: min(58vw, 250px) !important; height: min(58vw, 250px) !important; max-width: none !important; }
-  html.is-touch #startScreen .overlay-inner { gap: .5rem; }
-  html.is-touch #startScreen .a11y-note { display: none; }
-}
+/* ---------- écran de fin sur téléphone (le menu principal : css/menu.css) ---------- */
+html.is-touch #endScreen .level-pick { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+html.is-touch #endScreen .level-pick .level-label { grid-column: 1 / -1; }
+html.is-touch #endScreen .level-btn { min-height: 56px; padding: 8px 8px !important; border-radius: 14px; }
+html.is-touch #endScreen .level-btn .lv-name { font-size: 1rem; }
+html.is-touch #endScreen .level-btn .lv-desc { display: none; }

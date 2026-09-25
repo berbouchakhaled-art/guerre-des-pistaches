@@ -125,3 +125,57 @@ def build(outdir):
     root = os.path.abspath(os.path.join(outdir, '..', '..'))
     os.makedirs(os.path.join(root, 'assets', 'icons'), exist_ok=True)
     app_icons(root)
+
+# ---------------------------------------------------------------------------
+# Menu: chunky arcade logo font (2 styles) -> assets/gfx/logo_font.png
+# cell 15x21: 5x7 glyph x2, strokes thickened, 3-band gradient, top highlight,
+# 2px dark outline, 3px extrusion. Order = LOGO_CHARS, row 0 = gold, row 1 = pistachio.
+# ---------------------------------------------------------------------------
+LOGO_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÉ!*-'"
+LOGO_STYLES = [
+    # gradient top->bottom, highlight, outline, extrusion
+    ([(255, 246, 170), (255, 208, 64), (236, 142, 28)], (255, 255, 230), (46, 22, 10), (150, 66, 18)),
+    ([(226, 252, 160), (156, 214, 74), (86, 158, 40)], (250, 255, 225), (18, 38, 12), (44, 92, 26)),
+]
+def logo_font(outdir):
+    import font
+    cw, ch = 15, 21
+    img = new(cw * len(LOGO_CHARS), ch * len(LOGO_STYLES))
+    for r, (grad, hi, ol, ex) in enumerate(LOGO_STYLES):
+        for i, c in enumerate(LOGO_CHARS):
+            g = font.G.get(c, font.G[' '])
+            m = np.zeros((14, 11), bool)
+            for y, row in enumerate(g):
+                for x, b in enumerate(row):
+                    if b == '1':
+                        m[y * 2:y * 2 + 2, x * 2:x * 2 + 3] = True  # 2x + 1px thicker strokes
+            cell = new(cw, ch)
+            ox, oy = 2, 2
+            # extrusion (3px down), then outline, then face
+            face = np.zeros((ch, cw), bool); face[oy:oy + 14, ox:ox + 11] = m
+            ext = np.zeros_like(face)
+            for d in (1, 2, 3): ext[d:, :] |= face[:-d, :]
+            body = face | ext
+            ring = np.zeros_like(body)
+            for dy in (-2, -1, 0, 1, 2):
+                for dx in (-2, -1, 0, 1, 2):
+                    if abs(dx) + abs(dy) > 3: continue
+                    sh = np.roll(np.roll(body, dy, 0), dx, 1)
+                    ring |= sh
+            ring &= ~body
+            cell[ring] = ol + (255,)
+            cell[ext & ~face] = ex + (255,)
+            for y in range(ch):
+                for x in range(cw):
+                    if not face[y, x]: continue
+                    t = (y - oy) / 14.0
+                    col = grad[0] if t < 0.36 else (grad[1] if t < 0.72 else grad[2])
+                    if not face[y - 1, x]: col = hi
+                    cell[y, x] = col + (255,)
+            img[r * ch:(r + 1) * ch, i * cw:(i + 1) * cw] = cell
+    save(img, outdir + '/logo_font.png')
+
+_old_build = build
+def build(outdir):
+    _old_build(outdir)
+    logo_font(outdir)

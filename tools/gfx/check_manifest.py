@@ -4,7 +4,7 @@ import hashlib, os, sys
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 ICONS = os.path.join(ROOT, 'assets/icons')
-files = sorted(['assets/sousou-sprite.png']
+files = sorted(['assets/sousou-sprite.png', 'assets/sousou-sprite-hd.png']
                + ['assets/gfx/' + f for f in os.listdir(os.path.join(ROOT, 'assets/gfx')) if f.endswith('.png')]
                + (['assets/icons/' + f for f in os.listdir(ICONS) if f.endswith('.png')] if os.path.isdir(ICONS) else []))
 def h(f):

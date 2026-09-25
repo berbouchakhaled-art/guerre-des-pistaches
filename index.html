@@ -940,83 +940,53 @@
     </div>
     <button id="fsBtn" class="fs-btn" type="button" aria-label="Plein écran" title="Plein écran">Plein écran</button>
 
-    <div id="startScreen" class="overlay" role="dialog" aria-labelledby="gameTitle" aria-modal="true">
-      <div class="overlay-inner">
-        <div class="title-logo">
-          <div class="logo-main" id="gameTitle">LA GUERRE DES PISTACHES</div>
-          <div class="logo-star">★ SOUSOU ★</div>
-          <div class="logo-sub">pour toute la famille</div>
+    <div id="startScreen" class="overlay menu2" role="dialog" aria-labelledby="gameTitle" aria-modal="true">
+      <!-- Menu pixel animé (js/menu.js) : décor parallaxe, pluie de pistaches, logo arcade,
+           Sousou en pied (sprite HD) qui cligne des yeux, tire et saute. -->
+      <canvas id="menuFx" aria-hidden="true"></canvas>
+      <div class="m2">
+        <div class="m2-hero">
+          <h1 class="m2-logo" id="gameTitle"><span class="m2-fallback">La guerre des pistaches<br><small>★ Sousou ★</small></span></h1>
+          <div class="m2-stage" aria-hidden="true"></div>
         </div>
-        <div class="sousou-portrait-wrap">
-          <img
-            class="sousou-portrait"
-            src="assets/sousou-menu.png"
-            width="260"
-            height="260"
-            alt="Portrait pixel de Sousou — star du jeu"
-            decoding="async"
-            fetchpriority="high"
-          />
-          <span class="sousou-portrait-caption">★ Sousou ★</span>
-        </div>
-
-        <div class="diff-pick" role="group" aria-label="Niveau de difficulté">
-          <div class="level-label">😊 Pour qui ?</div>
-          <button type="button" class="diff-btn active" id="diffEasy" data-diff="easy" aria-pressed="true">
-            <span class="d-title">Pour tous</span>
-            <span class="d-sub">facile</span>
-          </button>
-          <button type="button" class="diff-btn" id="diffNormal" data-diff="normal" aria-pressed="false">
-            <span class="d-title">Normal</span>
-            <span class="d-sub">équilibré</span>
-          </button>
-          <button type="button" class="diff-btn" id="diffHard" data-diff="hard" aria-pressed="false">
-            <span class="d-title">Défi</span>
-            <span class="d-sub">corsé</span>
-          </button>
-        </div>
-
-        <div class="level-pick">
-          <div class="level-label">★ Choisis ton monde ★</div>
-          <button type="button" class="level-btn park" id="levelBtn0" data-level="0" aria-label="Monde 1 Parc Pistache">
-            <span class="lv-code">MONDE 1-1</span>
-            <span class="lv-name">🌳 Parc Pistache</span>
-            <span class="lv-desc">Jour · herbe · tuyaux · cacahuètes</span>
-          </button>
-          <button type="button" class="level-btn cosmo" id="levelBtn1" data-level="1" aria-label="Monde 2 Nuit Cosmique">
-            <span class="lv-code">MONDE 2-1</span>
-            <span class="lv-name">🌌 Nuit Cosmique</span>
-            <span class="lv-desc">Espace · trampolines · étoiles</span>
-          </button>
-          <button type="button" class="level-btn ship" id="levelBtn2" data-level="2" aria-label="Monde 3 Vaisseau Pistache">
-            <span class="lv-code">MONDE 3-1</span>
-            <span class="lv-name">🚀 Vaisseau Pistache</span>
-            <span class="lv-desc">Guerre spatiale vs raisins secs aliens</span>
-          </button>
-          <button type="button" class="level-btn story" id="startBtn" data-level="story" aria-label="Mode histoire les trois mondes">
-            ▶ Histoire (1 → 2 → 3)
-          </button>
-        </div>
-
-        <div class="a11y-row" style="width:100%;display:flex;flex-direction:column;gap:6px;align-items:stretch">
-          <button type="button" id="soundUnlockBtn" class="diff-btn active" style="background:linear-gradient(180deg,#66bb6a,#2e7d32);border-color:#1b5e20;color:#fff;font-weight:700">
-            🔊 Activer le son (touche ici)
-          </button>
-          <button type="button" id="a11yToggle" class="diff-btn" aria-pressed="false">
-            ♿ Texte + boutons plus grands
-          </button>
-          <p class="a11y-note">
-            💡 Premier lancement : « Activer le son » (surtout iPhone) · volume + · silencieux OFF<br/>
-            <span class="desktop-only">Clavier : <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> / <kbd>Q</kbd><kbd>D</kbd> (AZERTY) courir ·
-            <kbd>Espace</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> / <kbd>Z</kbd> sauter ·
-            <kbd>J</kbd> ou <kbd>X</kbd> tirer · <kbd>↓</kbd> se baisser ·
-            <kbd>P</kbd> pause · <kbd>M</kbd> son · <kbd>Échap</kbd> Menu</span>
-            <span class="mobile-only">Mobile : pouce gauche = Gauche/Droite · pouce droit = Sauter/Tirer · ☰ Menu · Son · paysage ou portrait OK</span>
-          </p>
-          <div class="touch-help" aria-label="Commandes tactiles">
-            <div><i class="ic ic-left"></i><span><b>Pouce gauche</b> : glisse sur ◀ ▶ pour courir</span></div>
-            <div><i class="ic ic-jump"></i><span><b>Pouce droit</b> : SAUT · TIR · touche une arme pour changer</span></div>
+        <div class="m2-panel">
+          <div class="diff-pick m2-pills" role="group" aria-label="Niveau de difficulté">
+            <button type="button" class="diff-btn active" id="diffEasy" data-diff="easy" aria-pressed="true">
+              <span class="d-title">Pour tous</span>
+            </button>
+            <button type="button" class="diff-btn" id="diffNormal" data-diff="normal" aria-pressed="false">
+              <span class="d-title">Normal</span>
+            </button>
+            <button type="button" class="diff-btn" id="diffHard" data-diff="hard" aria-pressed="false">
+              <span class="d-title">Défi</span>
+            </button>
           </div>
+          <button type="button" class="m2-play" id="startBtn" data-level="story" aria-label="Jouer : mode histoire, les trois mondes">
+            <span class="p-main">▶ JOUER</span>
+            <span class="p-sub">Histoire · 3 mondes</span>
+          </button>
+          <div class="level-pick m2-worlds" role="group" aria-label="Choisis ton monde">
+            <button type="button" class="m2-card park" id="levelBtn0" data-level="0" aria-label="Monde 1 : Parc Pistache">
+              <canvas class="wprev" width="120" height="68" data-theme="park"></canvas>
+              <span class="c-name">1 · Parc</span>
+            </button>
+            <button type="button" class="m2-card cosmo" id="levelBtn1" data-level="1" aria-label="Monde 2 : Nuit Cosmique">
+              <canvas class="wprev" width="120" height="68" data-theme="cosmo"></canvas>
+              <span class="c-name">2 · Cosmos</span>
+            </button>
+            <button type="button" class="m2-card ship" id="levelBtn2" data-level="2" aria-label="Monde 3 : Vaisseau Pistache">
+              <canvas class="wprev" width="120" height="68" data-theme="ship"></canvas>
+              <span class="c-name">3 · Vaisseau</span>
+            </button>
+          </div>
+          <div class="a11y-row m2-toggles">
+            <button type="button" id="soundUnlockBtn" class="m2-tog" aria-pressed="false">🔊 Activer le son</button>
+            <button type="button" id="a11yToggle" class="m2-tog" aria-pressed="false" aria-label="Texte et boutons plus grands">♿ Plus grand</button>
+          </div>
+          <p class="m2-hint">
+            <span class="desktop-only"><kbd>←</kbd><kbd>→</kbd> courir · <kbd>Espace</kbd> sauter · <kbd>X</kbd> tirer · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> armes · <kbd>P</kbd> pause</span>
+            <span class="mobile-only">👈 glisse sur ◀ ▶ · 👉 SAUT / TIR · touche une arme</span>
+          </p>
           <p class="rotate-tip">📱↻ Tourne en <b>paysage</b> pour jouer en grand !</p>
         </div>
       </div>
@@ -1078,8 +1048,10 @@
   </style>
 
   <link rel="stylesheet" href="css/mobile.css" />
+  <link rel="stylesheet" href="css/menu.css" />
 
   <script src="js/gfx.js"></script>
+  <script src="js/menu.js"></script>
   <script>
   // =========================================================
   // AUDIO MAX — musique + bruitages pistache/Mario-like
@@ -1550,7 +1522,11 @@
   // recalculée (applyView) pour un zoom entier « pixel-perfect » (Sousou ≈ 15 % de l'écran).
   let VW = canvas.width;
   let VH = canvas.height;
-  const VIEW = window.VIEW = { mobile: false, k: 1, cssScale: 1, portrait: false, hudL: 118, hudR: 110, hudT: 10 };
+  // rs = échelle de rendu : la toile est dessinée en x2 (pixel monde = 2x2 pixels de rendu)
+  // → sprite HD de Sousou (demi-pixels) net, décor inchangé (facteurs entiers).
+  const VIEW = window.VIEW = { mobile: false, k: 1, cssScale: 1, portrait: false, hudL: 118, hudR: 110, hudT: 10, rs: 2 };
+  canvas.width = VW * VIEW.rs; canvas.height = VH * VIEW.rs;
+  ctx.imageSmoothingEnabled = false;
   const T = 40; // taille tuile
 
   // Légende tuiles:
@@ -2088,8 +2064,9 @@
   }
   function setViewSize(w, h) {
     const oldW = VW;
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w; canvas.height = h;
+    const rs = VIEW.rs;
+    if (canvas.width !== w * rs || canvas.height !== h * rs) {
+      canvas.width = w * rs; canvas.height = h * rs;
     }
     VW = w; VH = h;
     ctx.imageSmoothingEnabled = false;
@@ -2122,12 +2099,20 @@
       areaH = cssH - areaY - (240 + ins.b);
     }
     const devW = areaW * dpr, devH = areaH * dpr;
+    // k = pixels écran (physiques) par pixel monde. Téléphone paysage : ~290 px monde
+    // de haut → Sousou (≈69 px monde) ≈ 24 % de l'écran. Entier si possible (net),
+    // sinon multiple de 0,5 (écrans dpr 2) pour garder le même zoom.
+    const pickK = (dev, target) => {
+      const raw = dev / target;
+      let k0 = Math.max(1, Math.round(raw));
+      if (Math.abs(k0 - raw) / raw > 0.14) k0 = Math.max(1, Math.round(raw * 2) / 2);
+      return k0;
+    };
     let k;
     if (portraitPlay) {
-      k = Math.max(1, Math.round(devW / (isPhone() ? 420 : 560)));
+      k = pickK(devW, isPhone() ? 400 : 560);
     } else {
-      const target = cssH >= 600 ? 520 : 400; // tablette : un peu plus de champ
-      k = Math.max(1, Math.round(devH / target));
+      k = pickK(devH, cssH >= 600 ? 420 : 290); // tablette : un peu plus de champ
     }
     let vw = Math.ceil(devW / k), vh = Math.ceil(devH / k);
     vh = Math.min(vh, 17 * T);             // jamais plus haut que le niveau (17 rangées)
@@ -2623,7 +2608,7 @@
     if (t) {
       t.setAttribute('aria-pressed', largeUI ? 'true' : 'false');
       t.classList.toggle('active', largeUI);
-      t.textContent = largeUI ? '♿ Mode grand : ON' : '♿ Texte + boutons plus grands';
+      t.textContent = largeUI ? '♿ Plus grand : OUI' : '♿ Plus grand';
     }
     try { localStorage.setItem('gdp_largeui', largeUI ? '1' : '0'); } catch (_) {}
   }
@@ -2690,6 +2675,15 @@
         if (e.cancelable) e.preventDefault();
         e.stopPropagation();
       }
+      // 2e appui = couper le son (bouton bascule)
+      if (soundUnlockBtn.classList.contains('active') && !AudioFX.isMuted()) {
+        AudioFX.setMuted(true);
+        syncMuteBtn();
+        soundUnlockBtn.textContent = '🔇 Son : NON';
+        soundUnlockBtn.classList.remove('active');
+        soundUnlockBtn.setAttribute('aria-pressed', 'false');
+        return;
+      }
       AudioFX.setMuted(false);
       syncMuteBtn();
       await AudioFX.resume();
@@ -2699,11 +2693,9 @@
         AudioFX.coin();
         setTimeout(() => AudioFX.powerup(), 120);
       } catch (_) {}
-      soundUnlockBtn.textContent = '🔊 Son activé !';
-      soundUnlockBtn.style.background = 'linear-gradient(180deg,#81c784,#388e3c)';
-      setTimeout(() => {
-        if (soundUnlockBtn) soundUnlockBtn.textContent = '🔊 Son OK — retester';
-      }, 1500);
+      soundUnlockBtn.textContent = '🔊 Son : OUI';
+      soundUnlockBtn.classList.add('active');
+      soundUnlockBtn.setAttribute('aria-pressed', 'true');
     };
     soundUnlockBtn.addEventListener('touchstart', (e) => { try { AudioFX.resume(); } catch (_) {} }, { passive: true });
     soundUnlockBtn.addEventListener('touchend', doUnlock, { passive: false });
@@ -5812,11 +5804,12 @@
       while (stepAcc >= STEP_MS - 0.5 && steps < 3) { update(); stepAcc -= STEP_MS; steps++; }
       if (steps === 3) stepAcc = 0;
       if (stepAcc < 0) stepAcc = 0;
-      draw();
+      ctx.setTransform(VIEW.rs, 0, 0, VIEW.rs, 0, 0);
+      if (running || !(window.MENU && MENU.active)) draw();
     } catch (err) {
       // Empêche un plantage unique de geler tout le jeu
       console.error('Erreur frame:', err);
-      try { ctx.setTransform(1, 0, 0, 1, 0, 0); } catch (_) {}
+      try { ctx.setTransform(VIEW.rs, 0, 0, VIEW.rs, 0, 0); } catch (_) {}
     }
     requestAnimationFrame(loop);
   }

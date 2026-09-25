@@ -25,6 +25,10 @@
   // cellule 48x64, pieds sur la ligne du bas, centre du corps x=22
   // ---------------------------------------------------------------
   const SP = { w: 48, h: 64, ax: 22, ay: 64 };
+  // Sprite HD (assets/sousou-sprite-hd.png, 792x528) : même design, 2,75x plus détaillé
+  // (cellule 132x176). Dessiné à 0,5 px monde par pixel d'art → 66x88 px monde (1,375x,
+  // Sousou ≈ 70 px de haut), net car la toile est rendue en x2 (VIEW.rs).
+  const HD = { f: 2.75, w: 132, h: 176, dw: 66, dh: 88, ax: 30.5 };
   const SP_FRAMES = {
     idle_0: [0, 0], idle_1: [48, 0], idle_2: [96, 0], idle_3: [144, 0],
     run_0: [192, 0], run_1: [240, 0], run_2: [0, 64], run_3: [48, 64],
@@ -38,9 +42,9 @@
   };
 
   const FILES = {
-    sousou: 'sousou-sprite.png',
+    sousou: 'sousou-sprite.png', sousouHD: 'sousou-sprite-hd.png',
     items: 'gfx/items.png', fxs: 'gfx/fx.png', boom: 'gfx/boom.png',
-    enemies: 'gfx/enemies.png', decor: 'gfx/decor.png', font: 'gfx/font.png',
+    enemies: 'gfx/enemies.png', decor: 'gfx/decor.png', font: 'gfx/font.png', logoFont: 'gfx/logo_font.png',
     tiles_park: 'gfx/tiles_park.png', tiles_cosmo: 'gfx/tiles_cosmo.png', tiles_ship: 'gfx/tiles_ship.png',
     park_sky: 'gfx/bg_park_sky.png', park_clouds: 'gfx/bg_park_clouds.png', park_far: 'gfx/bg_park_far.png',
     park_mid: 'gfx/bg_park_mid.png', park_near: 'gfx/bg_park_near.png',
@@ -113,6 +117,10 @@
     if (G.img.sousou) {
       G.sousouWhite = silhouette(G.img.sousou, '#ffffff');
       G.sousouGold = silhouette(G.img.sousou, 'rgba(255,220,90,0.45)');
+    }
+    if (G.img.sousouHD) {
+      G.sousouWhiteHD = silhouette(G.img.sousouHD, '#ffffff');
+      G.sousouGoldHD = silhouette(G.img.sousouHD, 'rgba(255,220,90,0.45)');
     }
     ['park_far', 'park_mid', 'park_near', 'cosmo_far', 'cosmo_near', 'ship_mid'].forEach(sampleBottom);
     // halo doux pré-rendu (utilisé en mode additif, jamais recalculé)
@@ -709,27 +717,34 @@
     let sx = 1, sy = 1;
     if (st > 1) { sy = 1 + (st - 1) * 0.5; sx = 1 - (st - 1) * 0.3; }
     if (sq > 1) { sx = 1 + (sq - 1) * 0.5; sy = 1 - (sq - 1) * 0.35; }
-    const dw = Math.round(SP.w * sx), dh = Math.round(SP.h * sy);
-    const ax = Math.round(SP.ax * sx);
+    const hd = !!G.img.sousouHD && (window.VIEW ? VIEW.rs >= 2 : false);
+    const img = hd ? G.img.sousouHD : G.img.sousou;
+    const f = hd ? HD.f : 1, cw = hd ? HD.w : SP.w, ch = hd ? HD.h : SP.h;
+    const q = hd ? 2 : 1; // arrondi au demi-pixel monde (= pixel de rendu) en HD
+    const dw = Math.round((hd ? HD.dw : SP.w) * sx * q) / q, dh = Math.round((hd ? HD.dh : SP.h) * sy * q) / q;
+    const ax = Math.round((hd ? HD.ax : SP.ax) * sx * q) / q;
+    const sc = hd ? 1.375 : 1;
     // ombre
-    if (p.onGround) { ctx.save(); ctx.globalAlpha *= 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(p.x - 13), Math.round(p.y - 2), 26, 3); ctx.fillRect(Math.round(p.x - 9), Math.round(p.y - 3), 18, 5); ctx.restore(); }
-    if (themeOf() !== 'park') glow(ctx, p.x, p.y - 26, 40, '#fff8e1', 0.16);
+    if (p.onGround) { ctx.save(); ctx.globalAlpha *= 0.28; ctx.fillStyle = '#000'; ctx.fillRect(Math.round(p.x - 16), Math.round(p.y - 2), 32, 3); ctx.fillRect(Math.round(p.x - 11), Math.round(p.y - 3), 22, 5); ctx.restore(); }
+    if (themeOf() !== 'park') glow(ctx, p.x, p.y - 32, 48, '#fff8e1', 0.16);
     ctx.save();
     ctx.translate(Math.round(p.x), Math.round(p.y));
     if (flip) ctx.scale(-1, 1);
     const ghost = buffs.ghost > 0;
     if (ghost) ctx.globalAlpha *= 0.6;
-    ctx.drawImage(G.img.sousou, fr[0], fr[1], SP.w, SP.h, -ax, -dh, dw, dh);
-    if (buffs.star > 0 && G.sousouGold && (frame >> 2) % 2) {
-      ctx.drawImage(G.sousouGold, fr[0], fr[1], SP.w, SP.h, -ax, -dh, dw, dh);
+    const fx0 = fr[0] * f, fy0 = fr[1] * f;
+    ctx.drawImage(img, fx0, fy0, cw, ch, -ax, -dh, dw, dh);
+    const gold = hd ? G.sousouGoldHD : G.sousouGold, white = hd ? G.sousouWhiteHD : G.sousouWhite;
+    if (buffs.star > 0 && gold && (frame >> 2) % 2) {
+      ctx.drawImage(gold, fx0, fy0, cw, ch, -ax, -dh, dw, dh);
     }
-    if ((p.hurtT || 0) > 30 && G.sousouWhite) {
-      ctx.drawImage(G.sousouWhite, fr[0], fr[1], SP.w, SP.h, -ax, -dh, dw, dh);
+    if ((p.hurtT || 0) > 30 && white) {
+      ctx.drawImage(white, fx0, fy0, cw, ch, -ax, -dh, dw, dh);
     }
     // flash de bouche du blaster pistache (canon à droite du sprite ~ x=+24, y=-31)
     if ((p.shootT || 0) > 8 && G.img.fxs && !p.aimUp) {
       const k = Math.min(2, 12 - p.shootT);
-      ctx.drawImage(G.img.fxs, k * 32, 96, 32, 32, 20, -31 - 16 + (p.crouching ? 12 : 0), 32, 32);
+      ctx.drawImage(G.img.fxs, k * 32, 96, 32, 32, Math.round(20 * sc), Math.round(-31 * sc) - 16 + (p.crouching ? 12 : 0), 32, 32);
     }
     ctx.restore();
     if ((p.shootT || 0) > 8 && p.aimUp && G.img.fxs) {
@@ -867,8 +882,15 @@
   // HUD compact téléphone : une seule rangée en haut, entre ☰ (gauche) et 🔊 (droite).
   // L'arme est affichée par les boutons tactiles, le nom du monde par le bandeau d'intro.
   function drawHudMobile(ctx, V) {
-    const h = 28, gap = 5;
-    let x = V.hudL, y = V.hudT;
+    // zoom fort (k>=3,5) : HUD dessiné à 0,75 (police = 3 pixels de rendu, net) pour
+    // ne pas manger la zone de jeu ; coordonnées paires → alignées sur la grille.
+    const hs = V.k >= 3.5 && !V.portrait ? 0.75 : 1;
+    ctx.save();
+    if (hs !== 1) ctx.scale(hs, hs);
+    const W = Math.floor(VW / hs);
+    const ev = (v) => Math.round(v / hs / 2) * 2;
+    const h = 28, gap = 6;
+    let x = ev(V.hudL), y = ev(V.hudT);
     const hearts = Math.max(0, lives);
     // coeurs : 1 coeur + xN (compact)
     const hw = 30 + G.textWidth('x' + hearts);
@@ -889,14 +911,14 @@
     text(ctx, String(tl), x + 28, y + 5, 2, tl <= 60 && (frame >> 4) % 2 ? 3 : 0);
     x += tw + gap;
     const sw = 32 + G.textWidth(String(score));
-    if (x + sw <= VW - V.hudR) {
+    if (x + sw <= W - V.hudR / hs) {
       panel(ctx, x, y, sw, h);
       icon(ctx, 7, 3, x + 3, y + 2);
       text(ctx, String(score), x + 28, y + 5, 2, 1);
       x += sw + gap;
     }
     // buffs : 2e rangée, petite
-    let bx = V.hudL;
+    let bx = ev(V.hudL);
     const by = y + h + 4;
     for (const [k, v] of Object.entries(buffs)) {
       if (v <= 0 || !POWER_DEFS[k]) continue;
@@ -912,9 +934,10 @@
     }
     if (player.aimUp) {
       const tw2 = G.textWidth('TIR HAUT') + 12;
-      panel(ctx, Math.round(VW / 2 - tw2 / 2), by, tw2, 28);
-      text(ctx, 'TIR HAUT', VW / 2, by + 5, 2, 1, 'center');
+      panel(ctx, Math.round(W / 2 - tw2 / 2), by, tw2, 28);
+      text(ctx, 'TIR HAUT', W / 2, by + 5, 2, 1, 'center');
     }
+    ctx.restore();
   }
 
   // Textes écran (intro, titres, pause) en police pixel : nets à toute échelle
@@ -922,10 +945,14 @@
     if (!G.ready || !G.img.font) return false;
     const fade = t > 120 ? (150 - t) / 30 : t < 25 ? t / 25 : 1;
     const a = Math.max(0, Math.min(1, fade));
-    const big = VW >= 700 ? 5 : 4;
-    const mid = VW >= 700 ? 3 : 2;
-    const y = Math.round(VH * 0.3);
-    const bh = 9 * big + 9 * mid + 9 * 2 + 40;
+    // petit écran (vue zoomée) : bandeau compact EN HAUT, sous le HUD, pour ne jamais
+    // couvrir Sousou (il est dans la moitié basse au départ)
+    const small = VH < 420;
+    const big = small ? 3 : VW >= 700 ? 5 : 4;
+    const mid = 2 + (!small && VW >= 700 ? 1 : 0);
+    const V = window.VIEW;
+    const y = small ? Math.round((V && V.mobile ? V.hudT : 8) + 40) : Math.round(VH * 0.3);
+    const bh = small ? 9 * big + 9 * mid + 8 + 28 : 9 * big + 9 * mid + 9 * 2 + 40;
     ctx.save();
     ctx.globalAlpha = a * 0.9;
     ctx.fillStyle = 'rgba(10, 26, 8, 0.82)';
@@ -940,6 +967,7 @@
     const bob = Math.round(Math.sin(frame * 0.2) * 2);
     text(ctx, '* SOUSOU *', VW / 2, ty + bob, big, 1, 'center');
     ty += 9 * big + 8;
+    if (small) { ctx.restore(); return true; }
     const sub = levelDef.theme === 'cosmo' ? 'trampolines - étoiles - petits trous'
       : levelDef.theme === 'ship' ? 'vaisseau pistache vs raisins secs'
       : 'la star entre en scène';
