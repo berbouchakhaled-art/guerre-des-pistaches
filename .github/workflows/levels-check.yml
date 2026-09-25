@@ -1,0 +1,28 @@
+name: Level checker
+# Vérifie les niveaux : 3 tuiles de dégagement (jamais besoin de se baisser),
+# pas de plafond qui cogne, checkpoint/arrivée/zone secrète atteignables.
+on:
+  push:
+    paths:
+      - "js/levels.js"
+      - "tools/levels/**"
+      - "index.html"
+      - ".github/workflows/levels-check.yml"
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: js/levels.js à jour avec build_levels.py
+        run: |
+          python3 tools/levels/build_levels.py
+          git diff --exit-code js/levels.js
+      - name: Checker (dégagement + atteignabilité)
+        run: python3 tools/levels/check_levels.py

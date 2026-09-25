@@ -1053,6 +1053,7 @@
   <link rel="stylesheet" href="css/mobile.css" />
   <link rel="stylesheet" href="css/menu.css" />
 
+  <script src="js/levels.js"></script>
   <script src="js/gfx.js"></script>
   <script src="js/menu.js"></script>
   <script>
@@ -1532,10 +1533,10 @@
   ctx.imageSmoothingEnabled = false;
   const T = 40; // taille tuile
 
-  // Légende tuiles:
-  // 1 sol  2 brique  3 ?  4 plateforme  5-8 tuyaux
-  // I glace (glisse)  B trampoline  X lave mortelle
-  // C pièce  E ennemi  F volant (niv2)
+  // Légende tuiles (cartes : js/levels.js, générées par tools/levels/build_levels.py) :
+  // 1 sol  2 brique  3 ?  4 plateforme TRAVERSABLE (on saute à travers par-dessous)
+  // 5-8 tuyaux  I glace (glisse)  B trampoline  X lave mortelle  H ?-bloc CACHÉ
+  // C pièce  P power-up  E ennemi  F volant  R raisin  S départ  K checkpoint  G arrivée
   const LEVEL_DEFS = [
     {
       id: 1,
@@ -1543,29 +1544,11 @@
       title: 'Parc Pistache',
       banner: 'MONDE 1-1 · PARC PISTACHE',
       theme: 'park',
-      time: 400,
+      time: 520,
       gravity: 0.52,
       jumpV: -17.5,
       music: 'day',
-      rows: [
-        '........................................................................................',
-        '........................................................................................',
-        '........................................................................................',
-        '........................................................................................',
-        '.....................C....3..........C...............3.....C................C...........',
-        '................2.3.2.......................3...........................................',
-        '.........C................C........2.2............C...............C........3............',
-        '............C........C.........C................C......C......C........C.......C........',
-        '.........4.4.4.4...........4.4.4..............4.4.4.4.4........4.4.4....................',
-        '....C....E....C......E.....C......E........C...E.......C....E..C......E....C....E.......',
-        '......E......E....E......E......E......E......E......E......E......E......E......E......',
-        '....E...........E...........E...........E...........E...........E...........E.......3...',
-        '.........56..............56.................56......................56..................',
-        '.........78...E..........78....E............78....E.................78....E.............',
-        '.........78....2.3.2.....78......2.3.2......78.....2.3.2............78....C....C........',
-        '111111111111111111111111111..1111111111111111111111111111111111.111111111111111111111111',
-        '111111111111111111111111111..1111111111111111111111111111111111.111111111111111111111111',
-      ],
+      rows: window.LEVEL_MAPS.park, // js/levels.js (tools/levels/build_levels.py)
     },
     {
       id: 2,
@@ -1573,30 +1556,11 @@
       title: 'Nuit Cosmique',
       banner: 'MONDE 2-1 · NUIT COSMIQUE ★',
       theme: 'cosmo',
-      time: 450,
+      time: 560,
       gravity: 0.44, // moins flottant, toujours généreux
       jumpV: -16.9,  // sauts généreux
       music: 'night',
-      rows: [
-        // Version FACILE : grands ponts, petits trous, peu de lave, peu d'ennemis
-        '........................................................................................',
-        '....C..............C..............C..............C..............C..............C........',
-        '............................................................................3...........',
-        '.........4.4.4.4...........C...........4.4.4.4...........C...........4.4.4.4............',
-        '........................................................................................',
-        '..C....3..........IIII..........B..........IIII..........B..........IIII......3....C....',
-        '........................................................................................',
-        '....4.4.4.4.4.4...........4.4.4.4.4.4...........4.4.4.4.4.4...........4.4.4.4.4.4.......',
-        '.........C...................C...................C...................C..................',
-        '..............E.........................E.........................E.....................',
-        '.......F...................................F...................................F........',
-        '....IIIIIIII.........B..............IIIIIIII.........B..............IIIIIIII............',
-        '............................................................................3...........',
-        '1111111111111111111..BB..1111111111111111111..BB..1111111111111111111..BB..1111111111111',
-        '1111111111111111111......1111111111111111111......1111111111111111111......1111111111111',
-        'XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXX',
-        'XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXXXXXXXX......XXXXXXXXXXXXX',
-      ],
+      rows: window.LEVEL_MAPS.cosmo, // js/levels.js (tools/levels/build_levels.py)
     },
     {
       id: 3,
@@ -1604,30 +1568,11 @@
       title: 'Vaisseau Pistache',
       banner: 'MONDE 3-1 · VAISSEAU PISTACHE 🚀 vs RAISINS SECS 👽',
       theme: 'ship',
-      time: 450,
+      time: 560,
       gravity: 0.46,
       jumpV: -16.3,
       music: 'ship',
-      rows: [
-        // Coque en forme de pistache dans l'espace : salles, ponts, hublots, raisins aliens R
-        '........................................................................................',
-        '....C....C....3....C....C....C....3....C....C....C....3....C....C....C....3....C........',
-        '.........4.4.4..........R..........4.4.4..........R..........4.4.4..........R...........',
-        '....R........B..............R........B..............R........B..............R....4.4....',
-        '..111111....111111......111111....111111......111111....111111......111111....111111....',
-        '........................................................................................',
-        '..C....B....C....R....C....B....C....R....C....B....C....R....C....B....C....R....C.....',
-        '....4.4.4.4.4...........4.4.4.4.4...........4.4.4.4.4...........4.4.4.4.4.......3.......',
-        '.........R...................R...................R...................R..........R.......',
-        '1111......11111111......11111111......11111111......11111111......11111111......1111....',
-        '............................................................................3...........',
-        '....R....C....4.4....C....R....C....4.4....C....R....C....4.4....C....R....C....B.......',
-        '......3......................3......................3......................3............',
-        '1111111111111111111..BB..1111111111111111111..BB..1111111111111111111..BB..1111111111111',
-        '1111111111111111111......1111111111111111111......1111111111111111111......1111111111111',
-        '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
-        '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
-      ],
+      rows: window.LEVEL_MAPS.ship, // js/levels.js (tools/levels/build_levels.py)
     },
   ];
 
@@ -1646,15 +1591,21 @@
   let coinSpawns = [];
   let enemySpawns = [];
   let flyerSpawns = [];
+  let powerSpawns = [];
+  let hiddenBlocks = [];     // H : ?-blocs invisibles révélés par un coup de tête
+  let startPos = { x: 3 * T, y: 0 };
+  let checkpoint = null;     // K : { x, y, active }
+  let lastSafe = null;       // dernier sol sûr (réapparition après une chute)
+  let camGroundY = 0;        // caméra verticale : dernier sol touché
   let meteors = []; // niv2 projectiles cosmiques
   let meteorTimer = 0;
 
+  const CHAR_TYPE = {
+    '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8,
+    'B': 10, 'I': 11, 'X': 12,
+  };
   function charToType(ch) {
-    const map = {
-      '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8,
-      'B': 10, 'I': 11, 'X': 12,
-    };
-    return map[ch] || null;
+    return CHAR_TYPE[ch] || null;
   }
 
   function parseLevel() {
@@ -1663,6 +1614,12 @@
     coinSpawns = [];
     enemySpawns = [];
     flyerSpawns = [];
+    powerSpawns = [];
+    hiddenBlocks = [];
+    checkpoint = null;
+    flag.x = (COLS - 5) * T;
+    flag.y = (ROWS - 2) * T;
+    startPos = { x: 3 * T, y: (ROWS - 2) * T - 2 };
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const ch = LEVEL_ROWS[r][c];
@@ -1680,13 +1637,29 @@
           flyerSpawns.push({ x: c * T + T / 2, y: r * T + T / 2 });
         } else if (ch === 'R') {
           enemySpawns.push({ x: c * T + T / 2, y: r * T + T, kind: 'raisin' });
+        } else if (ch === 'P') {
+          powerSpawns.push({ x: c * T + T / 2, y: r * T + T / 2 });
+        } else if (ch === 'H') {
+          hiddenBlocks.push({ c, r });
+        } else if (ch === 'S') {
+          startPos = { x: c * T + T / 2, y: (r + 1) * T - 2 };
+        } else if (ch === 'K') {
+          checkpoint = { x: c * T + T / 2, y: (r + 1) * T, active: false, wave: 0 };
+        } else if (ch === 'G') {
+          flag.x = c * T;
+          flag.y = (r + 1) * T;
         }
         // X lave = pas solide, géré à part
       }
     }
-    flag.x = (COLS - 5) * T;
-    flag.y = (ROWS - 4) * T;
     flag.h = 6 * T;
+  }
+
+  /** Remplace une case de la carte (copie propre au niveau en cours) + cache des tuiles. */
+  function setCell(c, r, ch) {
+    const row = LEVEL_ROWS[r];
+    LEVEL_ROWS[r] = row.slice(0, c) + ch + row.slice(c + 1);
+    if (window.GFX && GFX.invalidateTile) GFX.invalidateTile(c, r);
   }
 
   function tileAt(px, py) {
@@ -1703,9 +1676,35 @@
     return t && solidTypes.has(t.type);
   }
 
+  /** Mur plein (bloque côtés / tête) : tout le solide SAUF les plateformes traversables (4). */
+  function isWallAt(px, py) {
+    const t = tileAt(px, py);
+    return t && t.type !== 4 && solidTypes.has(t.type);
+  }
+
+  /** Atterrissage : les plateformes 4 ne portent que si l'on arrive par-dessus. */
+  function landsOn(px, py, prevY) {
+    const t = tileAt(px, py);
+    if (!t || !solidTypes.has(t.type)) return null;
+    if (t.type === 4 && prevY > t.r * T + 1) return null;
+    return t;
+  }
+
   function isLavaAt(px, py) {
     const t = tileAt(px, py);
     return t && t.type === 12;
+  }
+
+  /** Haut du premier sol (y des pieds) sous (x, y0), en cherchant sur maxRows tuiles, sinon null. */
+  function surfaceBelow(x, y0, maxRows) {
+    const c = Math.floor(x / T);
+    if (c < 0 || c >= COLS) return null;
+    for (let r = Math.max(1, Math.floor(y0 / T)); r < Math.min(ROWS, Math.floor(y0 / T) + maxRows); r++) {
+      const t = charToType(LEVEL_ROWS[r][c]);
+      if (t && t !== 12 && solidTypes.has(t) && !solidTypes.has(charToType(LEVEL_ROWS[r - 1][c]))) return r * T;
+      if (t === 12) return null;
+    }
+    return null;
   }
 
   function groundTileUnderPlayer() {
@@ -2776,9 +2775,10 @@
       try {
         await AudioFX.resume();
         const n = window.__retryLevel;
+        const fromCk = !!window.__retryCheckpoint;
         window.__retryLevel = undefined;
         storyMode = false;
-        startLevel(n, { resetScore: true });
+        startLevel(n, { resetScore: true, fromCheckpoint: fromCk });
       } finally {
         setTimeout(() => { startLock = false; }, 350);
       }
@@ -2797,7 +2797,7 @@
   function applyLevelDef(index) {
     currentLevelIndex = index;
     levelDef = LEVEL_DEFS[index];
-    LEVEL_ROWS = levelDef.rows;
+    LEVEL_ROWS = levelDef.rows.slice(); // copie : les ?-blocs cachés révélés modifient la carte
     ROWS = LEVEL_ROWS.length;
     COLS = LEVEL_ROWS[0].length;
     LEVEL_W = COLS * T;
@@ -2818,95 +2818,39 @@
     for (const s of coinSpawns) {
       coins.push({ x: s.x, y: s.y, baseY: s.y, taken: false, bob: Math.random() * 6 });
     }
+    // Tout vient de la carte (js/levels.js) : ennemis espacés à la main, pièces, power-ups.
+    // Difficulté : Pour tous = moins d'ennemis ; Défi = quelques renforts à côté des spawns.
     const em = difficulty.enemyCountMul;
-    if (levelDef.theme === 'park') {
-      for (let i = 0; i < 14; i++) {
-        coins.push({
-          x: 5 * T + i * 5.5 * T,
-          y: (ROWS - 4) * T,
-          baseY: (ROWS - 4) * T,
-          taken: false,
-          bob: i,
-        });
-      }
-      if (difficulty.extraCoins) {
-        for (let i = 0; i < 12; i++) {
-          coins.push({
-            x: 4 * T + i * 6 * T,
-            y: (ROWS - 6) * T,
-            baseY: (ROWS - 6) * T,
-            taken: false,
-            bob: i + 3,
-          });
-        }
-      }
-      for (const s of enemySpawns) {
-        if (Math.random() < em) enemies.push(makeEnemy(s.x, s.y));
-      }
-      const extraG = Math.round(16 * em);
-      for (let i = 0; i < extraG; i++) {
-        enemies.push(makeEnemy(6 * T + i * (4.5 / Math.max(em, 0.3)) * T, (ROWS - 3) * T));
-      }
-      const extraP = Math.round(6 * em);
-      for (let i = 0; i < extraP; i++) {
-        enemies.push(makeEnemy(8 * T + i * 10 * T, (ROWS - 8) * T));
-      }
-    } else if (levelDef.theme === 'cosmo') {
-      for (const s of enemySpawns) {
-        if (Math.random() < Math.max(0.4, em)) enemies.push(makeEnemy(s.x, s.y, { type: 'peanut' }));
-      }
-      for (const s of flyerSpawns) {
-        if (Math.random() < Math.max(0.35, em)) enemies.push(makeEnemy(s.x, s.y, { type: 'flyer', flying: true }));
-      }
-      const coinN = difficulty.extraCoins ? 30 : 20;
-      for (let i = 0; i < coinN; i++) {
-        coins.push({
-          x: 3 * T + i * 3.5 * T,
-          y: (4 + (i % 3)) * T + 10,
-          baseY: (4 + (i % 3)) * T + 10,
-          taken: false,
-          bob: i * 0.7,
-        });
-      }
-    } else {
-      // Vaisseau : raisins secs aliens
-      for (const s of enemySpawns) {
-        const kind = s.kind === 'raisin' ? 'raisin' : (levelDef.theme === 'ship' ? 'raisin' : 'peanut');
-        if (Math.random() < Math.max(0.5, em)) enemies.push(makeEnemy(s.x, s.y, { type: kind }));
-      }
-      for (let i = 0; i < Math.round(8 * em); i++) {
-        enemies.push(makeEnemy(5 * T + i * 9 * T, (ROWS - 3) * T, { type: 'raisin', fast: Math.random() < 0.3 }));
-      }
-      for (let i = 0; i < Math.round(6 * em); i++) {
-        enemies.push(makeEnemy(6 * T + i * 12 * T, (5 + i % 3) * T, { type: 'raisin', flying: true }));
-      }
-      for (let i = 0; i < 22; i++) {
-        coins.push({
-          x: 3 * T + i * 3.8 * T,
-          y: (3 + (i % 4)) * T + 8,
-          baseY: (3 + (i % 4)) * T + 8,
-          taken: false,
-          bob: i,
-        });
-      }
-      // quelques power-ups déjà posés
-      const ptypes = Object.keys(POWER_DEFS);
-      for (let i = 0; i < 6; i++) {
-        powerups.push({
-          x: 8 * T + i * 12 * T,
-          y: (6 + (i % 2)) * T,
-          baseY: (6 + (i % 2)) * T,
-          type: ptypes[i % ptypes.length],
-          bob: i,
-          life: 99999,
-        });
+    const th = levelDef.theme;
+    const keep = (i) => em >= 1 || ((i * 0.618) % 1) < Math.max(0.45, em); // tri stable (pas aléatoire)
+    enemySpawns.forEach((s, i) => {
+      if (!keep(i)) return;
+      const opts = th === 'ship' ? { type: s.kind === 'raisin' ? 'raisin' : 'raisin' }
+        : th === 'cosmo' ? { type: 'peanut' } : {};
+      enemies.push(makeEnemy(s.x, s.y, opts));
+      if (em > 1 && ((i * 0.37) % 1) < em - 1) enemies.push(makeEnemy(s.x + 2 * T, s.y, opts));
+    });
+    flyerSpawns.forEach((s, i) => {
+      if (!keep(i + 3)) return;
+      enemies.push(makeEnemy(s.x, s.y, th === 'ship' ? { type: 'raisin', flying: true } : { type: 'flyer', flying: true }));
+    });
+    const ptypes = Object.keys(POWER_DEFS);
+    powerSpawns.forEach((s, i) => {
+      powerups.push({ x: s.x, y: s.y, baseY: s.y, type: ptypes[(i * 5 + currentLevelIndex * 3) % ptypes.length], bob: i, life: 999999 });
+    });
+    if (difficulty.extraCoins) {
+      // Pour tous : une pistache bonus au-dessus de chaque ?-bloc
+      for (const q of questionBlocks) {
+        const y = q.r * T - T / 2;
+        coins.push({ x: q.c * T + T / 2, y, baseY: y, taken: false, bob: q.c });
       }
     }
     enemySpawnTimer = 0;
   }
 
-  function startLevel(index, { resetScore = false } = {}) {
+  function startLevel(index, { resetScore = false, fromCheckpoint = false } = {}) {
     window.__retryLevel = undefined;
+    window.__retryCheckpoint = false;
     applyLevelDef(index);
     parseLevel();
     if (resetScore) {
@@ -2938,21 +2882,15 @@
     coyoteFrames = 0;
     jumpBuffer = 0;
 
-    player.x = 3 * T;
-    player.y = Math.min((ROWS - 5) * T, LEVEL_H - 3 * T);
-    // Trouver un sol sûr au départ
-    for (let tryY = 2; tryY < ROWS - 1; tryY++) {
-      if (LEVEL_ROWS[tryY] && (LEVEL_ROWS[tryY][3] === '1' || LEVEL_ROWS[tryY][3] === 'I' || LEVEL_ROWS[tryY][3] === '4' || LEVEL_ROWS[tryY][3] === 'B')) {
-        player.y = tryY * T - 2;
-        break;
-      }
-    }
-    if (levelDef.theme === 'cosmo') {
-      player.x = 3 * T;
-      player.y = 13 * T - 2;
-    } else if (levelDef.theme === 'ship') {
-      player.x = 3 * T;
-      player.y = 13 * T - 2;
+    // départ (S) — ou drapeau checkpoint si on rejoue après un game over
+    lastSafe = null;
+    if (fromCheckpoint && checkpoint) {
+      checkpoint.active = true;
+      player.x = checkpoint.x + T;
+      player.y = checkpoint.y - 0.01;
+    } else {
+      player.x = startPos.x;
+      player.y = startPos.y;
     }
     player.vx = 0;
     player.vy = 0;
@@ -3165,12 +3103,12 @@
     // check sides
     const samplesY = [top + 4, player.y - player.h / 2, player.y - 4];
     for (const sy of samplesY) {
-      if (player.vx > 0 && isSolidAt(player.x + hw, sy)) {
+      if (player.vx > 0 && isWallAt(player.x + hw, sy)) {
         const c = Math.floor((player.x + hw) / T);
         player.x = c * T - hw - 0.01;
         player.vx = 0;
       }
-      if (player.vx < 0 && isSolidAt(player.x - hw, sy)) {
+      if (player.vx < 0 && isWallAt(player.x - hw, sy)) {
         const c = Math.floor((player.x - hw) / T);
         player.x = (c + 1) * T + hw + 0.01;
         player.vx = 0;
@@ -3183,6 +3121,7 @@
     player.vy += levelDef.gravity * gMul;
     if (buffs.hover > 0 && player.vy > 4) player.vy = 4;
     if (player.vy > 14) player.vy = 14;
+    const prevY = player.y;
     player.y += player.vy;
     player.onGround = false;
 
@@ -3192,9 +3131,9 @@
 
     if (player.vy >= 0) {
       for (const sx of xs) {
-        if (isSolidAt(sx, feet)) {
-          const r = Math.floor(feet / T);
-          const t = tileAt(sx, feet);
+        const t = landsOn(sx, feet, prevY);
+        if (t) {
+          const r = t.r;
           player.y = r * T - 0.01;
           player.onGround = true;
           // Trampoline cosmique
@@ -3212,15 +3151,28 @@
       }
     } else {
       for (const sx of xs) {
-        if (isSolidAt(sx, head)) {
-          const r = Math.floor(head / T);
+        const hc = Math.floor(sx / T), hr = Math.floor(head / T);
+        const hidden = hiddenBlocks.length && LEVEL_ROWS[hr] && LEVEL_ROWS[hr][hc] === 'H';
+        if (hidden || isWallAt(sx, head)) {
+          const r = hr;
           player.y = (r + 1) * T + player.h + 0.01;
           player.vy = 0.5;
-          const t = tileAt(sx, head);
-          if (t) hitBlock(t.c, t.r);
+          if (hidden) revealHidden(hc, hr);
+          else {
+            const t = tileAt(sx, head);
+            if (t) hitBlock(t.c, t.r);
+          }
           AudioFX.bump();
           break;
         }
+      }
+    }
+    // dernier sol sûr : sol plein sous les deux pieds (pas trampoline / glace au bord)
+    if (player.onGround && !player.crouching) {
+      const gl = tileAt(player.x - 12, player.y + 2), gr = tileAt(player.x + 12, player.y + 2);
+      if (gl && gr && gl.type !== 10 && gr.type !== 10 && solidTypes.has(gl.type) && solidTypes.has(gr.type)) {
+        if (!lastSafe) lastSafe = { x: 0, y: 0 };
+        lastSafe.x = player.x; lastSafe.y = player.y;
       }
     }
 
@@ -3278,6 +3230,28 @@
       AudioFX.bump();
       screenShake = 3;
     }
+  }
+
+  /** ?-bloc caché (H) touché par-dessous : il apparaît + jackpot de pistaches bonus. */
+  function revealHidden(c, r) {
+    const i = hiddenBlocks.findIndex(b => b.c === c && b.r === r);
+    if (i >= 0) hiddenBlocks.splice(i, 1);
+    setCell(c, r, '3');
+    questionBlocks.push({ c, r, used: true, bounce: 8 });
+    for (let k = 0; k < 5; k++) {
+      coins.push({
+        x: c * T + T / 2 + (k - 2) * 12, y: r * T - 10, baseY: r * T - 10,
+        taken: false, bob: k, pop: 16 + k * 3,
+      });
+    }
+    pistaches += 5;
+    score += 500;
+    floatScore(c * T + T / 2, r * T - 10, '🤫 SECRET +500');
+    spawnNameFX(c * T + T / 2, r * T - 40, 'BLOC CACHÉ !', 'pop', 50);
+    AudioFX.blockHit();
+    AudioFX.coin();
+    explode(c * T + T / 2, r * T, '#fff59d', 16);
+    updateHud();
   }
 
   function tryJump() {
@@ -3401,20 +3375,12 @@
       screenShake = 10;
       AudioFX.hit();
       floatScore(player.x, player.y - 40, '💔 -1');
-      // respawn sûr près de la caméra
-      player.x = Math.max(2 * T, cameraX + 80);
-      player.y = Math.min(player.y, (ROWS - 5) * T);
-      player.vy = -10;
+      // réapparition sur le dernier sol sûr (ou le checkpoint / le départ)
+      const sp = lastSafe || (checkpoint && checkpoint.active ? checkpoint : startPos);
+      player.x = sp.x;
+      player.y = sp.y - 0.01;
+      player.vy = 0;
       player.vx = 0;
-      // chercher un sol sous les pieds
-      for (let i = 0; i < 40; i++) {
-        if (isSolidAt(player.x, player.y + 4)) break;
-        player.y += 8;
-        if (player.y > LEVEL_H) {
-          player.y = 5 * T;
-          break;
-        }
-      }
       snapCamera();
       updateHud();
       if (lives <= 0) diePlayer();
@@ -3450,6 +3416,7 @@
     keys = {};
     window.__nextLevel = undefined;
     window.__retryLevel = currentLevelIndex;
+    window.__retryCheckpoint = !!(checkpoint && checkpoint.active);
     storyMode = false;
     AudioFX.die();
     AudioFX.stopMusic();
@@ -3466,7 +3433,7 @@
       const es = document.getElementById('endStarName');
       if (es) es.textContent = '★ SOUSOU ★';
       const retry = document.getElementById('retryBtn');
-      if (retry) retry.textContent = '🔄 Rejouer ce niveau';
+      if (retry) retry.textContent = window.__retryCheckpoint ? '🚩 Rejouer depuis le checkpoint' : '🔄 Rejouer ce niveau';
       endScreen.classList.remove('hidden');
       AudioFX.gameOver();
     }, 280);
@@ -3584,8 +3551,8 @@
       player.x = flag.x + 10;
       player.y += 3;
       player.facing = 1;
-      if (player.y >= (ROWS - 2) * T - 2) {
-        player.y = (ROWS - 2) * T - 2;
+      if (player.y >= flag.y - 2) {
+        player.y = flag.y - 2;
         finishWin();
       }
       // confettis
@@ -3700,6 +3667,19 @@
       winLevel();
     }
 
+    // drapeau checkpoint (mi-niveau) : on y réapparaît après un game over
+    if (checkpoint && !checkpoint.active && player.x >= checkpoint.x - 6 && Math.abs(player.y - checkpoint.y) < 4 * T) {
+      checkpoint.active = true;
+      checkpoint.wave = 60;
+      AudioFX.flag();
+      haptic(20);
+      spawnNameFX(checkpoint.x, checkpoint.y - 110, 'CHECKPOINT !', 'pop', 70);
+      explode(checkpoint.x, checkpoint.y - 90, '#aed581', 18);
+      explode(checkpoint.x, checkpoint.y - 90, '#ffeb3b', 10);
+    }
+    if (checkpoint && checkpoint.wave > 0) checkpoint.wave--;
+    if (frame % 300 === 0) enemies = enemies.filter(e => e.alive);
+
     // spawn continu
     enemySpawnTimer++;
     const maxEnemies = Math.max(4, Math.round(difficulty.maxEnemies * (levelDef.theme === 'cosmo' ? 0.55 : 1)));
@@ -3711,29 +3691,30 @@
       const sx = fromRight
         ? cameraX + VW + 30 + Math.random() * 40
         : cameraX - 30 - Math.random() * 40;
+      // sol le plus proche sous le niveau de Sousou dans la colonne d'apparition (sinon : pas de marcheur)
+      const gy = surfaceBelow(sx, player.y - 3 * T, 7);
       if (levelDef.theme === 'cosmo') {
-        if (Math.random() < 0.55) {
+        if (Math.random() < 0.55 || gy === null) {
           enemies.push(makeEnemy(
             sx,
             player.y - 30 - Math.random() * 40,
             { dir: fromRight ? -1 : 1, type: 'flyer', flying: true, fast: false }
           ));
         } else {
-          enemies.push(makeEnemy(sx, player.y, {
+          enemies.push(makeEnemy(sx, gy, {
             dir: fromRight ? -1 : 1, type: 'peanut', fast: false
           }));
         }
       } else if (levelDef.theme === 'ship') {
-        const fly = Math.random() < 0.4;
+        const fly = Math.random() < 0.4 || gy === null;
         enemies.push(makeEnemy(
           sx,
-          fly ? player.y - 40 - Math.random() * 50 : player.y,
+          fly ? player.y - 40 - Math.random() * 50 : gy,
           { dir: fromRight ? -1 : 1, type: Math.random() < 0.15 ? 'raisinBoss' : 'raisin', flying: fly, fast: Math.random() < 0.25 }
         ));
       } else {
-        const onPlatform = Math.random() < 0.25;
-        const sy = onPlatform ? (ROWS - 8) * T : (ROWS - 3) * T;
-        const pack = 1 + (Math.random() < 0.4 ? 1 : 0);
+        const sy = gy;
+        const pack = gy === null ? 0 : 1 + (Math.random() < 0.3 ? 1 : 0);
         for (let k = 0; k < pack; k++) {
           enemies.push(makeEnemy(sx + k * 28 * (fromRight ? 1 : -1), sy, { dir: fromRight ? -1 : 1, fast: Math.random() < 0.3 }));
         }
@@ -3751,7 +3732,7 @@
         if (Math.abs(mx - player.x) < 80) mx += 120;
         meteors.push({
           x: mx,
-          y: -30,
+          y: cameraY - 30,
           vx: (Math.random() - 0.5) * 0.8,
           vy: 2.2 + Math.random() * 1.2,
           rot: Math.random() * 6,
@@ -3763,7 +3744,7 @@
         m.x += m.vx;
         m.y += m.vy;
         m.rot += 0.1;
-        if (m.y > LEVEL_H + 40) { meteors.splice(i, 1); continue; }
+        if (m.y > LEVEL_H + 40 || m.y > cameraY + VH + 200 || isWallAt(m.x, m.y)) { meteors.splice(i, 1); continue; }
         if (invuln <= 0 && Math.hypot(m.x - player.x, m.y - (player.y - player.h / 2)) < m.r + 14) {
           meteors.splice(i, 1);
           explode(m.x, m.y, '#ff8a65', 10);
@@ -3847,7 +3828,7 @@
       if (b.kind === 'grenade') b.vy += 0.35; // gravité
       else if (b.kind === 'lance') b.vy += 0.04;
 
-      const hitSolid = isSolidAt(b.x, b.y) || b.y > LEVEL_H;
+      const hitSolid = isWallAt(b.x, b.y) || b.y > LEVEL_H;
       if (b.life <= 0 || hitSolid) {
         if (b.kind === 'grenade') {
           explodeGrenade(b.x, b.y);
@@ -3857,8 +3838,8 @@
         if (hitSolid && buffs.ricochet > 0 && (b.bounce || 0) < 3) {
           // Ricochet : rebond sur les murs
           b.bounce = (b.bounce || 0) + 1;
-          if (isSolidAt(b.x + b.vx, b.y)) b.vx *= -1;
-          if (isSolidAt(b.x, b.y + b.vy) || b.y > LEVEL_H) b.vy *= -1;
+          if (isWallAt(b.x + b.vx, b.y)) b.vx *= -1;
+          if (isWallAt(b.x, b.y + b.vy) || b.y > LEVEL_H) b.vy *= -1;
           b.life = Math.max(b.life, 40);
           b.x += b.vx * 2;
           b.y += b.vy * 2;
@@ -3952,6 +3933,8 @@
         if (e.flatTimer <= 0) e.alive = false;
         continue;
       }
+      // endormis loin de la caméra : ils attendent Sousou (rythme juste, 60 i/s sur grands niveaux)
+      if (e.x < cameraX - 320 || e.x > cameraX + VW + 320 || e.y < cameraY - 420 || e.y > cameraY + VH + 420) continue;
       e.bob += e.flying ? 0.16 : 0.12;
 
       // Gel : raisins / ennemis ralentis ou figés
@@ -3972,9 +3955,10 @@
       } else {
         e.vy += levelDef.gravity * 1.05;
         e.x += e.vx * freezeMul;
+        const ePrevY = e.y;
         e.y += e.vy;
         e.onGround = false;
-        if (e.vy >= 0 && (isSolidAt(e.x - 8, e.y) || isSolidAt(e.x + 8, e.y))) {
+        if (e.vy >= 0 && (landsOn(e.x - 8, e.y, ePrevY) || landsOn(e.x + 8, e.y, ePrevY))) {
           const r = Math.floor(e.y / T);
           e.y = r * T - 0.01;
           e.vy = 0;
@@ -3984,7 +3968,7 @@
           if (t && t.type === 11) e.vx *= 1.01;
           if (t && t.type === 10) e.vy = -10; // rebond trampoline
         }
-        if (isSolidAt(e.x + (e.vx > 0 ? e.w / 2 : -e.w / 2), e.y - e.h / 2)) {
+        if (isWallAt(e.x + (e.vx > 0 ? e.w / 2 : -e.w / 2), e.y - e.h / 2)) {
           e.vx *= -1;
         }
         if (e.onGround && !isSolidAt(e.x + e.vx * 8, e.y + 4)) {
@@ -4112,19 +4096,20 @@
     const maxCamX = Math.max(0, LEVEL_W - VW);
     cameraX = Math.max(0, Math.min(maxCamX, cameraX));
 
-    // --- Vertical : suit les sauts / plateformes hautes (critique en paysage) ---
-    const focusY = player.y - player.h * 0.45;
-    let targetY = focusY - VH * 0.58;
-    // Près du sol : coller le bas du niveau en bas de l'écran (style Mario)
-    const floorY = (ROWS - 2) * T;
-    if (player.onGround && player.y >= floorY - 8) {
-      targetY = Math.max(0, LEVEL_H - VH);
-    }
-    cameraY += (targetY - cameraY) * 0.20;
+    // --- Vertical, style Super Mario World : la caméra se cale sur le dernier sol où Sousou
+    // s'est posé (un saut ne la fait pas bouger), le suit quand il tombe plus bas, et le garde
+    // toujours bien dans le cadre ; mouvement lissé (pas de secousse sur les grands niveaux).
+    if (player.onGround) camGroundY = player.y;
+    let focusY = camGroundY;
+    if (player.y > camGroundY) focusY = player.y;                 // chute : on suit
+    if (player.y < camGroundY - VH * 0.42) focusY = player.y + VH * 0.42; // très haut : on suit
+    const targetY = focusY - VH * 0.72;
+    const dy = targetY - cameraY;
+    cameraY += dy * (Math.abs(dy) > VH * 0.5 ? 0.2 : 0.09);
 
-    // Contraintes dures verticales
-    const minScreenY = VH * 0.18;
-    const maxScreenY = VH * 0.78;
+    // Contraintes dures verticales (tête et pieds toujours visibles)
+    const minScreenY = player.h + VH * 0.12;
+    const maxScreenY = VH * 0.86;
     let sy = player.y - cameraY;
     if (sy < minScreenY) cameraY = player.y - minScreenY;
     if (sy > maxScreenY) cameraY = player.y - maxScreenY;
@@ -4135,16 +4120,13 @@
 
   /** Place la caméra immédiatement sur Sousou (spawn / respawn / rotation écran). */
   function snapCamera() {
+    camGroundY = player.y;
     cameraX = player.x - VW * 0.35;
-    cameraY = player.y - VH * 0.6;
+    cameraY = player.y - VH * 0.72;
     const maxCamX = Math.max(0, LEVEL_W - VW);
     const maxCamY = Math.max(0, LEVEL_H - VH);
     cameraX = Math.max(0, Math.min(maxCamX, cameraX));
     cameraY = Math.max(0, Math.min(maxCamY, cameraY));
-    // Force le bas du niveau visible au spawn au sol
-    if (player.y > (ROWS - 4) * T) {
-      cameraY = maxCamY;
-    }
   }
 
   function updateParticles() {
@@ -4367,11 +4349,12 @@
 
     drawTiles();
     drawFlag();
-    for (const c of coins) if (!c.taken) drawCoin(c);
+    drawCheckpoint();
+    for (const c of coins) if (!c.taken && inViewXY(c.x, c.baseY, 40)) drawCoin(c);
     for (const e of enemies) if (e.alive && inViewX(e.x, 80)) drawEnemy(e);
     for (const b of bullets) drawBullet(b);
     for (const m of meteors) drawMeteor(m);
-    for (const p of powerups) drawPowerup(p);
+    for (const p of powerups) if (inViewXY(p.x, p.baseY, 50)) drawPowerup(p);
     for (const m of mines) drawMine(m);
     drawSousou();
     // aura bouclier / étoile / fantôme / tourbillon
@@ -4884,6 +4867,30 @@
         }
       }
     }
+  }
+
+  /** Drapeau checkpoint pixel : gris avant, vert pistache + pistache dorée une fois touché. */
+  function drawCheckpoint() {
+    if (!checkpoint || !inViewX(checkpoint.x, 60)) return;
+    const x = Math.round(checkpoint.x) - 3, y = Math.round(checkpoint.y);
+    const on = checkpoint.active;
+    const H2 = 96;
+    ctx.fillStyle = '#20301a'; ctx.fillRect(x - 1, y - H2 - 1, 8, H2 + 1);
+    ctx.fillStyle = on ? '#e8eef0' : '#9aa8ad'; ctx.fillRect(x, y - H2, 6, H2);
+    ctx.fillStyle = '#20301a'; ctx.fillRect(x - 4, y - H2 - 12, 14, 12);
+    ctx.fillStyle = on ? '#ffc93c' : '#78909c'; ctx.fillRect(x - 3, y - H2 - 11, 12, 10);
+    const fy = y - H2 + 4 + (on ? 0 : 36);
+    for (let i = 0; i < 10; i++) {
+      const wave = on ? Math.round(Math.sin(frame * 0.18 - i * 0.6) * 2) : 0;
+      const h = Math.max(4, 24 - i * 2);
+      const yy = fy + (24 - h) / 2 + wave;
+      ctx.fillStyle = '#1e3a12'; ctx.fillRect(x + 6 + i * 3, yy - 1, 3, h + 2);
+      ctx.fillStyle = on ? (i % 4 === 0 ? '#9ccc4f' : '#7cb342') : '#b0bec5';
+      ctx.fillRect(x + 6 + i * 3, yy, 3, h);
+    }
+    ctx.fillStyle = '#20301a'; ctx.fillRect(x - 8, y - 7, 22, 7);
+    ctx.fillStyle = '#90a4ae'; ctx.fillRect(x - 7, y - 6, 20, 6);
+    if (window.GFX && GFX.text) GFX.text(ctx, on ? 'OK !' : 'CHECK', x + 3, y - H2 - 26, 1, 1, 'center');
   }
 
   function drawFlag() {
@@ -5857,8 +5864,8 @@
 
   // écran d'accueil : niveau + Sousou bien placé et visible
   parseLevel();
-  player.x = 4 * T;
-  player.y = (ROWS - 3) * T - 2;
+  player.x = startPos.x;
+  player.y = startPos.y;
   player.onGround = true;
   cameraX = 0;
   cameraY = Math.max(0, LEVEL_H - VH);
