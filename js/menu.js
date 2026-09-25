@@ -13,7 +13,7 @@
   const ctx = cv.getContext('2d');
   const MENU = window.MENU = { active: false };
   const LOGO_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÉ!*-'";
-  const HDC = { w: 132, h: 176, cx: 61, top: 36 };           // cellule sprite HD, centre du corps
+  const HDC = { w: 144, h: 192, cx: 66, top: 39 };           // cellule sprite HD (x3), centre du corps
   const FR = {
     idle: [[0, 0], [1, 0], [2, 0], [3, 0]], jump: [4, 1], fall: [5, 1],
     shoot0: [0, 2], shoot1: [1, 2], blink: [2, 2], run: [[4, 0], [5, 0], [0, 1], [1, 1], [2, 1], [3, 1]],
@@ -28,14 +28,17 @@
   // ---------------------------------------------------------------- taille
   function resize() {
     const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
-    const m = dpr >= 2.5 ? 2 : 1;           // pixel de rendu = 2 pixels écran sur dpr 3
-    bs = dpr / m;
-    // plafond de pixels de rendu (grandes tablettes) pour garder 60 i/s
+    // pixel de rendu = m pixels écran, m ENTIER (2 sur dpr 3) → pixels d'art carrés et réguliers ;
+    // plafond de pixels de rendu (grandes tablettes) pour garder 60 i/s, toujours en m entier
     const area = window.innerWidth * window.innerHeight;
-    if (area * bs * bs > 1.5e6) bs = Math.max(1, Math.sqrt(1.5e6 / area));
+    let m = dpr >= 2.5 ? 2 : 1;
+    while (area * (dpr / m) * (dpr / m) > 1.5e6 && dpr / (m + 1) >= 0.75) m++;
+    bs = dpr / m;
     const cw = Math.max(1, Math.round(window.innerWidth * bs));
     const ch = Math.max(1, Math.round(window.innerHeight * bs));
     if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+    // 1 px de rendu = m px écran exactement (pas d'étirement CSS fractionnaire)
+    cv.style.setProperty('width', cw / bs + 'px', 'important'); cv.style.setProperty('height', ch / bs + 'px', 'important');
     W = cw; H = ch;
     ctx.imageSmoothingEnabled = false;
     px = Math.max(1, Math.round(Math.min(W, H) / 300));
@@ -250,11 +253,11 @@
     const sp = img('sousouHD');
     if (!stageR || !sp) return;
     const tiles = img('tiles_' + th) || img('tiles_park');
-    // échelle entière : Sousou (140 px d'art) remplit ~80 % de la scène
-    // (demi-pas autorisés sous 2 : les pixels d'art HD restent plus petits qu'un pixel CSS)
-    const fit = (stageR.h * 0.94 - 20) / 146;
-    let s = fit >= 2 ? Math.floor(fit) : Math.max(1, Math.floor(fit * 2) / 2);
-    while (s > 1 && 70 * s > stageR.w * 0.95) s -= s > 2 ? 1 : 0.5;
+    // échelle ENTIÈRE uniquement : Sousou (153 px d'art) remplit ~80 % de la scène,
+    // chaque pixel d'art = s x s pixels de rendu → jamais déformé
+    const fit = (stageR.h * 0.94 - 20) / 160;
+    let s = Math.max(1, Math.floor(fit));
+    while (s > 1 && 76 * s > stageR.w * 0.95) s--;
     const cx = Math.round(stageR.x + stageR.w / 2);
     const platH = 22 * s;
     const groundY = Math.round(stageR.y + stageR.h - platH * 1.25);
@@ -299,7 +302,7 @@
     const x0 = Math.round(cx - HDC.cx * s);
     const y0 = Math.round(feet - HDC.h * s - Math.round(S.y) * s);
     ctx.drawImage(sp, fr[0] * HDC.w, fr[1] * HDC.h, HDC.w, HDC.h, x0, y0, HDC.w * s, HDC.h * s);
-    lastGeo = { mx: x0 + 128 * s, my: y0 + 102 * s, s };
+    lastGeo = { mx: x0 + 138 * s, my: y0 + 110 * s, s };
     // tirs de pistaches
     const it = img('items');
     for (let i = shots.length - 1; i >= 0; i--) {
