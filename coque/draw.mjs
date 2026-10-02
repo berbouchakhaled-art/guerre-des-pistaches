@@ -67,6 +67,19 @@ function drawDrip(ctx, x, y, len) {
   ctx.fill()
 }
 
+function drawStrand(ctx, x, y, len) {
+  ctx.beginPath()
+  ctx.moveTo(x, y)
+  ctx.lineTo(x, y + len)
+  ctx.strokeStyle = '#e7c98a'
+  ctx.lineWidth = 2
+  ctx.stroke()
+  ctx.fillStyle = '#f3ddb0'
+  ctx.beginPath()
+  ctx.ellipse(x, y + len, 2.5, 4, 0, 0, Math.PI * 2)
+  ctx.fill()
+}
+
 function drawKernel(ctx, plat) {
   ctx.fillStyle = KERNEL
   ctx.fillRect(plat.x, plat.y, plat.w, plat.h)
@@ -164,7 +177,7 @@ export function drawWorld(ctx, cam) {
 
   for (const plat of PLATFORMS.slice(1)) drawKernel(ctx, plat)
 
-  for (const drop of CEILING) drawDrip(ctx, drop[0], drop[1], drop[2])
+  for (const drop of CEILING) drawStrand(ctx, drop[0], drop[1], drop[2])
   for (const drip of DRIPS) drawDrip(ctx, drip.x, drip.y, drip.len)
 
   ctx.restore()
@@ -213,6 +226,18 @@ function drawForearm(ctx, ax, ay, w, h) {
 function drawSideArms(ctx, x, y) {
   drawForearm(ctx, x - 26, y - 56, 9, 16)
   drawForearm(ctx, x + 17, y - 56, 9, 16)
+}
+
+function drawAimArm(ctx, x, y, f) {
+  const ax = f > 0 ? 14 : -28
+  ctx.fillStyle = PALETTE.skin
+  ctx.fillRect(x + ax, y - 46, 14, 7)
+  ink(ctx)
+  ctx.strokeRect(x + ax, y - 46, 14, 7)
+  ctx.beginPath()
+  ctx.arc(x + f * 28, y - 42, 4, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.stroke()
 }
 
 function drawWhipArm(ctx, x, y, f) {
@@ -357,7 +382,7 @@ function drawStand(ctx, x, y, f, whipping) {
 }
 
 function drawRun(ctx, x, y, f, whipping) {
-  const stride = Math.sin(x * 0.5)
+  const stride = Math.sin(x * 0.12)
   const bob = Math.abs(stride) * 3
   const py = y - bob
   const front = f * (8 + stride * 8)
@@ -530,6 +555,7 @@ export function drawSousou(ctx, state) {
   else if (state.vx !== 0) drawRun(ctx, x, y, f, whipping)
   else if (!state.onGround) drawJump(ctx, x, y, f, whipping)
   else drawStand(ctx, x, y, f, whipping)
+  if (state.nuts.length > 0 && !state.hanging) drawAimArm(ctx, x, y, f)
   if (whipping) drawWhip(ctx, state)
   for (const nut of state.nuts) drawNut(ctx, nut.x, nut.y)
 }

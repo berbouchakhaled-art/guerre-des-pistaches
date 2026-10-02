@@ -42,8 +42,8 @@ test('gauche et droite ensemble ne bougent pas', () => {
 test('espace donne une vitesse vers le haut', () => {
   const s = createState()
   step(s, { left: false, right: false, jump: true, jumpPressed: true, shoot: false, whip: false })
-  assert.equal(s.vy, -12)
-  assert.equal(s.y, 608)
+  assert.equal(s.vy, -22)
+  assert.equal(s.y, 598)
   assert.equal(s.onGround, false)
 })
 
@@ -61,6 +61,26 @@ test('la gravité ramène au sol', () => {
   assert.equal(s.y, WORLD.ground)
   assert.equal(s.vy, 0)
   assert.equal(s.onGround, true)
+})
+
+test('un saut du sol pose sur l’amande puis attrape le caramel', () => {
+  const idle = { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false }
+  const s = createState()
+  step(s, { left: false, right: false, jump: true, jumpPressed: true, shoot: false, whip: false })
+  for (let i = 0; i < 90 && !(s.onGround && s.y === 490); i++) step(s, idle)
+  assert.equal(s.x, 300)
+  assert.equal(s.y, 490)
+  assert.equal(s.onGround, true)
+  for (let i = 0; i < 30 && s.x < 400; i++) {
+    step(s, { left: false, right: true, jump: false, jumpPressed: false, shoot: false, whip: false })
+  }
+  assert.equal(s.x, 400)
+  step(s, { left: false, right: false, jump: true, jumpPressed: true, shoot: false, whip: false })
+  for (let i = 0; i < 20 && !s.hanging; i++) {
+    step(s, { left: false, right: false, jump: true, jumpPressed: false, shoot: false, whip: false })
+  }
+  assert.equal(s.hanging, true)
+  assert.equal(s.hangId, 0)
 })
 
 test('on ne saute pas en l’air', () => {

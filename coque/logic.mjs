@@ -21,7 +21,7 @@ export function createState() {
   }
 }
 
-const JUMP = -12
+const JUMP = -22
 const GRAVITY = 1
 const MAX_FALL = 14
 
@@ -122,6 +122,7 @@ export function step(state, input) {
       state.vx = 0
     }
     if (!state.hanging) state.x += state.vx
+    state.x = Math.max(20, Math.min(WORLD.width - 20, state.x))
     bodies(state, input)
   }
   if (input.shoot && state.nuts.length === 0) {
