@@ -55,18 +55,65 @@ function bodies(state, input) {
   if (state.y >= WORLD.ground) land(state, WORLD.ground)
 }
 
-export function step(state, input) {
-  const SPEED = 4
-  if (input.left && !input.right) {
-    state.face = -1
-    state.vx = -SPEED
-  } else if (input.right && !input.left) {
-    state.face = 1
-    state.vx = SPEED
-  } else {
-    state.vx = 0
+function hand(state) {
+  return { x: state.x + state.face * 16, y: state.y - 48 }
+}
+
+function nearDrip(state) {
+  const h = hand(state)
+  for (const drip of DRIPS) {
+    const top = drip.y
+    const bot = drip.y + drip.len
+    const cy = Math.max(top, Math.min(bot, h.y))
+    const dx = h.x - drip.x
+    const dy = h.y - cy
+    if (dx * dx + dy * dy <= 36 * 36) return drip
   }
-  if (!state.hanging) state.x += state.vx
-  bodies(state, input)
+  return null
+}
+
+function hang(state, input) {
+  if (state.hanging && !input.jump) {
+    state.hanging = false
+    state.vx = Math.sin(state.angle) * 6
+    state.vy = -3
+    state.hangId = null
+    return
+  }
+  if (!state.hanging && !state.onGround && input.jump) {
+    const drip = nearDrip(state)
+    if (drip) {
+      state.hanging = true
+      state.hangId = drip.id
+      state.angle = 0
+      state.vy = 0
+      state.onGround = false
+    }
+  }
+  if (!state.hanging) return
+  if (input.right) state.angle = Math.min(1, state.angle + 0.05)
+  if (input.left) state.angle = Math.max(-1, state.angle - 0.05)
+  const drip = DRIPS.find((d) => d.id === state.hangId)
+  state.x = drip.x + Math.sin(state.angle) * 80
+  state.y = drip.y + 48 + Math.cos(state.angle) * 80
+}
+
+export function step(state, input) {
+  const wasHanging = state.hanging
+  hang(state, input)
+  if (!wasHanging && !state.hanging) {
+    const SPEED = 4
+    if (input.left && !input.right) {
+      state.face = -1
+      state.vx = -SPEED
+    } else if (input.right && !input.left) {
+      state.face = 1
+      state.vx = SPEED
+    } else {
+      state.vx = 0
+    }
+    if (!state.hanging) state.x += state.vx
+    bodies(state, input)
+  }
   return state
 }

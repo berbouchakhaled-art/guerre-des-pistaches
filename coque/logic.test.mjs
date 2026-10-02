@@ -95,3 +95,33 @@ test('à côté de la plateforme on tombe jusqu’au sol', () => {
   }
   assert.equal(s.y, WORLD.ground)
 })
+
+test('en l’air, espace tenu près d’un fil accroche', () => {
+  const s = createState()
+  s.x = 420
+  s.y = 200
+  s.onGround = false
+  s.vy = 1
+  s.face = 1
+  step(s, { left: false, right: false, jump: true, jumpPressed: false, shoot: false, whip: false })
+  assert.equal(s.hanging, true)
+  assert.equal(s.hangId, 0)
+  assert.equal(s.x, 420)
+})
+
+test('la croix balance puis relâcher lâche le fil', () => {
+  const s = createState()
+  s.x = 420
+  s.y = 200
+  s.onGround = false
+  s.face = 1
+  const hold = { left: false, right: true, jump: true, jumpPressed: false, shoot: false, whip: false }
+  step(s, hold)
+  step(s, hold)
+  assert.ok(s.angle > 0)
+  assert.ok(s.x > 420)
+  step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  assert.equal(s.hanging, false)
+  assert.ok(s.vx > 0)
+  assert.equal(s.vy, -3)
+})
