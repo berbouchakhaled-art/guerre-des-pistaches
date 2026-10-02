@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Homebrew NES original : La guerre des pistaches, avec Sousou.
+"""Homebrew NES original : Sousou, Le rayon.
 
-NROM-128 (16 Ko PRG, 8 Ko CHR, mapper 0). Trois ecrans : Parc, Cosmos,
-Vaisseau. Meme manette que Mario sur le game stick :
-croix pour marcher (acceleration, freinage, derapage),
-A saute (garder A = grand saut, tapoter = petit saut),
-B tenu fait courir, B appuye tire une pistache,
-Start lance ou recommence.
-Le drapeau au sol finit le niveau. Les pistaches sont facultatives.
+NROM-128 (16 Ko PRG, 8 Ko CHR, mapper 0). Un seul ecran, le rayon.
+Croix pour marcher (acceleration, freinage). A saute, et garde en l'air
+sous une etiquette jaune pour s'y accrocher. B tenu court, B appuye tire
+une pistache. Select donne un coup de fouet. Start lance.
+Pas d'ennemis, pas de vies, pas de score. Les boites ne bougent pas.
 """
 
 import os
@@ -25,6 +23,7 @@ FAV = os.path.join(STICK, "cubegm", "favorites.lst")
 
 NMI_C, JOY, PREV = 0x10, 0x11, 0x12
 STATE, LEVEL, LIVES = 0x13, 0x14, 0x15
+WHIP, HANG, SWING = 0x16, 0x17, 0x19
 FRAME = 0x18
 PX, PY, VY = 0x20, 0x21, 0x22
 RISING, GROUND, FACE = 0x23, 0x24, 0x25
@@ -140,23 +139,36 @@ def build_chr():
     def put(buf, i, tile):
         buf[i * 16:(i + 1) * 16] = tile
 
-    put(bg, 1, grass())
+    wood = {"1": 1, "2": 2, "#": 3}
+    put(bg, 1, pict([
+        "11111111", "11111111", "########", "11111111",
+        "11111111", "22222222", "11111111", "11111111",
+    ], wood))
     put(bg, 2, pict([
-        "........", "....#...", "........", "..#.....",
-        "........", "......#.", "........", "...#....",
-    ], {"#": 3}))
+        "11111111", "11211111", "11111111", "11112111",
+        "11111111", "11111121", "11111111", "12111111",
+    ], wood))
+    put(bg, 3, pict([
+        "########", "11111111", "11111111", "22222222",
+        "11111111", "11111111", "11111111", "11111111",
+    ], wood))
+    box = {"#": 2, "1": 1, "E": 3}
     put(bg, 4, pict([
-        "###.....", "####....", "#####...", "######..",
-        "##......", "##......", "##......", "##......",
-    ], {"#": 3}))
+        "########", "#1111111", "#1111111", "#1111111",
+        "#111EE11", "#111EE11", "#1111111", "#1111111",
+    ], box))
     put(bg, 5, pict([
-        "##......", "##......", "##......", "##......",
-        "##......", "##......", "###.....", ".#......",
-    ], {"#": 3}))
+        "########", "1111111#", "1111111#", "1111111#",
+        "11EE111#", "11EE111#", "1111111#", "1111111#",
+    ], box))
     put(bg, 6, pict([
-        "########", "#......#", "#..##..#", "#..##..#",
-        "#......#", "#......#", "#......#", "########",
-    ], {"#": 3}))
+        "#1111111", "#1111111", "#1111111", "#1111111",
+        "#1111111", "#1111111", "#1111111", "########",
+    ], box))
+    put(bg, 7, pict([
+        "1111111#", "1111111#", "1111111#", "1111111#",
+        "1111111#", "1111111#", "1111111#", "########",
+    ], box))
     for ch, rows in FONT.items():
         padded = [r.ljust(8, ".")[:8] for r in rows]
         while len(padded) < 8:
@@ -166,33 +178,33 @@ def build_chr():
         else:
             put(bg, 64 + ord(ch) - 48, glyph(padded))
     put(sp, 0, pict([
-        "..HHHH..", ".HHHHHH.", "HSSEESSH", "HSSSSSSH",
-        ".SSSSSS.", ".SSMMSS.", "..S..S..", "........",
-    ], {"H": 2, "S": 1, "E": 3, "M": 3}))
+        ".HHH....", "HHHHH...", "HSSSSSH.", "HSSEESSH",
+        ".SSMMS..", "........", "........", "........",
+    ], {"H": 1, "S": 2, "E": 3, "M": 3}))
     put(sp, 1, pict([
-        ".CC..CC.", "CCCCCCCC", ".CCCCCC.", ".CC..CC.",
-        ".LL..LL.", ".LL..LL.", "........", "........",
-    ], {"C": 3, "L": 1}))
+        ".WWWW...", "WWWWWWW.", ".WWWWW..", ".BBBB...",
+        ".BBBB...", ".RR.RR..", ".RR.RR..", "........",
+    ], {"W": 1, "B": 2, "R": 3}))
     put(sp, 2, pict([
-        ".CC..CC.", "CCCCCCCC", ".CCCCCC.", "..CC..CC",
-        "..LL..LL", ".LL..LL.", "........", "........",
-    ], {"C": 3, "L": 1}))
-    put(sp, 4, pict([
-        "..OOOO..", ".OBBBBO.", "OBBBBBBO", "OBBDBBBO",
-        "OBBBBBBO", ".OBBBBO.", "..OOOO..", "........",
-    ], {"O": 3, "B": 1, "D": 2}))
+        ".WWWW...", "WWWWWWW.", ".WWWWW..", ".BBBB...",
+        "BB..BB..", ".RR..RR.", "..R..R..", "........",
+    ], {"W": 1, "B": 2, "R": 3}))
     put(sp, 5, pict([
-        "...GG...", "..GGGG..", ".GGYYGG.", ".GYYYGG.",
-        "..GGGG..", "...GG...", "........", "........",
-    ], {"G": 2, "Y": 1}))
-    put(sp, 6, pict([
-        "........", "...CC...", "...CC...", "........",
-        "........", "........", "........", "........",
-    ], {"C": 3}))
-    put(sp, 7, pict([
-        ".HH.HH..", "HHHHHHHH", "HWHHHHHH", ".HHHHHH.",
-        "..HHHH..", "...HH...", "........", "........",
-    ], {"H": 1, "W": 2}))
+        "..####..", ".#1111#.", "#11YY11#", ".#1111#.",
+        "..####..", "........", "........", "........",
+    ], {"#": 3, "1": 1, "Y": 2}))
+    put(sp, 8, pict([
+        "########", "#111111#", "#122221#", "#111111#",
+        "########", "...##...", "........", "........",
+    ], {"#": 3, "1": 1, "2": 2}))
+    put(sp, 9, pict([
+        "........", "........", "......##", "....##..",
+        "..##....", "##......", "........", "........",
+    ], {"#": 3}))
+    put(sp, 10, pict([
+        "..####..", ".######.", "##1111##", ".######.",
+        "..####..", "........", "........", "........",
+    ], {"#": 3, "1": 1}))
     return bytes(bg + sp)
 
 
@@ -232,20 +244,46 @@ def flag_tiles(buf, x):
     buf[24 * 32 + col] = 5
 
 
-def make_nt(title, plats, flag_x, stars=False, windows=False):
+def fill_tiles(buf, col, row, w, h, tile):
+    for y in range(row, row + h):
+        for x in range(col, col + w):
+            buf[y * 32 + x] = tile
+
+
+def set_block(buf, tx, ty, pal):
+    ax, ay = tx // 4, ty // 4
+    quad = ((ty // 2) & 1) * 2 + ((tx // 2) & 1)
+    shift = quad * 2
+    i = 0x3C0 + ay * 8 + ax
+    buf[i] = (buf[i] & ~(3 << shift)) | ((pal & 3) << shift)
+
+
+def put_box(buf, col, row, pal):
+    buf[row * 32 + col] = 4
+    buf[row * 32 + col + 1] = 5
+    buf[(row + 1) * 32 + col] = 6
+    buf[(row + 1) * 32 + col + 1] = 7
+    set_block(buf, col, row, pal)
+
+
+def make_aisle():
     buf = empty_nt()
-    text(buf, max(0, 16 - len(title) // 2), 3, title)
-    if stars:
-        for col, row in ((4, 6), (10, 8), (18, 5), (26, 9), (7, 12), (22, 14)):
-            buf[row * 32 + col] = 2
-    if windows:
-        for col, row in ((6, 8), (12, 10), (22, 7), (27, 12)):
-            buf[row * 32 + col] = 6
-    for x, y, w in plats:
-        if w and y < 200:
-            plat_tiles(buf, x, y, w)
+    text(buf, 13, 2, "RAYON")
+    # Trois comptoirs : dessus, face avant jusqu'au sol, boites posees dessus.
+    fill_tiles(buf, 2, 20, 9, 1, 3)
+    fill_tiles(buf, 2, 21, 9, 4, 2)
+    fill_tiles(buf, 13, 16, 10, 1, 3)
+    fill_tiles(buf, 13, 17, 10, 8, 2)
+    fill_tiles(buf, 23, 20, 8, 1, 3)
+    fill_tiles(buf, 23, 21, 8, 4, 2)
+    put_box(buf, 2, 18, 1)
+    put_box(buf, 6, 18, 1)
+    put_box(buf, 6, 16, 1)
+    put_box(buf, 14, 14, 1)
+    put_box(buf, 18, 14, 3)
+    put_box(buf, 24, 18, 1)
+    put_box(buf, 28, 18, 3)
     floor(buf)
-    flag_tiles(buf, flag_x)
     return bytes(buf)
 
 
@@ -257,41 +295,41 @@ def screen_text(lines):
     return bytes(buf)
 
 
-PARK_PLATS = [(40, 168, 64), (150, 136, 56), (0, 200, 255), (0, 0, 0)]
-COSMO_PLATS = [(24, 168, 48), (104, 136, 48), (184, 112, 48), (0, 200, 255)]
-SHIP_PLATS = [(32, 160, 80), (168, 128, 64), (0, 200, 255), (0, 0, 0)]
+# Dessus des comptoirs, puis le sol. y = surface, le sprite se pose a y-16.
+RAYON_PLATS = [(16, 160, 72), (104, 128, 80), (184, 160, 64), (0, 200, 255)]
+# Etiquettes jaunes : x, y du sprite. On s'y accroche en gardant A en l'air.
+RAYON_TAGS = [(48, 176), (140, 144), (208, 176)]
 
-NTS = [
-    make_nt("PARC", PARK_PLATS, 216),
-    make_nt("COSMOS", COSMO_PLATS, 216, stars=True),
-    make_nt("VAISSEAU", SHIP_PLATS, 216, windows=True),
-]
+AISLE_NT = make_aisle()
+NTS = [AISLE_NT, AISLE_NT, AISLE_NT]
 TITLE_NT = screen_text([
-    (11, 6, "GUERRE DES"),
-    (11, 8, "PISTACHES"),
-    (13, 11, "SOUSOU"),
-    (9, 15, "A SAUTE"),
-    (6, 17, "B COURT ET TIRE"),
-    (13, 20, "START"),
-    (12, 22, "3 MONDES"),
+    (12, 4, "LE RAYON"),
+    (13, 7, "SOUSOU"),
+    (12, 11, "A SAUTE"),
+    (11, 13, "ACCROCHE"),
+    (8, 16, "B COURT ET TIRE"),
+    (10, 18, "SELECT FOUET"),
+    (13, 22, "START"),
 ])
 WIN_NT = screen_text([(13, 8, "BRAVO"), (13, 11, "SOUSOU"), (13, 16, "START")])
 OVER_NT = screen_text([(13, 10, "PERDU"), (13, 16, "START")])
 
 
-def pal(back, c1, c2, c3, shirt):
+def aisle_pal():
+    bg = 0x30
     return bytes([
-        back, c1, c2, c3, back, c1, c2, c3, back, c1, c2, c3, back, c1, c2, c3,
-        back, 0x37, 0x28, shirt, back, 0x17, 0x07, 0x0F,
-        back, 0x38, 0x2A, 0x30, back, 0x16, 0x30, 0x0F,
+        bg, 0x17, 0x07, 0x0F,
+        bg, 0x2A, 0x0A, 0x30,
+        bg, 0x28, 0x0F, 0x30,
+        bg, 0x23, 0x13, 0x30,
+        bg, 0x07, 0x37, 0x0F,
+        bg, 0x30, 0x12, 0x16,
+        bg, 0x19, 0x28, 0x0F,
+        bg, 0x28, 0x30, 0x0F,
     ])
 
 
-PALS = [
-    pal(0x09, 0x2A, 0x1A, 0x30, 0x2A),
-    pal(0x01, 0x22, 0x12, 0x30, 0x22),
-    pal(0x0F, 0x10, 0x00, 0x30, 0x10),
-]
+PALS = [aisle_pal(), aisle_pal(), aisle_pal()]
 
 
 def ent_bytes(enemies, nuts, flag, plats):
@@ -313,23 +351,12 @@ def ent_bytes(enemies, nuts, flag, plats):
     return bytes(raw)
 
 
-ENTS = [
-    ent_bytes(
-        [(168, 192, 1, 1, 0, 1), (56, 160, 255, 1, 0, 1), (0, 0, 1, 0, 0, 1)],
-        [(48, 160, 1), (158, 128, 1), (200, 192, 1), (0, 0, 0)],
-        208, PARK_PLATS,
-    ),
-    ent_bytes(
-        [(40, 96, 1, 1, 1, 1), (150, 192, 255, 1, 0, 1), (112, 128, 1, 1, 0, 1)],
-        [(32, 160, 1), (112, 128, 1), (192, 104, 1), (0, 0, 0)],
-        208, COSMO_PLATS,
-    ),
-    ent_bytes(
-        [(176, 192, 255, 1, 2, 3), (48, 152, 1, 1, 0, 1), (0, 0, 1, 0, 0, 1)],
-        [(40, 152, 1), (176, 120, 1), (210, 192, 1), (0, 0, 0)],
-        208, SHIP_PLATS,
-    ),
-]
+def rayon_ents():
+    tags = [(x, y, 0, 0, 0, 0) for x, y in RAYON_TAGS]
+    return ent_bytes(tags, [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)], 0, RAYON_PLATS)
+
+
+ENTS = [rayon_ents(), rayon_ents(), rayon_ents()]
 
 
 class Asm:
@@ -498,6 +525,7 @@ def program():
     edge("start_edge", 0x10)
     edge("a_edge", 0x80)
     edge("b_edge", 0x40)
+    edge("select_edge", 0x20)
 
     a.label("beep")
     a.lda_i(0x0E); a.sta_a(0x4000)
@@ -556,6 +584,7 @@ def program():
     a.lda_i(184); a.sta_z(PY)
     a.lda_i(0)
     a.sta_z(VY); a.sta_z(RISING); a.sta_z(BON); a.sta_z(SCD); a.sta_z(ANIM); a.sta_z(VX)
+    a.sta_z(HANG); a.sta_z(WHIP); a.sta_z(SWING)
     a.lda_i(1); a.sta_z(GROUND); a.sta_z(FACE)
     a.lda_i(90); a.sta_z(INV)
     a.ldx_z(LEVEL)
@@ -602,6 +631,8 @@ def program():
 
     a.label("move_player")
     a.inc_z(ANIM)
+    a.jsr("hang_control"); a.bcc("do_move"); a.jmp("player_actions")
+    a.label("do_move")
     # Marche 2 px, course 4 px si B est tenu (comme le bouton course de Mario).
     a.lda_i(2); a.sta_z(TMP)
     a.lda_z(JOY); a.and_i(0x40); a.beq("spd_walk")
@@ -673,6 +704,8 @@ def program():
     a.lda_i(0); a.sta_z(GROUND)
     a.jsr("beep")
     a.label("no_jump")
+    a.jsr("try_grab")
+    a.label("player_actions")
     a.lda_z(BON); a.bne("no_shot")
     a.lda_z(SCD); a.bne("no_shot")
     a.jsr("b_edge"); a.bcc("no_shot")
@@ -686,6 +719,7 @@ def program():
     a.lda_i(10); a.sta_z(SCD)
     a.jsr("blip")
     a.label("no_shot")
+    a.jsr("whip_tick")
     a.lda_z(SCD); a.beq("no_scd"); a.dec_z(SCD)
     a.label("no_scd")
     a.lda_z(INV); a.beq("no_inv"); a.dec_z(INV)
@@ -824,6 +858,61 @@ def program():
     a.label("nut_rts")
     a.rts()
 
+    a.label("hang_control")
+    a.lda_z(HANG); a.beq("hang_no")
+    a.lda_z(JOY); a.and_i(0x01); a.beq("hang_try_left")
+    a.lda_z(SWING); a.cmp_i(20); a.bcs("hang_placed")
+    a.inc_z(SWING); a.jmp("hang_placed")
+    a.label("hang_try_left")
+    a.lda_z(JOY); a.and_i(0x02); a.beq("hang_placed")
+    a.lda_z(SWING); a.beq("hang_placed")
+    a.dec_z(SWING)
+    a.label("hang_placed")
+    a.lda_z(HANG); a.sec(); a.sbc_i(1); a.sta_z(IDX)
+    a.jsr("idx_times6")
+    a.lda_ay(ENT); a.clc(); a.adc_z(SWING); a.sec(); a.sbc_i(16); a.sta_z(PX)
+    a.lda_ay(ENT + 1); a.sta_z(PY)
+    a.lda_i(0); a.sta_z(GROUND); a.sta_z(RISING); a.sta_z(VY)
+    a.lda_z(JOY); a.and_i(0x80); a.bne("hang_keep")
+    a.lda_i(0); a.sta_z(HANG)
+    a.lda_i(1); a.sta_z(RISING)
+    a.lda_i(4); a.sta_z(VY)
+    a.label("hang_keep")
+    a.sec(); a.rts()
+    a.label("hang_no")
+    a.clc(); a.rts()
+
+    a.label("try_grab")
+    a.lda_z(HANG); a.bne("grab_out")
+    a.lda_z(GROUND); a.bne("grab_out")
+    a.lda_z(JOY); a.and_i(0x80); a.beq("grab_out")
+    a.lda_i(0); a.sta_z(IDX)
+    a.label("grab_lp")
+    a.jsr("idx_times6")
+    a.lda_z(PX); a.clc(); a.adc_i(10); a.cmp_ay(ENT); a.bcc("grab_nx")
+    a.lda_ay(ENT); a.clc(); a.adc_i(10); a.cmp_z(PX); a.bcc("grab_nx")
+    a.lda_z(PY); a.clc(); a.adc_i(8); a.cmp_ay(ENT + 1); a.bcc("grab_nx")
+    a.lda_ay(ENT + 1); a.clc(); a.adc_i(8); a.cmp_z(PY); a.bcc("grab_nx")
+    a.lda_z(IDX); a.clc(); a.adc_i(1); a.sta_z(HANG)
+    a.lda_i(10); a.sta_z(SWING)
+    a.lda_i(0); a.sta_z(GROUND); a.sta_z(RISING); a.sta_z(VY)
+    a.jsr("beep"); a.rts()
+    a.label("grab_nx")
+    a.inc_z(IDX); a.lda_z(IDX); a.cmp_i(3); a.bcs("grab_out")
+    a.jmp("grab_lp")
+    a.label("grab_out")
+    a.rts()
+
+    a.label("whip_tick")
+    a.lda_z(WHIP); a.beq("whip_arm")
+    a.dec_z(WHIP); a.rts()
+    a.label("whip_arm")
+    a.jsr("select_edge"); a.bcc("whip_out")
+    a.lda_i(18); a.sta_z(WHIP)
+    a.jsr("blip")
+    a.label("whip_out")
+    a.rts()
+
     a.label("check_flag")
     a.lda_z(STATE); a.cmp_i(1); a.bne("flag_rts")
     a.lda_z(GROUND); a.beq("flag_rts")
@@ -861,7 +950,7 @@ def program():
     a.lda_i(1)
     a.label("mascot_set")
     a.sta_z(TMP2)
-    a.lda_i(0); a.sta_z(TMP3)
+    a.lda_i(1); a.sta_z(TMP3)
     a.lda_i(120); a.jsr("put_spr")
     a.rts()
 
@@ -883,6 +972,12 @@ def program():
     a.lda_i(1)
     a.label("body_set")
     a.sta_z(TMP2)
+    a.lda_z(FACE); a.bne("body_face_r")
+    a.lda_i(0x41); a.jmp("body_attr")
+    a.label("body_face_r")
+    a.lda_i(0x01)
+    a.label("body_attr")
+    a.sta_z(TMP3)
     a.lda_z(PX); a.jsr("put_spr")
     a.label("skip_pl")
     a.rts()
@@ -925,10 +1020,49 @@ def program():
     a.label("oam_bullet")
     a.lda_z(BON); a.beq("ob_rts")
     a.lda_z(BY); a.sta_z(TMP)
-    a.lda_i(6); a.sta_z(TMP2)
-    a.lda_i(0); a.sta_z(TMP3)
+    a.lda_i(5); a.sta_z(TMP2)
+    a.lda_i(2); a.sta_z(TMP3)
     a.lda_z(BX); a.jsr("put_spr")
     a.label("ob_rts")
+    a.rts()
+
+    a.label("oam_tags")
+    a.lda_i(0); a.sta_z(IDX)
+    a.label("ot_lp")
+    a.jsr("idx_times6")
+    a.lda_ay(ENT); a.beq("ot_nx")
+    a.lda_ay(ENT + 1); a.sta_z(TMP)
+    a.lda_i(8); a.sta_z(TMP2)
+    a.lda_i(3); a.sta_z(TMP3)
+    a.lda_ay(ENT); a.jsr("put_spr")
+    a.label("ot_nx")
+    a.inc_z(IDX); a.lda_z(IDX); a.cmp_i(3); a.bcs("ot_rts")
+    a.jmp("ot_lp")
+    a.label("ot_rts")
+    a.rts()
+
+    a.label("oam_whip")
+    a.lda_z(WHIP); a.beq("ow_rts")
+    a.lda_z(FACE); a.beq("ow_left")
+    a.lda_z(PY); a.clc(); a.adc_i(4); a.sta_z(TMP)
+    a.lda_i(9); a.sta_z(TMP2)
+    a.lda_i(2); a.sta_z(TMP3)
+    a.lda_z(PX); a.clc(); a.adc_i(8); a.jsr("put_spr")
+    a.lda_z(PY); a.clc(); a.adc_i(4); a.sta_z(TMP)
+    a.lda_i(10); a.sta_z(TMP2)
+    a.lda_i(2); a.sta_z(TMP3)
+    a.lda_z(PX); a.clc(); a.adc_i(16); a.jsr("put_spr")
+    a.rts()
+    a.label("ow_left")
+    a.lda_z(PY); a.clc(); a.adc_i(4); a.sta_z(TMP)
+    a.lda_i(9); a.sta_z(TMP2)
+    a.lda_i(0x42); a.sta_z(TMP3)
+    a.lda_z(PX); a.sec(); a.sbc_i(8); a.jsr("put_spr")
+    a.lda_z(PY); a.clc(); a.adc_i(4); a.sta_z(TMP)
+    a.lda_i(10); a.sta_z(TMP2)
+    a.lda_i(0x42); a.sta_z(TMP3)
+    a.lda_z(PX); a.sec(); a.sbc_i(16); a.jsr("put_spr")
+    a.label("ow_rts")
     a.rts()
 
     a.label("oam_hearts")
@@ -951,8 +1085,8 @@ def program():
     a.lda_z(STATE); a.cmp_i(1); a.beq("oam_play")
     a.jsr("oam_mascot"); a.jmp("oam_hide")
     a.label("oam_play")
-    a.jsr("oam_player"); a.jsr("oam_enemies"); a.jsr("oam_nuts")
-    a.jsr("oam_bullet"); a.jsr("oam_hearts"); a.jmp("oam_hide")
+    a.jsr("oam_player"); a.jsr("oam_tags")
+    a.jsr("oam_bullet"); a.jsr("oam_whip"); a.jmp("oam_hide")
 
     a.label("main")
     a.jsr("wait_nmi")
@@ -962,8 +1096,7 @@ def program():
     a.cmp_i(1); a.beq("playing")
     a.jmp("idle")
     a.label("playing")
-    a.jsr("move_player"); a.jsr("move_bullet"); a.jsr("move_enemies")
-    a.jsr("check_hits"); a.jsr("check_nuts"); a.jsr("check_flag")
+    a.jsr("move_player"); a.jsr("move_bullet")
     a.jsr("build_oam"); a.jmp("frame_end")
     a.label("idle")
     a.jsr("start_edge"); a.bcc("idle_draw")
@@ -1294,6 +1427,7 @@ def snap(m):
     return dict(pc=m.pc, state=m.ram[STATE], level=m.ram[LEVEL], lives=m.ram[LIVES],
                 px=m.ram[PX], py=m.ram[PY], vx=m.ram[VX], vy=m.ram[VY], rising=m.ram[RISING],
                 ground=m.ram[GROUND], bon=m.ram[BON], bx=m.ram[BX], bd=m.ram[BD],
+                hang=m.ram[HANG], whip=m.ram[WHIP], swing=m.ram[SWING],
                 visit=m.visit, steps=m.steps)
 
 
@@ -1399,48 +1533,97 @@ def smoke(prg, labels):
             m.ram[RISING] = 0
             m.ram[ENT:ENT + 6] = bytes((168, 192, 1, 1, 0, 1))
         if m.visit == 6:
-            need(m, m.ram[STATE] == 3 and m.ram[LIVES] == 0, "game over")
+            need(m, m.ram[STATE] == 1 and m.ram[LIVES] == 1, "raisins inertes")
             m.visit = 40
 
     run_case(prg, main, death)
-    print("contact: perte de la derniere vie OK")
+    print("contact: les raisins ne font rien OK")
 
-    def win(m):
+    def hang(m):
         if m.visit == 3:
             m.buttons = 0x10
-        else:
-            m.buttons = 0
-        if m.visit == 5:
-            m.ram[LEVEL] = 2
-            m.ram[PX] = 230
+        elif m.visit == 5:
+            m.ram[PX] = 48
             m.ram[PY] = 184
-            m.ram[GROUND] = 1
-            m.ram[RISING] = 0
+            m.ram[VX] = 0
             m.ram[VY] = 0
-            m.ram[FLAG] = 200
-            m.ram[STATE] = 1
-        if m.visit == 6:
-            need(m, m.ram[STATE] == 4 and m.ram[LEVEL] == 3, "victoire")
+            m.ram[RISING] = 0
+            m.ram[GROUND] = 1
+            m.ram[HANG] = 0
+            m.buttons = 0x80
+        elif m.visit == 6:
+            m.buttons = 0x80
+        elif m.visit == 7:
+            need(m, m.ram[HANG] == 1 and m.ram[PY] == 176 and m.ram[GROUND] == 0, "etiquette")
+            m.buttons = 0
+        elif m.visit == 8:
+            need(m, m.ram[HANG] == 0 and m.ram[RISING] == 1 and m.ram[VY] == 4, "lacher")
             m.visit = 40
-
-    run_case(prg, main, win)
-    print("drapeau du 3e monde: victoire OK")
-
-    def nuts(m):
-        if m.visit == 3:
-            m.buttons = 0x10
         else:
             m.buttons = 0
-        if m.visit == 5:
-            m.ram[NUT] = m.ram[PX]
-            m.ram[NUT + 1] = m.ram[PY]
-            m.ram[NUT + 2] = 1
-        if m.visit == 6:
-            need(m, m.ram[NUT + 2] == 0 and m.ram[STATE] == 1, "pistache")
-            m.visit = 40
 
-    run_case(prg, main, nuts)
-    print("pistache ramassee OK")
+    run_case(prg, main, hang)
+    print("etiquette: A sous le carton accroche, lacher A decroche OK")
+
+    def whip(m):
+        if m.visit == 3:
+            m.buttons = 0x10
+        elif m.visit == 5:
+            m.buttons = 0x20
+        elif m.visit == 6:
+            need(m, m.ram[WHIP] == 18, "fouet")
+            m.visit = 40
+        else:
+            m.buttons = 0
+
+    run_case(prg, main, whip)
+    print("fouet: Select arme le coup OK")
+
+    def land(m):
+        if m.visit == 3:
+            m.buttons = 0x10
+        elif m.visit == 5:
+            m.ram[PX] = 40
+            m.ram[PY] = 130
+            m.ram[VX] = 0
+            m.ram[VY] = 0
+            m.ram[RISING] = 0
+            m.ram[GROUND] = 0
+            m.ram[HANG] = 0
+            m.buttons = 0
+        elif m.visit == 20:
+            need(m, m.ram[GROUND] == 1 and m.ram[PY] == 144 and m.ram[HANG] == 0, "comptoir gauche")
+            m.visit = 40
+        else:
+            m.buttons = 0
+
+    run_case(prg, main, land)
+    print("chute: atterrit sur le comptoir gauche OK")
+
+    def mid(m):
+        if m.visit == 3:
+            m.buttons = 0x10
+        elif m.visit == 5:
+            m.ram[PX] = 78
+            m.ram[PY] = 144
+            m.ram[VX] = 0
+            m.ram[VY] = 0
+            m.ram[RISING] = 0
+            m.ram[GROUND] = 1
+            m.ram[FACE] = 1
+            m.ram[HANG] = 0
+            m.buttons = 0x81
+        elif m.visit > 5:
+            m.buttons = 0x81
+            if m.ram[GROUND] == 1 and m.ram[PY] == 112:
+                m.visit = 40
+            elif m.visit > 36:
+                fail(m, "comptoir du milieu")
+        else:
+            m.buttons = 0
+
+    run_case(prg, main, mid)
+    print("saut tenu: du comptoir gauche au milieu OK")
 
 
 def need(m, cond, msg):
@@ -1464,7 +1647,10 @@ def render(chr_rom, nt, pal, sprites, path):
                 for col in range(8):
                     bit = 7 - col
                     ci = ((lo >> bit) & 1) | (((hi >> bit) & 1) << 1)
-                    color = pal[ci]
+                    attr = nt[0x3C0 + (ty // 4) * 8 + (tx // 4)]
+                    quad = ((ty // 2) & 1) * 2 + ((tx // 2) & 1)
+                    pal_i = (attr >> (quad * 2)) & 3
+                    color = pal[pal_i * 4 + ci]
                     put(rgb, w, tx * 8 + col, ty * 8 + row, NES_PAL[color & 63])
     for sx, sy, tile_i, attr, pal_i in sprites:
         tile = sp[tile_i * 16:(tile_i + 1) * 16]
@@ -1522,13 +1708,11 @@ def level_sprites(ent, boss=False):
 
 
 def previews(chr_rom):
+    tags = [(x, y, 8, 0, 3) for x, y in RAYON_TAGS]
+    rayon = [(24, 184, 0, 0, 0), (24, 192, 1, 0, 1)] + tags
     jobs = [
-        ("preview-titre.png", TITLE_NT, PALS[0], [(120, 184, 0, 0, 0), (120, 192, 1, 0, 0)]),
-        ("preview-parc.png", NTS[0], PALS[0], level_sprites(ENTS[0])),
-        ("preview-cosmos.png", NTS[1], PALS[1], level_sprites(ENTS[1])),
-        ("preview-vaisseau.png", NTS[2], PALS[2], level_sprites(ENTS[2])),
-        ("preview-bravo.png", WIN_NT, PALS[0], [(120, 184, 0, 0, 0), (120, 192, 1, 0, 0)]),
-        ("preview-perdu.png", OVER_NT, PALS[0], [(120, 184, 0, 0, 0), (120, 192, 1, 0, 0)]),
+        ("preview-titre.png", TITLE_NT, PALS[0], [(120, 184, 0, 0, 0), (120, 192, 1, 0, 1)]),
+        ("preview-rayon.png", NTS[0], PALS[0], rayon),
     ]
     for name, nt, pal, sprites in jobs:
         render(chr_rom, nt, pal, sprites, os.path.join(OUT, name))
@@ -1564,10 +1748,8 @@ def install():
 
 
 def main():
-    assert b"PISTACHES" and bytes([32 + ord(c) - 65 for c in "PISTACHES"]) in TITLE_NT
-    assert bytes([32 + ord(c) - 65 for c in "PARC"]) in NTS[0]
-    assert bytes([32 + ord(c) - 65 for c in "COSMOS"]) in NTS[1]
-    assert bytes([32 + ord(c) - 65 for c in "VAISSEAU"]) in NTS[2]
+    assert bytes([32 + ord(c) - 65 for c in "RAYON"]) in TITLE_NT
+    assert bytes([32 + ord(c) - 65 for c in "RAYON"]) in NTS[0]
     chr_rom = build_chr()
     if len(chr_rom) != 8192:
         raise SystemExit("CHR")
