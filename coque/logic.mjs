@@ -21,6 +21,30 @@ export function createState() {
   }
 }
 
+const JUMP = -12
+const GRAVITY = 1
+const MAX_FALL = 14
+
+function land(state, sole) {
+  state.y = sole
+  state.vy = 0
+  state.onGround = true
+  state.hanging = false
+  state.hangId = null
+}
+
+function bodies(state, input) {
+  if (state.hanging) return
+  if (state.onGround && input.jumpPressed) {
+    state.vy = JUMP
+    state.onGround = false
+  } else {
+    state.vy = Math.min(MAX_FALL, state.vy + GRAVITY)
+  }
+  state.y += state.vy
+  if (state.y >= WORLD.ground) land(state, WORLD.ground)
+}
+
 export function step(state, input) {
   const SPEED = 4
   if (input.left && !input.right) {
@@ -33,9 +57,6 @@ export function step(state, input) {
     state.vx = 0
   }
   if (!state.hanging) state.x += state.vx
-  if (!input.left && !input.right && !input.jump && state.onGround) {
-    state.vy = 0
-    state.y = WORLD.ground
-  }
+  bodies(state, input)
   return state
 }

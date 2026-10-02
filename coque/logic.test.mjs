@@ -38,3 +38,36 @@ test('gauche et droite ensemble ne bougent pas', () => {
   step(s, { left: true, right: true, jump: false, jumpPressed: false, shoot: false, whip: false })
   assert.equal(s.x, 300)
 })
+
+test('espace donne une vitesse vers le haut', () => {
+  const s = createState()
+  step(s, { left: false, right: false, jump: true, jumpPressed: true, shoot: false, whip: false })
+  assert.equal(s.vy, -12)
+  assert.equal(s.y, 608)
+  assert.equal(s.onGround, false)
+})
+
+test('la gravité ramène au sol', () => {
+  const s = createState()
+  s.y = 610
+  s.onGround = false
+  s.vy = 0
+  step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  assert.equal(s.vy, 1)
+  assert.equal(s.y, 611)
+  for (let i = 0; i < 30; i++) {
+    step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  }
+  assert.equal(s.y, WORLD.ground)
+  assert.equal(s.vy, 0)
+  assert.equal(s.onGround, true)
+})
+
+test('on ne saute pas en l’air', () => {
+  const s = createState()
+  s.onGround = false
+  s.y = 400
+  s.vy = 2
+  step(s, { left: false, right: false, jump: true, jumpPressed: true, shoot: false, whip: false })
+  assert.notEqual(s.vy, -12)
+})
