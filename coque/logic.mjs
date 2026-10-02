@@ -98,7 +98,16 @@ function hang(state, input) {
   state.y = drip.y + 48 + Math.cos(state.angle) * 80
 }
 
+export function whipBox(state) {
+  if (state.whip <= 0) return null
+  const w = 52
+  const x = state.face === 1 ? state.x + 10 : state.x - 10 - w
+  return { x, y: state.y - 36, w, h: 24 }
+}
+
 export function step(state, input) {
+  if (input.whip && state.whip === 0) state.whip = 8
+  else if (state.whip > 0) state.whip -= 1
   const wasHanging = state.hanging
   hang(state, input)
   if (!wasHanging && !state.hanging) {

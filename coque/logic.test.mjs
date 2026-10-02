@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { createState, WORLD, PLATFORMS, DRIPS, step } from './logic.mjs'
+import { createState, WORLD, PLATFORMS, DRIPS, step, whipBox } from './logic.mjs'
 
 test('état de départ debout sur le sol', () => {
   const s = createState()
@@ -142,4 +142,19 @@ test('la pistache disparaît hors de la salle', () => {
   s.nuts.push({ x: WORLD.width - 4, y: 500, vx: 8 })
   step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
   assert.equal(s.nuts.length, 0)
+})
+
+test('L déclenche un fouet de 8 images', () => {
+  const s = createState()
+  step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: true })
+  assert.equal(s.whip, 8)
+  const box = whipBox(s)
+  assert.equal(box.w, 52)
+  assert.ok(box.x > s.x)
+  step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  assert.equal(s.whip, 7)
+})
+
+test('sans fouet il n’y a pas de boîte', () => {
+  assert.equal(whipBox(createState()), null)
 })
