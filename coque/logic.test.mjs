@@ -125,3 +125,21 @@ test('la croix balance puis relâcher lâche le fil', () => {
   assert.ok(s.vx > 0)
   assert.equal(s.vy, -3)
 })
+
+test('J tire une seule pistache vers la droite', () => {
+  const s = createState()
+  const fire = { left: false, right: false, jump: false, jumpPressed: false, shoot: true, whip: false }
+  step(s, fire)
+  assert.equal(s.nuts.length, 1)
+  assert.equal(s.nuts[0].vx, 8)
+  assert.ok(s.nuts[0].x > s.x)
+  step(s, fire)
+  assert.equal(s.nuts.length, 1)
+})
+
+test('la pistache disparaît hors de la salle', () => {
+  const s = createState()
+  s.nuts.push({ x: WORLD.width - 4, y: 500, vx: 8 })
+  step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  assert.equal(s.nuts.length, 0)
+})

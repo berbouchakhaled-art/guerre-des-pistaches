@@ -115,5 +115,10 @@ export function step(state, input) {
     if (!state.hanging) state.x += state.vx
     bodies(state, input)
   }
+  if (input.shoot && state.nuts.length === 0) {
+    state.nuts.push({ x: state.x + state.face * 28, y: state.y - 40, vx: 8 * state.face })
+  }
+  for (const nut of state.nuts) nut.x += nut.vx
+  state.nuts = state.nuts.filter((nut) => nut.x > 0 && nut.x < WORLD.width)
   return state
 }
