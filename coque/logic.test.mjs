@@ -71,3 +71,27 @@ test('on ne saute pas en l’air', () => {
   step(s, { left: false, right: false, jump: true, jumpPressed: true, shoot: false, whip: false })
   assert.notEqual(s.vy, -12)
 })
+
+test('on se pose sur la plateforme de gauche', () => {
+  const s = createState()
+  s.x = 200
+  s.y = 486
+  s.vy = 4
+  s.onGround = false
+  step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  assert.equal(s.y, 490)
+  assert.equal(s.onGround, true)
+  assert.equal(s.vy, 0)
+})
+
+test('à côté de la plateforme on tombe jusqu’au sol', () => {
+  const s = createState()
+  s.x = 40
+  s.y = 500
+  s.vy = 0
+  s.onGround = false
+  for (let i = 0; i < 40; i++) {
+    step(s, { left: false, right: false, jump: false, jumpPressed: false, shoot: false, whip: false })
+  }
+  assert.equal(s.y, WORLD.ground)
+})

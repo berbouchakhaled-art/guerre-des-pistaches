@@ -42,6 +42,16 @@ function bodies(state, input) {
     state.vy = Math.min(MAX_FALL, state.vy + GRAVITY)
   }
   state.y += state.vy
+  if (state.vy >= 0) {
+    for (const plat of PLATFORMS) {
+      const wasAbove = state.y - state.vy <= plat.y
+      const overlaps = state.x >= plat.x && state.x <= plat.x + plat.w
+      if (wasAbove && state.y >= plat.y && overlaps) {
+        land(state, plat.y)
+        break
+      }
+    }
+  }
   if (state.y >= WORLD.ground) land(state, WORLD.ground)
 }
 
