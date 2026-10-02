@@ -22,6 +22,17 @@ export function createState() {
 }
 
 export function step(state, input) {
+  const SPEED = 4
+  if (input.left && !input.right) {
+    state.face = -1
+    state.vx = -SPEED
+  } else if (input.right && !input.left) {
+    state.face = 1
+    state.vx = SPEED
+  } else {
+    state.vx = 0
+  }
+  if (!state.hanging) state.x += state.vx
   if (!input.left && !input.right && !input.jump && state.onGround) {
     state.vy = 0
     state.y = WORLD.ground
